@@ -6,33 +6,16 @@ import {
   tutorialsQuery,
   countQuery,
   lessonsQuery,
-  tutorialIdQuery,
   lessonDetailsQuery,
 } from "./queries";
 import type { Tutorial, Lesson } from "./types";
 
 /**
- * Retrieves the ID of a tutorial by its slug
- * @param {string} slug - The slug of the tutorial to retrieve
- * @returns {Promise<string | undefined>} The ID of the tutorial or undefined if not found
- * @example
- * // Get the ID of a tutorial about React hooks
- * const id = await getTutorialIdBySlug("react-hooks-guide");
- * console.log(id); // "1234567890"
- */
-export async function getTutorialIdBySlug(slug: string) {
-  return client
-    .fetch<{ id: string }>(tutorialIdQuery, { slug })
-    .then((tutorial) => tutorial.id)
-    .catch(() => undefined);
-}
-
-/**
- * Retrieves a list of articles based on specified filtering criteria
- * @param {ArticlesArgs} args - The arguments for filtering and pagination
- * @param {string} [args.search=""] - Search term to filter articles
- * @param {string} [args.category=""] - Category slug to filter articles
- * @param {string} [args.tag=""] - Tag slug to filter articles
+ * Retrieves a list of tutorials based on specified filtering criteria
+ * @param {TutorialsArgs} args - The arguments for filtering and pagination
+ * @param {string} [args.search=""] - Search term to filter tutorials
+ * @param {string} [args.category=""] - Category slug to filter tutorials
+ * @param {string} [args.tag=""] - Tag slug to filter tutorials
  * @param {string} [args.order="createdAt desc"] - Sort order for articles
  * @param {number} [args.start] - Start index for pagination
  * @param {number} [args.end] - End index for pagination

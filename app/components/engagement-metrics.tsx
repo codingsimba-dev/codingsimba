@@ -24,7 +24,7 @@ export function EngagementMetrics({ className }: { className?: string }) {
       >
         {(metrics) =>
           metrics ? (
-            <MetricsContent metrics={metrics} className={className} />
+            <ArticleMetricsContent metrics={metrics} className={className} />
           ) : (
             <NoMetrics className={className} />
           )
@@ -85,7 +85,7 @@ function MetricsError({ className }: { className?: string }) {
   );
 }
 
-function MetricsContent({
+function ArticleMetricsContent({
   metrics,
   className,
 }: {

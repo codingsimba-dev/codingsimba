@@ -11,6 +11,7 @@ import {
  * Schema for a tutorial lesson
  * Defines the structure of a lesson within a tutorial.
  */
+
 const LessonSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -35,7 +36,7 @@ export const TutorialSchema = z.object({
   published: z.boolean(),
   premium: z.boolean(),
   createdAt: z.string().datetime({ offset: true }),
-  lessons: z.array(LessonSchema),
+  lessons: z.array(LessonSchema.pick({ id: true })),
   lessonsCount: z.number(),
 });
 

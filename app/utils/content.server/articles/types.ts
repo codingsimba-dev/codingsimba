@@ -64,6 +64,8 @@ export const ArticleSchema = z.object({
   tags: TagsSchema,
   author: AuthorSchema,
   image: z.string(),
+  featured: z.boolean().nullable(),
+  published: z.boolean().nullable(),
   excerpt: z.string(),
   content: z.string(),
   markdown: z.string(),

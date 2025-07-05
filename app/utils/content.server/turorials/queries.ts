@@ -1,14 +1,6 @@
 import groq from "groq";
 
 /**
- * GROQ query to fetch the ID of a tutorial by its slug
- * @returns {string} GROQ query string that returns the ID of the tutorial
- */
-export const tutorialIdQuery = groq`*[_type == "tutorial" && slug.current == $slug][0] {
-  "id": _id,
-}`;
-
-/**
  * Generates a GROQ query for fetching tutorials with filtering, search, and pagination
  * @param {Object} params - Query parameters
  * @param {string} params.search - Search term to filter tutorials by title, excerpt, or content
@@ -32,9 +24,7 @@ export function tutorialsQuery({
   filters: string;
   order: string;
 }) {
-  const searchCondition = search
-    ? `&& (title match $search || overview match $search)`
-    : "";
+  const searchCondition = search ? `&& (title match $search)` : "";
   const publishedCondition = `&& published == true`;
   return groq`{
     "tutorials": *[${filters} ${publishedCondition} ${searchCondition}] | order(${order}) [$start...$end] {
@@ -60,6 +50,9 @@ export function tutorialsQuery({
         "slug": slug.current,
         "image": image.asset->url,
       },
+      "lessons": lessons[]->{
+        "id": _id
+      },
       "lessonsCount": count(*[_type == "lesson" && references(^._id)])
     },
     "total": count(*[${filters}])
@@ -79,13 +72,11 @@ export const countQuery = `count(*[_type == "tutorial" && published == true])`;
  * - Category information
  * - Tags
  * - Image URL
- * - Overview
  */
 export const tutorialDetailsQuery = groq`*[_type == "tutorial" && _id == $tutorialId][0] {
   "id": _id,
   title,
   "slug": slug.current,
-  overview,
   "image": image.asset->url,
   "category": category->{
     "id": _id,
@@ -106,7 +97,7 @@ export const tutorialDetailsQuery = groq`*[_type == "tutorial" && _id == $tutori
     socialLinks,
     createdAt,
     bio
-  },
+  }
 }`;
 
 /**

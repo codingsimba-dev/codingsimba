@@ -12,7 +12,7 @@ interface TutorialCardProps {
 
 export function TutorialCard({ tutorial }: TutorialCardProps) {
   return (
-    <Link to={`/tutorials/${tutorial.slug}/lessons/${tutorial.lessons[0].id}`}>
+    <Link to={`/tutorials/${tutorial.id}/lessons/${tutorial.lessons[0].id}`}>
       <Card className="group relative h-full overflow-hidden rounded-xl border-0 bg-gradient-to-br from-white to-gray-50 pt-0 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:from-gray-900 dark:to-gray-800">
         <div className="relative h-48 overflow-hidden">
           <img

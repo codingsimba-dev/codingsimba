@@ -35,7 +35,7 @@ export function articlesQuery({
   const searchCondition = search
     ? `&& (title match $search || excerpt match $search || content match $search)`
     : "";
-  const publishedCondition = `&& published == false`;
+  const publishedCondition = `&& published == true`;
   return groq`{
     "articles": *[${filters} ${publishedCondition} ${searchCondition}] | order(${order}) [$start...$end] {
       "id": _id,

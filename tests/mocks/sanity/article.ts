@@ -7,69 +7,37 @@ import { articleIdQuery } from "~/utils/content.server/articles/queries";
 import { categoryQuery } from "~/utils/content.server/shared-queries";
 import { relatedQuery } from "~/utils/content.server/articles/queries";
 import { tagQuery } from "~/utils/content.server/articles/queries";
-import type {
-  SanityTag,
-  SanityCategory,
-  SanityAuthor,
-  SanitySandpackTemplate,
-  SanityReactComponent,
-  QueryHandler,
-  FilterOptions,
-} from "./utils";
+import type { QueryHandler, FilterOptions } from "./utils";
 import {
   matchStrategies,
   getContentFromDirectory,
-  getTagsFromDirectory,
-  getCategoriesFromDirectory,
-  getAuthorsFromDirectory,
   ContentCache,
 } from "./utils";
+import type { Article } from "~/utils/content.server/articles/types";
+import type { Tag, Category } from "~/utils/content.server/shared-types";
+import type { Author } from "~/utils/content.server/authors/types";
 
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
 
 /**
- * Base content interface for articles
+ * Raw article data from MDX files before transformation
  */
-export interface SanityArticle {
+interface RawArticleData {
   id: string;
   title: string;
   slug: string;
-  createdAt: string;
-  categoryId: string;
-  tags: SanityTag[];
-  authorId: string;
-  published: boolean;
-  featured?: boolean;
-  image: string;
-  excerpt: string;
   content: string;
-  sandpackTemplates?: SanitySandpackTemplate[];
-  reactComponents?: SanityReactComponent[];
-}
-
-/**
- * Fully resolved article with all references populated
- * This is what gets returned to the client
- */
-export interface Article {
-  id: string;
-  title: string;
-  slug: string;
-  createdAt: string;
-  categoryId: string;
   authorId: string;
-  published: boolean;
+  categoryId: string;
+  tagIds: string[];
+  image?: string;
   featured?: boolean;
-  image: string;
-  excerpt: string;
-  content: string;
-  sandpackTemplates?: SanitySandpackTemplate[];
-  reactComponents?: SanityReactComponent[];
-  category: SanityCategory;
-  author: SanityAuthor;
-  tags: SanityTag[];
+  published?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  excerpt?: string;
 }
 
 // ============================================================================
@@ -79,7 +47,7 @@ export interface Article {
 /**
  * In-memory cache for articles to avoid repeated file system reads
  */
-const articleCache = new ContentCache<SanityArticle>();
+const articleCache = new ContentCache<Article>();
 
 /**
  * Clears the article cache for development and testing
@@ -93,31 +61,99 @@ export function clearArticleCache(): void {
 // ============================================================================
 
 /**
+ * Loads all authors for articles from the fixtures
+ */
+async function getArticleAuthorsFromDirectory(): Promise<Author[]> {
+  return getContentFromDirectory<Author>("authors");
+}
+
+/**
+ * Loads all categories for articles from the fixtures
+ */
+async function getArticleCategoriesFromDirectory(): Promise<Category[]> {
+  return getContentFromDirectory<Category>("categories");
+}
+
+/**
+ * Loads all tags for articles from the fixtures
+ */
+async function getArticleTagsFromDirectory(): Promise<Tag[]> {
+  return getContentFromDirectory<Tag>("tags");
+}
+
+/**
  * Loads articles from MDX files in the fixtures directory
  */
-export async function getArticlesFromDirectory(): Promise<SanityArticle[]> {
-  return articleCache.getOrLoad("articles", () =>
-    getContentFromDirectory<SanityArticle>("articles"),
-  );
+export async function getArticlesFromDirectory(): Promise<Article[]> {
+  return articleCache.getOrLoad("articles", async () => {
+    const [authors, categories, tags] = await Promise.all([
+      getArticleAuthorsFromDirectory(),
+      getArticleCategoriesFromDirectory(),
+      getArticleTagsFromDirectory(),
+    ]);
+
+    const rawArticles =
+      await getContentFromDirectory<RawArticleData>("articles");
+
+    // Transform articles to match the exact Sanity Article schema structure
+    const transformedArticles = rawArticles.map((article) => {
+      // Find the author and category by ID
+      const author = authors.find((a) => a.id === article.authorId);
+      const category = categories.find((c) => c.id === article.categoryId);
+
+      if (!author || !category) {
+        console.warn(`Missing author or category for article ${article.slug}`);
+        return null;
+      }
+
+      // Get tag IDs and create the tags array structure
+      const tagIds = article.tagIds || [];
+      const articleTags = tagIds
+        .map((tagId: string) => tags.find((t) => t.id === tagId))
+        .filter(Boolean);
+
+      // Create the exact structure that matches the Article schema
+      return {
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        createdAt: article.createdAt || new Date().toISOString(),
+        updatedAt: article.updatedAt || new Date().toISOString(),
+        category, // Full Category object
+        tags: articleTags, // Array of full Tag objects
+        author, // Full Author object
+        image: article.image || "",
+        featured: article.featured ?? false,
+        published: article.published ?? true,
+        excerpt: article.excerpt || "",
+        content: article.content,
+        markdown: article.content,
+        html: article.content,
+        relatedArticles: [], // Empty array as per schema default
+        sandpackTemplates: [], // Empty array as per schema
+        reactComponents: [], // Empty array as per schema
+      } as Article;
+    });
+
+    return transformedArticles.filter(Boolean) as Article[];
+  });
 }
 
 /**
  * Filters and paginates articles based on provided options
  */
 export function filterArticles(
-  articles: SanityArticle[],
+  articles: Article[],
   options: FilterOptions,
-): { articles: SanityArticle[]; total: number } {
+): { articles: Article[]; total: number } {
   let filteredArticles = articles.filter((item) =>
-    options.published !== undefined
-      ? item.published === options.published
-      : true,
+    options.published !== undefined ? item.published === true : true,
   );
 
   // Apply featured filter
   if (options.featured !== undefined) {
     filteredArticles = filteredArticles.filter(
-      (item) => item.featured === options.featured,
+      (item) => item.featured === true,
     );
   }
 
@@ -135,7 +171,7 @@ export function filterArticles(
   // Apply category filter
   if (options.category) {
     filteredArticles = filteredArticles.filter(
-      (item) => item.categoryId === options.category,
+      (item) => item.category.id === options.category,
     );
   }
 
@@ -178,12 +214,12 @@ export function filterArticles(
  * Extracts unique tags from articles
  */
 export async function getUniqueTagsFromArticles(
-  articles: SanityArticle[],
-): Promise<SanityTag[]> {
-  const uniqueTags = new Map<string, SanityTag>();
-  const tags = await getTagsFromDirectory();
+  articles: Article[],
+): Promise<Tag[]> {
+  const uniqueTags = new Map<string, Tag>();
+  const tags = await getArticleTagsFromDirectory();
   articles
-    .filter((item) => item.published)
+    .filter((item) => item.published === true)
     .forEach((item) => {
       item.tags.forEach((tag) => {
         const foundTag = tags.find((t) => t.id === tag.id);
@@ -205,28 +241,18 @@ export async function getUniqueTagsFromArticles(
  * Converts SanityArticle to Article with populated author, category, and tags
  */
 export async function resolveArticleReferences(
-  article: SanityArticle,
+  article: Article,
 ): Promise<Article> {
-  const [authors, categories, tags] = await Promise.all([
-    getAuthorsFromDirectory(),
-    getCategoriesFromDirectory(),
-    getTagsFromDirectory(),
-  ]);
+  // Since we're using Sanity types, author and category should already be full objects
+  // We just need to ensure tags are properly resolved
+  const tags = await getArticleTagsFromDirectory();
 
-  const author = authors.find((a) => a.id === article.authorId);
-  const category = categories.find((c) => c.id === article.categoryId);
   const resolvedTags = (article.tags || [])
-    .map((t: SanityTag) => tags.find((tag) => tag.id === t.id))
-    .filter((tag): tag is SanityTag => tag !== undefined);
-
-  if (!author || !category) {
-    throw new Error(`Missing author or category for article ${article.id}`);
-  }
+    .map((t: Tag) => tags.find((tag) => tag.id === t.id))
+    .filter((tag): tag is Tag => tag !== undefined);
 
   return {
     ...article,
-    author,
-    category,
     tags: resolvedTags,
   };
 }
@@ -235,7 +261,7 @@ export async function resolveArticleReferences(
  * Resolves references for multiple articles
  */
 export async function resolveArticlesReferences(
-  articles: SanityArticle[],
+  articles: Article[],
 ): Promise<Article[]> {
   return Promise.all(articles.map(resolveArticleReferences));
 }
@@ -274,15 +300,15 @@ export class ArticleQueryResolver {
     );
     const relatedArticles = articles
       .filter((a) => {
-        if (!a.published || a.slug === currentArticle?.slug) {
+        if (a.published === false || a.slug !== currentArticle?.slug) {
           return false;
         }
-        const hasSharedTags = (a.tags || []).some((tag: SanityTag) =>
+        const hasSharedTags = (a.tags || []).some((tag: Tag) =>
           (currentArticle?.tags || []).some(
-            (currentTag: SanityTag) => currentTag.id === tag.id,
+            (currentTag: Tag) => currentTag.id === tag.id,
           ),
         );
-        const sameCategory = a.categoryId === currentArticle?.categoryId;
+        const sameCategory = a.category.id === currentArticle?.category.id;
         return hasSharedTags || sameCategory;
       })
       .slice(0, 3);
@@ -306,7 +332,7 @@ export class ArticleQueryResolver {
    * Handles queries for all categories
    */
   static async handleCategoryQuery() {
-    return getCategoriesFromDirectory();
+    return getArticleCategoriesFromDirectory();
   }
 
   /**
@@ -316,7 +342,7 @@ export class ArticleQueryResolver {
     const limit = Number(url.searchParams.get("$limit") ?? 4);
     const articles = await ArticleQueryResolver.getArticles();
     const recentArticles = articles
-      .filter((a) => a.published)
+      .filter((a) => a.published === true)
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -331,7 +357,7 @@ export class ArticleQueryResolver {
   static async handleFeaturedArticleQuery() {
     const articles = await ArticleQueryResolver.getArticles();
     const featuredArticle = articles.find(
-      (article) => article.featured && article.published,
+      (article) => article.featured === true && article.published === true,
     );
 
     if (!featuredArticle) return null;
@@ -344,7 +370,7 @@ export class ArticleQueryResolver {
    */
   static async handleCountQuery() {
     const articles = await ArticleQueryResolver.getArticles();
-    return articles.filter((a) => a.published).length;
+    return articles.filter((a) => a.published === true).length;
   }
 
   /**

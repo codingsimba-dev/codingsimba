@@ -1,23 +1,19 @@
 import { HeroSection } from "./hero";
 // import { CoursesSection } from "./courses";
-// import { ArticlesSection } from "./articles";
-// import { About } from "./about";
 import { ContactSection } from "./contact";
 import { NewsLetterSection } from "./news-letter";
-import {
-  countArticles,
-  getRecentArticles,
-} from "~/utils/content.server/articles/utils";
+import { countArticles } from "~/utils/content.server/articles/utils";
 import { generateMetadata } from "~/utils/meta";
 import { Subscription } from "./subscription";
 import { FAQSection } from "./faqs";
 import { readMdxDirectory } from "~/utils/misc.server";
+import { listProducts } from "~/utils/subcription.server";
 
 export async function loader() {
-  const articles = getRecentArticles();
   const articlesCount = countArticles();
   const faqs = readMdxDirectory("faqs");
-  return { articles, articlesCount, faqs };
+  const products = listProducts();
+  return { articlesCount, faqs, products };
 }
 
 export default function HomeRoute() {
@@ -26,10 +22,8 @@ export default function HomeRoute() {
       {generateMetadata({})}
       <HeroSection />
       {/* <CoursesSection /> */}
-      {/* <ArticlesSection /> */}
       <FAQSection />
       <Subscription />
-      {/* <About /> */}
       <ContactSection />
       <NewsLetterSection />
     </>

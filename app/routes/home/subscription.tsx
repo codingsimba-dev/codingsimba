@@ -1,154 +1,394 @@
-import type React from "react";
+import React from "react";
+import type { Route } from "./+types/index";
 import { motion } from "framer-motion";
 import { Check, Star, Users, Zap, Crown } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  Await,
+  Link,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "react-router";
+import { Skeleton } from "~/components/ui/skeleton";
+import { useOptionalUser } from "~/hooks/user";
 
-interface PricingPlan {
-  name: string;
-  price: string;
-  originalPrice?: string;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  buttonText: string;
-  buttonVariant: "default" | "outline";
-  icon: React.ReactNode;
-  maxMembers?: number;
-  perSeat?: boolean;
-  minSeats?: number;
+/**
+ * Feature definitions for each subscription plan
+ *
+ * Maps plan names to their feature lists. Used to display features
+ * in the pricing cards based on the plan type.
+ */
+export const features = {
+  basic: [
+    "Access to free courses and tutorials",
+    "Basic articles and workshops",
+    "Basic monthly coding challenges",
+    "Discord community access",
+    "Email support",
+  ],
+  premium: [
+    "Everything in Basic",
+    "Access to all premium tutorials and workshops",
+    "Priority community support",
+    "Access to premium monthly coding challenges",
+    "AI Learning Assistant (100 times/month)",
+  ],
+  pro: [
+    "Everything in Premium",
+    "Access to all courses and programs",
+    "AI Learning Assistant",
+    "Advanced certificates and badges",
+    "1-on-1 mentorship sessions (2/month)",
+  ],
+  "team starter": [
+    "Everything in Pro for each member",
+    "Team dashboard and analytics",
+    "Progress tracking for all members",
+    "Team certificates",
+    "Basic team reporting",
+    "Email support",
+  ],
+  "team pro": [
+    "Everything in Team Starter",
+    "Custom learning paths",
+    "Advanced team analytics",
+    "Skills assessment tools",
+    "Integration with Slack/Teams",
+  ],
+  enterprise: [
+    "Everything in Team Pro",
+    "Unlimited team members",
+    "Custom integrations",
+    "Dedicated account manager",
+    "Custom branding",
+  ],
+};
+
+/**
+ * Main subscription component that handles loading states and data fetching
+ *
+ * This component manages the async loading of products from the loader
+ * and displays a loading skeleton while data is being fetched.
+ *
+ * @example
+ * ```tsx
+ * <Subscription />
+ * ```
+ *
+ * @returns {JSX.Element} The subscription section with loading states
+ */
+export function Subscription() {
+  const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
+  const { products } = loaderData;
+  return (
+    <React.Suspense fallback={<SubscriptionSkeleton />}>
+      <Await resolve={products}>
+        {(products) => <SubscriptionPromise products={products} />}
+      </Await>
+    </React.Suspense>
+  );
 }
 
-const individualPlans: PricingPlan[] = [
-  {
-    name: "Basic",
-    price: "Free",
-    period: "forever",
-    description: "Perfect for getting started with coding",
-    features: [
-      "Access to free courses and tutorials",
-      "Basic articles and workshops",
-      "Basic monthly coding challenges",
-      "Discord community access",
-      "Email support",
-    ],
-    buttonText: "Get Started",
-    buttonVariant: "outline",
-    icon: <Zap className="h-5 w-5" />,
-  },
-  {
-    name: "Premium",
-    price: "$9",
-    period: "per month",
-    description: "Unlock premium tutorials and advanced content",
-    features: [
-      "Everything in Basic",
-      "Access to all premium tutorials and workshops",
-      "Priority community support",
-      "Access to premium monthly coding challenges",
-      "Basic certificates of completion",
-    ],
-    buttonText: "Upgrade to Premium",
-    buttonVariant: "outline",
-    icon: <Star className="h-5 w-5" />,
-  },
-  {
-    name: "Pro",
-    price: "$19",
-    originalPrice: "$29",
-    period: "per month",
-    description: "Complete learning experience for serious developers",
-    features: [
-      "Everything in Premium",
-      "Access to all courses and programs",
-      "AI Learning Assistant",
-      "Advanced certificates and badges",
-      "1-on-1 mentorship sessions (2/month)",
-      "Priority email support",
-      "Early access to new content",
-      "Progress analytics and insights",
-    ],
-    popular: true,
-    buttonText: "Start Free Trial",
-    buttonVariant: "default",
-    icon: <Crown className="h-5 w-5" />,
-  },
-];
+/**
+ * Subscription content component that renders the pricing plans
+ *
+ * This component processes the products data from Polar, groups them
+ * by type (individual/team), sorts them by price, and renders the
+ * pricing interface with tabs for different plan categories.
+ *
+ * @param {Object} props - Component props
+ * @param {Awaited<Route.ComponentProps["loaderData"]["products"]>} props.products - Resolved products data from Polar API
+ *
+ * @example
+ * ```tsx
+ * <SubscriptionPromise products={productsData} />
+ * ```
+ *
+ * @returns {JSX.Element} The complete subscription pricing interface
+ */
+export function SubscriptionPromise({
+  products,
+}: {
+  products: Awaited<Route.ComponentProps["loaderData"]["products"]>;
+}) {
+  const groups = {
+    individual: "individual",
+    team: "team",
+  } as const;
 
-const teamPlans: PricingPlan[] = [
-  {
-    name: "Team Starter",
-    price: "$12",
-    period: "per member/month",
-    description: "Perfect for small teams getting started",
-    features: [
-      "Everything in Pro for each member",
-      "Team dashboard and analytics",
-      "Progress tracking for all members",
-      "Team certificates",
-      "Basic team reporting",
-      "Email support",
-    ],
-    buttonText: "Start Team Trial",
-    buttonVariant: "outline",
-    icon: <Users className="h-5 w-5" />,
-    minSeats: 3,
-    maxMembers: 10,
-    perSeat: true,
-  },
-  {
-    name: "Team Pro",
-    price: "$18",
-    period: "per member/month",
-    description: "Advanced features for growing teams",
-    features: [
-      "Everything in Team Starter",
-      "Custom learning paths",
-      "Advanced team analytics",
-      "Skills assessment tools",
-      "Integration with Slack/Teams",
-      "Priority support",
-      "Bulk user management",
-      "Advanced reporting",
-      // "Team competitions",
-    ],
-    popular: true,
-    buttonText: "Start Team Trial",
-    buttonVariant: "default",
-    icon: <Crown className="h-5 w-5" />,
-    minSeats: 5,
-    maxMembers: 50,
-    perSeat: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "pricing",
-    description: "Tailored solutions for large organizations",
-    features: [
-      "Everything in Team Pro",
-      "Unlimited team members",
-      "Custom integrations",
-      "Dedicated account manager",
-      "Custom branding",
-      "Advanced security features",
-      "SLA guarantees",
-      "24/7 phone support",
-    ],
-    buttonText: "Contact Sales",
-    buttonVariant: "outline",
-    icon: <Crown className="h-5 w-5" />,
-    maxMembers: 999,
-  },
-];
+  /**
+   * Groups products by their metadata group (individual or team)
+   * Creates separate arrays for individual and team plans
+   */
+  const product = products.result.items.reduce(
+    (acc, item) => {
+      const group = item.metadata.group as keyof typeof groups;
+      if (group in groups) {
+        if (!acc[group]) {
+          acc[group] = [];
+        }
+        acc[group].push(item);
+      }
+      return acc;
+    },
+    {} as Record<keyof typeof groups, (typeof products.result.items)[number][]>,
+  );
 
-function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
-  const isTeam =
-    plan.perSeat ||
-    plan.name.toLowerCase().includes("team") ||
-    plan.name.toLowerCase().includes("enterprise");
+  function checkProductType(item: (typeof product.individual)[number]) {
+    return (
+      item.prices?.[0]?.amountType !== "free" &&
+      item.prices?.[0]?.amountType !== "custom"
+    );
+  }
+
+  const productIds = product.individual
+    .filter(checkProductType)
+    .map((item) => item.id);
+  const teamProductIds = product.team
+    .filter(checkProductType)
+    .map((item) => item.id);
+
+  /**
+   * Sorts products by price and type
+   *
+   * Custom plans are sorted to the end (highest tier),
+   * while fixed-price plans are sorted by price (lowest to highest)
+   *
+   * @param {Array} productList - Array of products to sort
+   * @returns {Array} Sorted array of products
+   */
+  function sortProducts(productList: (typeof product.individual)[number][]) {
+    const getPriceAmount = (
+      price: (typeof productList)[number]["prices"][number] | undefined,
+    ) => {
+      if (!price) return 0;
+      return price.amountType === "fixed" &&
+        "priceAmount" in price &&
+        typeof price.priceAmount === "number"
+        ? price.priceAmount
+        : 0;
+    };
+
+    const checkIsCustom = (
+      price: (typeof productList)[number]["prices"][number] | undefined,
+    ) => {
+      return price?.amountType === "custom";
+    };
+
+    return productList.sort((a, b) => {
+      const priceA = a.prices?.[0];
+      const priceB = b.prices?.[0];
+
+      if (checkIsCustom(priceA) && !checkIsCustom(priceB)) return 1;
+      if (!checkIsCustom(priceA) && checkIsCustom(priceB)) return -1;
+      if (checkIsCustom(priceA) && checkIsCustom(priceB)) return 0;
+
+      const amountA = getPriceAmount(priceA);
+      const amountB = getPriceAmount(priceB);
+      return amountA - amountB;
+    });
+  }
+
+  return (
+    <section className="relative overflow-hidden py-24">
+      <div className="absolute left-0 top-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
+      <div className="absolute bottom-0 right-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
+
+      <div className="container relative z-10 mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="mx-auto mb-16 max-w-3xl text-center"
+        >
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+            Choose Your Learning Path
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Flexible pricing that scales with your needs - whether you&apos;re
+            learning solo or building a team.
+          </p>
+        </motion.div>
+
+        <Tabs defaultValue="individual" className="mx-auto max-w-6xl">
+          <TabsList className="mx-auto mb-12 flex w-fit">
+            <TabsTrigger value={groups.individual} className="py-3 text-lg">
+              Individual Plans
+            </TabsTrigger>
+            <TabsTrigger value={groups.team} className="py-3 text-lg">
+              Team Plans
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={groups.individual}>
+            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
+              {sortProducts(product[groups.individual]).map((item, index) => (
+                <PricingCard
+                  key={index}
+                  plan={item}
+                  index={index}
+                  productIds={productIds}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value={groups.team}>
+            <div className="space-y-8">
+              <TeamPricingExplanation />
+
+              <div className="grid gap-8 lg:grid-cols-3">
+                {sortProducts(product[groups.team]).map((item, index) => (
+                  <PricingCard
+                    key={index}
+                    plan={item}
+                    index={index}
+                    productIds={teamProductIds}
+                  />
+                ))}
+              </div>
+
+              <VolumeDiscounts />
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center"
+        >
+          <p className="mb-4 text-gray-600 dark:text-gray-300">
+            All plans include a 14-day free trial
+          </p>
+          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-500 dark:text-gray-400">
+            <span>✓ No setup fees</span>
+            <span>✓ Cancel anytime</span>
+            <span>✓ Secure payments</span>
+            <span>✓ 24/7 support</span>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Individual pricing card component
+ *
+ * Renders a single subscription plan card with pricing, features,
+ * and call-to-action button. Supports different plan types (free,
+ * fixed-price, custom) and team vs individual plans.
+ *
+ * @param {Object} props - Component props
+ * @param {Awaited<Route.ComponentProps["loaderData"]["products"]>["result"]["items"][number]} props.plan - Product data from Polar
+ * @param {number} props.index - Index for animation delays
+ *
+ * @example
+ * ```tsx
+ * <PricingCard plan={productData} index={0} />
+ * ```
+ *
+ * @returns {JSX.Element} A pricing card with plan details and CTA
+ */
+function PricingCard({
+  plan,
+  index,
+  productIds,
+}: {
+  plan: Awaited<
+    Route.ComponentProps["loaderData"]["products"]
+  >["result"]["items"][number];
+  index: number;
+  productIds: string[];
+}) {
+  const user = useOptionalUser();
+  const navigation = useNavigation();
+  const submit = useSubmit();
+  const isTeam = plan.metadata.group === "team";
+  const price = plan.prices?.[0];
+  const isCustom = price.amountType === "custom";
+  const isFree = price.amountType === "free";
+  const isPopular = !!plan.metadata.popular;
+
+  /**
+   * Determines the appropriate link destination based on plan type
+   * - Free plans: Sign in page
+   * - Custom plans: Contact page
+   * - Paid plans: Subscription checkout page
+   */
+  const href = isFree
+    ? "/signin"
+    : isCustom
+      ? "/contact"
+      : user
+        ? "/subscription/checkout"
+        : "/signin";
+
+  /**
+   * Extracts the price amount from a price object
+   *
+   * @param {Object} price - Price object from Polar
+   * @returns {number} Price amount in dollars (divided by 100)
+   */
+  function getPriceAmount(price: (typeof plan.prices)[number]): number {
+    if (price.amountType === "fixed" && "priceAmount" in price) {
+      return price.priceAmount / 100;
+    }
+    return 0;
+  }
+
+  /**
+   * Maps icon names to React components
+   *
+   * @param {string} iconName - Name of the icon to render
+   * @returns {JSX.Element} The corresponding icon component
+   */
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case "Zap":
+        return <Zap className="size-5" />;
+      case "Star":
+        return <Star className="size-5" />;
+      case "Crown":
+        return <Crown className="size-5" />;
+      case "Users":
+        return <Users className="size-5" />;
+      default:
+        return <Star className="size-5" />;
+    }
+  };
+
+  function handleSubmit(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    submit({ products: productIds }, { method: "post", action: href });
+  }
+
+  const isLoading = navigation.state === "submitting";
+
+  const isDisabled = isLoading;
+  // !isFree;
+
+  const actionButton = (
+    <Button
+      onClick={isDisabled ? () => {} : handleSubmit}
+      className={`w-full py-6 text-lg ${
+        isPopular
+          ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          : ""
+      }`}
+      variant={plan.metadata.buttonVariant as "default" | "outline"}
+      disabled={isDisabled}
+    >
+      {!isDisabled ? plan.metadata.buttonText : "Coming Soon"}
+    </Button>
+  );
 
   return (
     <motion.div
@@ -158,82 +398,88 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
       className={`relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900 ${
-        plan.popular
+        isPopular
           ? `${
               isTeam ? "scale-105" : ""
             } border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400 dark:ring-blue-400/20`
           : "border-gray-200 dark:border-gray-800"
       }`}
     >
-      {plan.popular && (
+      {isPopular ? (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
           <div className="flex items-center gap-1 rounded-full bg-blue-600 px-4 py-1 text-sm font-medium text-white dark:bg-blue-500">
-            <Star className="h-4 w-4 fill-current" />
+            <Star className="size-4 fill-current" />
             Most Popular
           </div>
         </div>
-      )}
+      ) : null}
 
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center gap-2">
-          {plan.icon}
-          <h3 className="text-2xl font-bold">{plan.name}</h3>
+          {getIcon(plan.metadata.icon as string)}
+          <h3 className="text-2xl font-bold capitalize">{plan.name}</h3>
         </div>
         <div className="mb-4">
-          <span className="text-4xl font-bold">{plan.price}</span>
-          {plan.originalPrice && (
+          <span className="text-4xl font-bold">
+            {isFree
+              ? "Free"
+              : isCustom
+                ? "Custom"
+                : `$${getPriceAmount(price!)}`}
+          </span>
+          {plan.metadata.originalPrice ? (
             <span className="ml-2 text-lg text-gray-500 line-through dark:text-gray-400">
-              {plan.originalPrice}
+              {plan.metadata.originalPrice}
             </span>
-          )}
-          {plan.price !== "Free" && plan.price !== "Custom" && (
+          ) : null}
+          {!isFree && !isCustom ? (
             <span className="ml-2 text-gray-500 dark:text-gray-400">
-              /{plan.period}
+              {isTeam
+                ? `/per seat /${price.recurringInterval}`
+                : ` / ${price.recurringInterval}`}
             </span>
-          )}
+          ) : null}
         </div>
-        {plan.minSeats && (
+        {plan.metadata.minSeats ? (
           <div className="mb-2">
             <Badge variant="outline" className="text-xs">
-              Minimum {plan.minSeats} members
+              Minimum {plan.metadata.minSeats} members
             </Badge>
           </div>
-        )}
-        {plan.maxMembers && plan.maxMembers < 999 && (
+        ) : null}
+        {plan.metadata.maxMembers && Number(plan.metadata.maxMembers) < 999 ? (
           <div className="mb-2">
             <Badge variant="outline" className="text-xs">
-              Up to {plan.maxMembers} members
+              Up to {plan.metadata.maxMembers} members
             </Badge>
           </div>
-        )}
+        ) : null}
         <p className="text-gray-600 dark:text-gray-300">{plan.description}</p>
       </div>
 
       <ul className="mb-8 flex-grow space-y-4">
-        {plan.features.map((feature, featureIndex) => (
-          <li key={featureIndex} className="flex items-start gap-3">
-            <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
-            <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-          </li>
-        ))}
+        {features[plan.name.toLowerCase() as keyof typeof features].map(
+          (feature, featureIndex) => (
+            <li key={featureIndex} className="flex items-start gap-3">
+              <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
+              <span className="text-gray-700 dark:text-gray-300">
+                {feature}
+              </span>
+            </li>
+          ),
+        )}
       </ul>
 
-      <Button
-        className={`w-full py-6 text-lg ${
-          plan.popular
-            ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-            : ""
-        }`}
-        variant={plan.buttonVariant}
-      >
-        {plan.buttonText}
-      </Button>
+      {isFree || isCustom ? (
+        <Link to={href}>{actionButton}</Link>
+      ) : (
+        actionButton
+      )}
 
-      {plan.perSeat && plan.price !== "Custom" && (
+      {plan.metadata.perSeat && price.amountType !== "custom" && (
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Example: 10 members = $
-            {Number.parseInt(plan.price.replace("$", "")) * 10}
+            Example: 10 members = ${getPriceAmount(price!) * 10}
             /month
           </p>
         </div>
@@ -242,6 +488,14 @@ function PricingCard({ plan, index }: { plan: PricingPlan; index: number }) {
   );
 }
 
+/**
+ * Team pricing explanation component
+ *
+ * Displays information about per-seat pricing for team plans,
+ * including benefits like no setup fees and flexible member management.
+ *
+ * @returns {JSX.Element} Team pricing information section
+ */
 function TeamPricingExplanation() {
   return (
     <div className="mb-12 text-center">
@@ -284,6 +538,14 @@ function TeamPricingExplanation() {
   );
 }
 
+/**
+ * Volume discounts component
+ *
+ * Displays available volume discounts for team plans based on
+ * member count, encouraging larger team purchases.
+ *
+ * @returns {JSX.Element} Volume discounts information section
+ */
 function VolumeDiscounts() {
   return (
     <div className="mt-12">
@@ -311,84 +573,18 @@ function VolumeDiscounts() {
   );
 }
 
-export function Subscription() {
-  return (
-    <section className="relative overflow-hidden py-24">
-      <div className="absolute left-0 top-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
-
-      <div className="container relative z-10 mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="mx-auto mb-16 max-w-3xl text-center"
-        >
-          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-            Choose Your Learning Path
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Flexible pricing that scales with your needs - whether you&apos;re
-            learning solo or building a team.
-          </p>
-        </motion.div>
-
-        <Tabs defaultValue="individual" className="mx-auto max-w-6xl">
-          <TabsList className="mx-auto mb-12 flex w-fit">
-            <TabsTrigger value="individual" className="py-3 text-lg">
-              Individual Plans
-            </TabsTrigger>
-            <TabsTrigger value="team" className="py-3 text-lg">
-              Team Plans
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="individual">
-            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
-              {individualPlans.map((plan, index) => (
-                <PricingCard key={index} plan={plan} index={index} />
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="team">
-            <div className="space-y-8">
-              <TeamPricingExplanation />
-
-              <div className="grid gap-8 lg:grid-cols-3">
-                {teamPlans.map((plan, index) => (
-                  <PricingCard key={index} plan={plan} index={index} />
-                ))}
-              </div>
-
-              <VolumeDiscounts />
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          viewport={{ once: true }}
-          className="mt-12 text-center"
-        >
-          <p className="mb-4 text-gray-600 dark:text-gray-300">
-            All plans include a 14-day free trial
-          </p>
-          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-500 dark:text-gray-400">
-            <span>✓ No setup fees</span>
-            <span>✓ Cancel anytime</span>
-            <span>✓ Secure payments</span>
-            <span>✓ 24/7 support</span>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
+/**
+ * Individual discount tier component
+ *
+ * Displays a single volume discount tier with the discount percentage
+ * and required member count.
+ *
+ * @param {Object} props - Component props
+ * @param {string} props.discount - Discount percentage (e.g., "5%")
+ * @param {string} props.memberCount - Required member count (e.g., "25+ members")
+ *
+ * @returns {JSX.Element} A discount tier card
+ */
 function MembersCount({
   discount,
   memberCount,
@@ -403,5 +599,94 @@ function MembersCount({
         {memberCount}
       </div>
     </div>
+  );
+}
+
+/**
+ * Skeleton component for individual pricing cards
+ *
+ * Shows loading placeholders while pricing data is being fetched.
+ * Uses the same layout as the actual PricingCard component.
+ *
+ * @param {Object} props - Component props
+ * @param {number} props.index - Index for animation delays
+ *
+ * @returns {JSX.Element} A skeleton pricing card
+ */
+function PricingCardSkeleton({ index }: { index: number }) {
+  return (
+    <motion.div
+      key={index}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true }}
+      className="relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900"
+    >
+      <div className="mb-8 text-center">
+        <div className="mb-4 flex items-center justify-center gap-2">
+          <Skeleton className="h-5 w-5" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <div className="mb-4">
+          <Skeleton className="mx-auto h-12 w-20" />
+        </div>
+        <Skeleton className="mx-auto h-4 w-48" />
+      </div>
+
+      <div className="mb-8 flex-grow space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <Skeleton className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <Skeleton className="h-4 flex-1" />
+          </div>
+        ))}
+      </div>
+
+      <Skeleton className="h-14 w-full" />
+    </motion.div>
+  );
+}
+
+/**
+ * Main skeleton component for the subscription section
+ *
+ * Shows loading placeholders for the entire subscription interface
+ * while products data is being fetched from the Polar API.
+ *
+ * @returns {JSX.Element} A skeleton version of the subscription section
+ */
+function SubscriptionSkeleton() {
+  return (
+    <section className="relative overflow-hidden py-24">
+      <div className="absolute left-0 top-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
+      <div className="absolute bottom-0 right-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
+
+      <div className="container relative z-10 mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="mx-auto mb-16 max-w-3xl text-center"
+        >
+          <Skeleton className="mx-auto mb-4 h-12 w-96" />
+          <Skeleton className="mx-auto h-6 w-80" />
+        </motion.div>
+
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto mb-12 flex w-fit">
+            <Skeleton className="h-12 w-32" />
+            <Skeleton className="ml-2 h-12 w-32" />
+          </div>
+
+          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <PricingCardSkeleton key={index} index={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

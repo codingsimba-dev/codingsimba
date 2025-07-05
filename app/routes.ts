@@ -89,10 +89,8 @@ export default [
 
   ...prefix("tutorials", [
     index("routes/tutorials/index.tsx"),
-    layout("routes/tutorials/layout.tsx", [
-      route(":tutorialId", "routes/tutorials/tutorial.tsx", [
-        route("lessons/:lessonId", "routes/tutorials/lesson.tsx"),
-      ]),
+    route(":tutorialId", "routes/tutorials/tutorial.tsx", [
+      route("lessons/:lessonId", "routes/tutorials/lesson.tsx"),
     ]),
   ]),
 

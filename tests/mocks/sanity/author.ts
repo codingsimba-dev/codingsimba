@@ -4,30 +4,7 @@ import matter from "gray-matter";
 import { authorArticlesQuery } from "~/utils/content.server/authors/queries";
 import { authorDetailsQuery } from "~/utils/content.server/authors/queries";
 import { readPageContent } from "~/utils/misc.server";
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-/**
- * Author information for content creators
- */
-export interface SanityAuthor {
-  id: string;
-  name: string;
-  slug: string;
-  image: string;
-  bio: string;
-  skills: string[];
-  socialLinks?: {
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    website?: string;
-  };
-  isActive: boolean;
-  createdAt: string;
-}
+import type { Author } from "~/utils/content.server/authors/types";
 
 // ============================================================================
 // CACHE MANAGEMENT
@@ -36,7 +13,7 @@ export interface SanityAuthor {
 /**
  * In-memory cache for authors to avoid repeated file system reads
  */
-const authorCache = new Map<string, SanityAuthor[]>();
+const authorCache = new Map<string, Author[]>();
 
 /**
  * Clears the author cache for development and testing
@@ -52,7 +29,7 @@ export function clearAuthorCache(): void {
 /**
  * Loads authors from MDX files in the fixtures directory
  */
-export async function getAuthorsFromDirectory(): Promise<SanityAuthor[]> {
+export async function getAuthorsFromDirectory(): Promise<Author[]> {
   const cacheKey = "authors";
 
   if (authorCache.has(cacheKey)) {
@@ -90,7 +67,7 @@ export async function getAuthorsFromDirectory(): Promise<SanityAuthor[]> {
           return {
             ...frontmatter,
             slug,
-          } as SanityAuthor;
+          } as Author;
         } catch (error) {
           console.error(`Error processing author ${file}:`, error);
           return null;
@@ -98,7 +75,7 @@ export async function getAuthorsFromDirectory(): Promise<SanityAuthor[]> {
       }),
     );
 
-    const validAuthors = authors.filter(Boolean) as SanityAuthor[];
+    const validAuthors = authors.filter(Boolean) as Author[];
     authorCache.set(cacheKey, validAuthors);
     console.log(`Processed authors:`, validAuthors.length);
     return validAuthors;
@@ -211,7 +188,7 @@ export class AuthorQueryResolver {
       await import("./article");
     const articles = await getArticlesFromDirectory();
     const authorArticles = articles.filter(
-      (article) => article.authorId === author.id,
+      (article) => article.author.id === author.id,
     );
 
     return resolveArticlesReferences(authorArticles);

@@ -4,6 +4,7 @@ import { Calendar, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { readingTime } from "reading-time-estimator";
 import type { Article } from "~/utils/content.server/articles/types";
+import type { Tutorial } from "~/utils/content.server/turorials/types";
 
 import {
   Breadcrumb,
@@ -16,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getImgSrc, getInitials, getSeed } from "~/utils/misc";
 
 type DetailsHeaderProps = {
-  item: Article; // | Tutorial | Course
+  item: Article | Tutorial; // | Tutorial | Course
 };
 
 export function DetailsHeader({ item }: DetailsHeaderProps) {
@@ -27,7 +28,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
   // const isCourse = itemType === "courses";
   // const isProgram = itemType === "programs"
 
-  const stats = isArticle ? readingTime(item.markdown) : null;
+  const stats = "markdown" in item ? readingTime(item.markdown) : null;
 
   const shapes = Array.from({ length: 15 }, (_, i) => {
     const seededRandom = (seed: number) => {
@@ -119,14 +120,16 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
           >
             {item.title}
           </motion.h1>
-          <motion.h1
-            className="mb-4 max-w-3xl text-sm"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            {item.excerpt}
-          </motion.h1>
+          {"excerpt" in item ? (
+            <motion.h1
+              className="mb-4 max-w-3xl text-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              {item.excerpt}
+            </motion.h1>
+          ) : null}
 
           <motion.div
             className="flex flex-wrap items-center gap-4"

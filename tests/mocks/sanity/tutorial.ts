@@ -2,113 +2,13 @@ import path from "path";
 import fs from "fs/promises";
 import matter from "gray-matter";
 import { readPageContent } from "~/utils/misc.server";
-import type { SanityReactComponent, SanitySandpackTemplate } from "./utils";
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-/**
- * Tutorial content interface
- */
-export interface SanityTutorial {
-  id: string;
-  title: string;
-  slug: string;
-  categoryId: string;
-  authorId: string;
-  tags: SanityTag[];
-  published: boolean;
-  premium: boolean;
-  createdAt: string;
-  lessons: string[]; // References to tutorial lesson IDs
-  overview: string;
-}
-
-/**
- * Tutorial lesson content interface
- */
-export interface SanityTutorialLesson {
-  id: string;
-  title: string;
-  slug: string;
-  createdAt: string;
-  published: boolean;
-  overview: string;
-  sandpackTemplates?: string[]; // References to sandpack template IDs
-  reactComponents?: string[]; // References to react component IDs
-}
-
-/**
- * Tag system for content organization
- */
-export interface SanityTag {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-/**
- * Category classification for content
- */
-export interface SanityCategory {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-/**
- * Author information for content creators
- */
-export interface SanityAuthor {
-  id: string;
-  name: string;
-  slug: string;
-  image: string;
-  bio: string;
-  skills: string[];
-  socialLinks?: {
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    website?: string;
-  };
-  isActive: boolean;
-  createdAt: string;
-}
-
-/**
- * Fully resolved tutorial with all references populated
- */
-export interface Tutorial {
-  id: string;
-  title: string;
-  slug: string;
-  categoryId: string;
-  authorId: string;
-  published: boolean;
-  premium: boolean;
-  createdAt: string;
-  lessons: TutorialLesson[];
-  overview: string;
-  category: SanityCategory;
-  author: SanityAuthor;
-  tags: SanityTag[];
-}
-
-/**
- * Fully resolved tutorial lesson
- */
-export interface TutorialLesson {
-  id: string;
-  title: string;
-  slug: string;
-  createdAt: string;
-  published: boolean;
-  overview: string;
-  sandpackTemplates?: SanitySandpackTemplate[];
-  reactComponents?: SanityReactComponent[];
-}
+import {
+  categoryQuery,
+  tutorialDetailsQuery,
+} from "~/utils/content.server/turorials/queries";
+import type { Lesson, Tutorial } from "~/utils/content.server/turorials/types";
+import type { Category, Tag } from "~/utils/content.server/shared-types";
+import type { Author } from "~/utils/content.server/authors/types";
 
 // ============================================================================
 // CACHE MANAGEMENT
@@ -117,8 +17,8 @@ export interface TutorialLesson {
 /**
  * In-memory cache for tutorials and lessons
  */
-const tutorialCache = new Map<string, SanityTutorial[]>();
-const lessonCache = new Map<string, SanityTutorialLesson[]>();
+const tutorialCache = new Map<string, Tutorial[]>();
+const lessonCache = new Map<string, Lesson[]>();
 
 /**
  * Clears the tutorial cache for development and testing
@@ -133,127 +33,126 @@ export function clearTutorialCache(): void {
 // ============================================================================
 
 /**
+ * Generic function to load content from MDX files in a directory
+ */
+async function loadContentFromDirectory<T>(
+  directoryName: string,
+  transform: (slug: string, frontmatter: Record<string, unknown>) => T | null,
+): Promise<T[]> {
+  try {
+    const contentDir = path.join(
+      process.cwd(),
+      "tests/fixtures/sanity",
+      directoryName,
+    );
+    const files = await fs.readdir(contentDir);
+    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
+
+    const items = await Promise.all(
+      mdxFiles.map(async (file) => {
+        try {
+          const slug = file.replace(/\.mdx$/, "");
+          const content = await readPageContent({
+            basePath: "tests/fixtures/sanity",
+            pageName: `${directoryName}/${slug}`,
+          });
+
+          if (!content) return null;
+
+          const { data: frontmatter } = matter(content);
+          return transform(slug, frontmatter);
+        } catch (error) {
+          console.error(`Error processing ${directoryName} ${file}:`, error);
+          return null;
+        }
+      }),
+    );
+
+    return items.filter(Boolean) as T[];
+  } catch (error) {
+    console.error(`Error loading ${directoryName}:`, error);
+    return [];
+  }
+}
+
+/**
  * Loads tutorials from MDX files in the fixtures directory
  */
-export async function getTutorialsFromDirectory(): Promise<SanityTutorial[]> {
+export async function getTutorialsFromDirectory(): Promise<Tutorial[]> {
   const cacheKey = "tutorials";
 
   if (tutorialCache.has(cacheKey)) {
     return tutorialCache.get(cacheKey)!;
   }
 
-  try {
-    const contentDir = path.join(
-      process.cwd(),
-      "tests/fixtures/sanity",
-      "tutorials",
-    );
-    const files = await fs.readdir(contentDir);
-    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
+  const [authors, categories, lessons] = await Promise.all([
+    getAuthorsFromDirectory(),
+    getCategoriesFromDirectory(),
+    getTutorialLessonsFromDirectory(),
+  ]);
 
-    console.log(`Found MDX files for tutorials:`, mdxFiles.length);
+  const tutorials = await loadContentFromDirectory<Tutorial>(
+    "tutorials",
+    (slug, frontmatter) => {
+      // Find the author and category by ID
+      const author = authors.find((a) => a.id === frontmatter.authorId);
+      const category = categories.find((c) => c.id === frontmatter.categoryId);
 
-    const tutorials = await Promise.all(
-      mdxFiles.map(async (file) => {
-        try {
-          const slug = file.replace(/\.mdx$/, "");
-          const content = await readPageContent({
-            basePath: "tests/fixtures/sanity",
-            pageName: `tutorials/${slug}`,
-          });
+      if (!author || !category) {
+        console.warn(`Missing author or category for tutorial ${slug}`);
+        return null;
+      }
 
-          if (!content) {
-            console.warn(`No content found for: ${slug}`);
-            return null;
-          }
+      // Get lesson IDs and create the lessons array structure
+      const lessonIds = (frontmatter.lessons as string[]) || [];
+      const tutorialLessons = lessonIds
+        .map((lessonId) => lessons.find((l) => l.id === lessonId))
+        .filter(Boolean)
+        .map((lesson) => ({ id: lesson!.id }));
 
-          // Parse frontmatter using gray-matter
-          const { data: frontmatter, content: markdownContent } =
-            matter(content);
+      return {
+        ...frontmatter,
+        slug,
+        author,
+        category,
+        lessons: tutorialLessons,
+        lessonsCount: tutorialLessons.length,
+        image: frontmatter.image || "",
+        published: frontmatter.published ?? true,
+        premium: frontmatter.premium ?? false,
+        createdAt: frontmatter.createdAt || new Date().toISOString(),
+      } as Tutorial;
+    },
+  );
 
-          return {
-            ...frontmatter,
-            slug,
-            overview: markdownContent,
-          } as SanityTutorial;
-        } catch (error) {
-          console.error(`Error processing tutorial ${file}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    const validTutorials = tutorials.filter(Boolean) as SanityTutorial[];
-    tutorialCache.set(cacheKey, validTutorials);
-    console.log(`Processed tutorials:`, validTutorials.length);
-    return validTutorials;
-  } catch (error) {
-    console.error(`Error loading tutorials:`, error);
-    return [];
-  }
+  const validTutorials = tutorials.filter(Boolean) as Tutorial[];
+  tutorialCache.set(cacheKey, validTutorials);
+  console.log(`Processed tutorials:`, validTutorials.length);
+  return validTutorials;
 }
 
 /**
  * Loads tutorial lessons from MDX files in the fixtures directory
  */
-export async function getTutorialLessonsFromDirectory(): Promise<
-  SanityTutorialLesson[]
-> {
+export async function getTutorialLessonsFromDirectory(): Promise<Lesson[]> {
   const cacheKey = "tutorial-lessons";
 
   if (lessonCache.has(cacheKey)) {
     return lessonCache.get(cacheKey)!;
   }
 
-  try {
-    const contentDir = path.join(
-      process.cwd(),
-      "tests/fixtures/sanity",
-      "tutorial-lessons",
-    );
-    const files = await fs.readdir(contentDir);
-    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
+  const lessons = await loadContentFromDirectory<Lesson>(
+    "tutorial-lessons",
+    (slug, frontmatter) =>
+      ({
+        ...frontmatter,
+        slug,
+      }) as Lesson,
+  );
 
-    console.log(`Found MDX files for tutorial lessons:`, mdxFiles.length);
-
-    const lessons = await Promise.all(
-      mdxFiles.map(async (file) => {
-        try {
-          const slug = file.replace(/\.mdx$/, "");
-          const content = await readPageContent({
-            basePath: "tests/fixtures/sanity",
-            pageName: `tutorial-lessons/${slug}`,
-          });
-
-          if (!content) {
-            console.warn(`No content found for: ${slug}`);
-            return null;
-          }
-
-          // Parse frontmatter using gray-matter
-          const { data: frontmatter, content: markdownContent } =
-            matter(content);
-
-          return {
-            ...frontmatter,
-            slug,
-            overview: markdownContent,
-          } as SanityTutorialLesson;
-        } catch (error) {
-          console.error(`Error processing tutorial lesson ${file}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    const validLessons = lessons.filter(Boolean) as SanityTutorialLesson[];
-    lessonCache.set(cacheKey, validLessons);
-    console.log(`Processed tutorial lessons:`, validLessons.length);
-    return validLessons;
-  } catch (error) {
-    console.error(`Error loading tutorial lessons:`, error);
-    return [];
-  }
+  lessonCache.set(cacheKey, lessons);
+  console.log(`Processed tutorial lessons:`, lessons.length);
+  return lessons;
 }
 
 // ============================================================================
@@ -263,172 +162,64 @@ export async function getTutorialLessonsFromDirectory(): Promise<
 /**
  * Loads all tags from the fixtures
  */
-export async function getTagsFromDirectory(): Promise<SanityTag[]> {
-  try {
-    const contentDir = path.join(
-      process.cwd(),
-      "tests/fixtures/sanity",
-      "tags",
-    );
-    const files = await fs.readdir(contentDir);
-    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
-
-    const tags = await Promise.all(
-      mdxFiles.map(async (file) => {
-        try {
-          const slug = file.replace(/\.mdx$/, "");
-          const content = await readPageContent({
-            basePath: "tests/fixtures/sanity",
-            pageName: `tags/${slug}`,
-          });
-
-          if (!content) return null;
-
-          const { data: frontmatter } = matter(content);
-          return {
-            ...frontmatter,
-            slug,
-          } as SanityTag;
-        } catch (error) {
-          console.error(`Error processing tag ${file}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    return tags.filter(Boolean) as SanityTag[];
-  } catch (error) {
-    console.error(`Error loading tags:`, error);
-    return [];
-  }
+export async function getTagsFromDirectory(): Promise<Tag[]> {
+  return loadContentFromDirectory<Tag>(
+    "tags",
+    (slug, frontmatter) =>
+      ({
+        ...frontmatter,
+        slug,
+      }) as Tag,
+  );
 }
 
 /**
  * Loads all categories from the fixtures
  */
-export async function getCategoriesFromDirectory(): Promise<SanityCategory[]> {
-  try {
-    const contentDir = path.join(
-      process.cwd(),
-      "tests/fixtures/sanity",
-      "categories",
-    );
-    const files = await fs.readdir(contentDir);
-    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
-
-    const categories = await Promise.all(
-      mdxFiles.map(async (file) => {
-        try {
-          const slug = file.replace(/\.mdx$/, "");
-          const content = await readPageContent({
-            basePath: "tests/fixtures/sanity",
-            pageName: `categories/${slug}`,
-          });
-
-          if (!content) return null;
-
-          const { data: frontmatter } = matter(content);
-          return {
-            ...frontmatter,
-            slug,
-          } as SanityCategory;
-        } catch (error) {
-          console.error(`Error processing category ${file}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    return categories.filter(Boolean) as SanityCategory[];
-  } catch (error) {
-    console.error(`Error loading categories:`, error);
-    return [];
-  }
+export async function getCategoriesFromDirectory(): Promise<Category[]> {
+  return loadContentFromDirectory<Category>(
+    "categories",
+    (slug, frontmatter) =>
+      ({
+        ...frontmatter,
+        slug,
+      }) as Category,
+  );
 }
 
 /**
  * Loads all authors from the fixtures
  */
-export async function getAuthorsFromDirectory(): Promise<SanityAuthor[]> {
-  try {
-    const contentDir = path.join(
-      process.cwd(),
-      "tests/fixtures/sanity",
-      "authors",
-    );
-    const files = await fs.readdir(contentDir);
-    const mdxFiles = files.filter((file) => file.endsWith(".mdx"));
-
-    const authors = await Promise.all(
-      mdxFiles.map(async (file) => {
-        try {
-          const slug = file.replace(/\.mdx$/, "");
-          const content = await readPageContent({
-            basePath: "tests/fixtures/sanity",
-            pageName: `authors/${slug}`,
-          });
-
-          if (!content) return null;
-
-          const { data: frontmatter } = matter(content);
-          return {
-            ...frontmatter,
-            slug,
-          } as SanityAuthor;
-        } catch (error) {
-          console.error(`Error processing author ${file}:`, error);
-          return null;
-        }
-      }),
-    );
-
-    return authors.filter(Boolean) as SanityAuthor[];
-  } catch (error) {
-    console.error(`Error loading authors:`, error);
-    return [];
-  }
+export async function getAuthorsFromDirectory(): Promise<Author[]> {
+  return loadContentFromDirectory<Author>(
+    "authors",
+    (slug, frontmatter) =>
+      ({
+        ...frontmatter,
+        slug,
+      }) as Author,
+  );
 }
 
 /**
- * Resolves references for a single tutorial
- * Converts SanityTutorial to Tutorial with populated author, category, tags, and lessons
+ * Resolves references for a single tutorial without lessons
+ * Converts SanityTutorial to Tutorial with populated author, category, and tags
  */
 export async function resolveTutorialReferences(
-  tutorial: SanityTutorial,
+  tutorial: Tutorial,
 ): Promise<Tutorial> {
-  const [authors, categories, tags, lessons] = await Promise.all([
-    getAuthorsFromDirectory(),
-    getCategoriesFromDirectory(),
-    getTagsFromDirectory(),
-    getTutorialLessonsFromDirectory(),
-  ]);
+  // Since we're using Sanity types, author and category should already be full objects
+  // We just need to ensure tags are properly resolved
+  const tags = await getTagsFromDirectory();
 
-  const author = authors.find((a) => a.id === tutorial.authorId);
-  const category = categories.find((c) => c.id === tutorial.categoryId);
   const resolvedTags = (tutorial.tags || [])
-    .map((t: SanityTag) => tags.find((tag) => tag.id === t.id))
-    .filter((tag): tag is SanityTag => tag !== undefined);
-
-  // Resolve lessons
-  const resolvedLessons = (tutorial.lessons || [])
-    .map((lessonId) => lessons.find((lesson) => lesson.id === lessonId))
-    .filter((lesson): lesson is SanityTutorialLesson => lesson !== undefined)
-    .map((lesson) => ({
-      ...lesson,
-      sandpackTemplates: [], // TODO: Resolve sandpack templates
-      reactComponents: [], // TODO: Resolve react components
-    }));
-
-  if (!author || !category) {
-    throw new Error(`Missing author or category for tutorial ${tutorial.id}`);
-  }
+    .map((t: Tag) => tags.find((tag) => tag.id === t.id))
+    .filter((tag): tag is Tag => tag !== undefined);
 
   return {
     ...tutorial,
-    author,
-    category,
     tags: resolvedTags,
-    lessons: resolvedLessons,
+    lessonsCount: tutorial.lessons.length,
   };
 }
 
@@ -436,7 +227,7 @@ export async function resolveTutorialReferences(
  * Resolves references for multiple tutorials
  */
 export async function resolveTutorialsReferences(
-  tutorials: SanityTutorial[],
+  tutorials: Tutorial[],
 ): Promise<Tutorial[]> {
   return Promise.all(tutorials.map(resolveTutorialReferences));
 }
@@ -526,10 +317,10 @@ export class TutorialQueryResolver {
    * Handles queries for tutorial details by slug
    */
   static async handleTutorialDetailsQuery(url: URL) {
-    const slug = url.searchParams.get("$slug");
+    const tutorialId = url.searchParams.get("$tutorialId");
     const tutorials = await TutorialQueryResolver.getTutorials();
     const tutorial = tutorials.find(
-      (t) => t.slug === slug?.replace(/["']/g, ""),
+      (t) => t.id === tutorialId?.replace(/["']/g, ""),
     );
 
     if (!tutorial) {
@@ -558,10 +349,8 @@ export class TutorialQueryResolver {
 
     if (search) {
       const searchTerm = search.toLowerCase();
-      filteredTutorials = filteredTutorials.filter(
-        (t) =>
-          t.title.toLowerCase().includes(searchTerm) ||
-          t.overview.toLowerCase().includes(searchTerm),
+      filteredTutorials = filteredTutorials.filter((t) =>
+        t.title.toLowerCase().includes(searchTerm),
       );
     }
 
@@ -607,14 +396,14 @@ export class TutorialQueryResolver {
    * Handles queries for tutorial lessons by tutorial slug
    */
   static async handleTutorialLessonsQuery(url: URL) {
-    const tutorialSlug = url.searchParams.get("$tutorialSlug");
-    if (!tutorialSlug) {
+    const tutorialId = url.searchParams.get("$tutorialId");
+    if (!tutorialId) {
       throw new Error("Tutorial slug parameter is required");
     }
 
     const tutorials = await TutorialQueryResolver.getTutorials();
     const tutorial = tutorials.find(
-      (t) => t.slug === tutorialSlug.replace(/["']/g, ""),
+      (t) => t.id === tutorialId.replace(/["']/g, ""),
     );
     if (!tutorial) {
       throw new Error("Tutorial not found");
@@ -622,7 +411,7 @@ export class TutorialQueryResolver {
 
     const lessons = await TutorialQueryResolver.getTutorialLessons();
     const tutorialLessons = lessons.filter((lesson) =>
-      tutorial.lessons.includes(lesson.id),
+      tutorial.lessons.some((l) => l.id === lesson.id),
     );
 
     return tutorialLessons.map((lesson) => ({
@@ -630,6 +419,29 @@ export class TutorialQueryResolver {
       sandpackTemplates: [], // TODO: Resolve sandpack templates
       reactComponents: [], // TODO: Resolve react components
     }));
+  }
+
+  /**
+   * Handles queries for individual lesson details by lesson ID
+   */
+  static async handleLessonDetailsQuery(url: URL) {
+    const lessonId = url.searchParams.get("$lessonId");
+    if (!lessonId) {
+      throw new Error("Lesson ID parameter is required");
+    }
+
+    const lessons = await TutorialQueryResolver.getTutorialLessons();
+    const lesson = lessons.find((l) => l.id === lessonId.replace(/["']/g, ""));
+
+    if (!lesson) {
+      throw new Error("Lesson not found");
+    }
+
+    return {
+      ...lesson,
+      sandpackTemplates: [], // TODO: Resolve sandpack templates
+      reactComponents: [], // TODO: Resolve react components
+    };
   }
 }
 
@@ -645,10 +457,7 @@ export const tutorialQueryHandler: QueryHandler[] = [
   {
     name: "tutorial-details-query",
     priority: 95,
-    match: (q: string) =>
-      q.includes('_type == "tutorial"') &&
-      q.includes("slug.current == $slug") &&
-      q.includes("published == true"),
+    match: (q: string) => matchStrategies.pattern(q, tutorialDetailsQuery),
     handle: async (url: URL) =>
       TutorialQueryResolver.handleTutorialDetailsQuery(url),
   },
@@ -662,21 +471,28 @@ export const tutorialQueryHandler: QueryHandler[] = [
     handle: async (url: URL) => TutorialQueryResolver.handleTutorialsQuery(url),
   },
   {
-    name: "tutorial-lessons-query",
+    name: "lesson-details-query",
     priority: 90,
     match: (q: string) =>
-      q.includes('_type == "tutorialLesson"') &&
-      q.includes("published == true"),
+      q.includes('_type == "lesson"') &&
+      q.includes("_id == $lessonId") &&
+      q.includes("[0]"),
+    handle: async (url: URL) =>
+      TutorialQueryResolver.handleLessonDetailsQuery(url),
+  },
+  {
+    name: "tutorial-lessons-query",
+    priority: 85,
+    match: (q: string) =>
+      q.includes('_type == "lesson"') &&
+      q.includes("tutorial._ref == $tutorialId"),
     handle: async (url: URL) =>
       TutorialQueryResolver.handleTutorialLessonsQuery(url),
   },
   {
     name: "categories-query",
     priority: 80,
-    match: (q: string) =>
-      q.includes('_type == "category"') &&
-      q.includes('"id": _id') &&
-      q.includes('"slug": slug.current'),
+    match: (q: string) => matchStrategies.exact(q, categoryQuery),
     handle: async () => getCategoriesFromDirectory(),
   },
 ];
