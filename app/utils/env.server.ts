@@ -9,6 +9,7 @@ export const schema = z.object({
   TURSO_DATABASE_URL: z.string(),
   TURSO_AUTH_TOKEN: z.string(),
   DATABASE_URL: z.string().default("file:./dev.db"),
+  OPENAI_API_KEY: z.string(),
   BUNNY_STORAGE_ZONE: z.string(),
   BUNNY_ACCESS_KEY: z.string(),
   BUNNY_LIBRARY_ID: z.string(),

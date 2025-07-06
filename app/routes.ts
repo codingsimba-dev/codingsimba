@@ -21,6 +21,8 @@ export default [
   route("roadmap", "routes/roadmap/index.tsx"),
   route("*", "routes/not-found.tsx"),
 
+  route("test", "routes/test.tsx"),
+
   // SEO
   route("robots.txt", "routes/seo/robots[.]txt.ts"),
   route("sitemap.xml", "routes/seo/sitemap[.]xml.ts"),
@@ -84,12 +86,14 @@ export default [
 
   ...prefix("challenges", [
     index("routes/challenges/index.tsx"),
-    // route(":programId", "routes/programs/program.tsx"),
+    // route(":challengeId", "routes/challenges/challenge.tsx"),
+    // route(":leaderboardId", "routes/challenges/leaderboard.tsx"),
   ]),
 
   ...prefix("tutorials", [
     index("routes/tutorials/index.tsx"),
     route(":tutorialId", "routes/tutorials/tutorial.tsx", [
+      // index("routes/tutorials/home.tsx"),
       route("lessons/:lessonId", "routes/tutorials/lesson.tsx"),
     ]),
   ]),
