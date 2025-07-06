@@ -17,12 +17,6 @@ model Subscription {
   /// The timestamp when the current subscription period ends.
   currentPeriodEnd   DateTime?
 
-  // Webhook metadata
-  /// The timestamp of the last webhook received for this subscription.
-  lastWebhookAt   DateTime?
-  /// The type of the last webhook received.
-  lastWebhookType String?
-
   /// A list of all enrollments granted by this subscription.
   enrollments Enrollment[]
 
@@ -62,7 +56,7 @@ enum SubscriptionType {
 
 /// Defines the subscription plans available for temas and users.
 enum Plan {
-  // User plans (PRO for Teams too)
+  // User plans
   basic
   premium
   pro

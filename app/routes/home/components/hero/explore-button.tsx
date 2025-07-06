@@ -11,7 +11,7 @@ export function ExploreButton() {
       className="absolute bottom-8 left-0 right-0 flex justify-center"
     >
       <Link
-        to="#courses"
+        to="/courses"
         className="flex flex-col items-center text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
         <span className="mb-2 text-sm">Explore</span>

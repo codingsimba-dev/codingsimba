@@ -20,7 +20,7 @@ export function HeroCard() {
                   <div className="h-3 w-3 rounded-full bg-green-400" />
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  codingsimba.com
+                  tekbreed.com
                 </div>
               </div>
               <div className="space-y-4">

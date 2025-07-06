@@ -1,0 +1,30 @@
+model DocumentChunk {
+  id         String    @id @default(ulid())
+  chunkType  ChunkType @default(TEXT)
+  chunkIndex Int
+  embedding  Bytes
+  metadata   Json?
+  document   Document  @relation(fields: [documentId], references: [id])
+  documentId String
+  content    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([documentId])
+  @@index([documentId, chunkIndex])
+}
+
+enum ChunkType {
+  TEXT
+  IMAGE
+}
+
+model Document {
+  id        String          @id @default(ulid())
+  title     String
+  source    String?
+  content   String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  chunks    DocumentChunk[]
+}

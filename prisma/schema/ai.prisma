@@ -1,0 +1,46 @@
+/// Tracks AI usage for premium users with monthly limits
+model AIUsage {
+  id String @id @default(ulid())
+
+  /// The user who made the AI request
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The type of AI interaction (e.g., "learning_assistant", "code_review", "explanation")
+  type AIUsageType @default(learning_assistant)
+
+  /// The prompt or question sent to AI
+  prompt String
+
+  /// The response received from AI
+  response String?
+
+  /// The number of tokens used in the request (for cost tracking)
+  tokensUsed Int @default(0)
+
+  /// The cost of this AI interaction (in cents)
+  costInCents Int @default(0)
+
+  /// Whether the request was successful
+  success Boolean @default(true)
+
+  /// Error message if the request failed
+  errorMessage String?
+
+  /// The month and year this usage belongs to (YYYY-MM format)
+  usageMonth String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([usageMonth])
+  @@index([createdAt])
+}
+
+/// Types of AI usage available in the system
+enum AIUsageType {
+  learning_assistant
+  explanation
+  concept_clarification
+}
