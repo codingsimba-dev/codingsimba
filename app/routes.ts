@@ -34,7 +34,7 @@ export default [
   //Subscription
   ...prefix("subscription", [
     route("checkout", "routes/subscription/checkout.ts"),
-    route("portal", "routes/subscription/customer-portal.ts"),
+    route("portal", "routes/subscription/portal.ts"),
     route("success", "routes/subscription/success.tsx"),
     route("webhook", "routes/subscription/webhook.ts"),
   ]),

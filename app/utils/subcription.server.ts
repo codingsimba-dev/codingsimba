@@ -79,32 +79,35 @@ export const polar = new Polar({
  */
 export async function createCheckoutSession({
   userId,
+  teamId,
   products,
   successUrl,
   discountId,
   customerEmail,
   customerName,
-  // isBusinessCustomer,
+  isBusinessCustomer,
 }: {
-  userId: string;
+  userId?: string;
+  teamId?: string;
   products: string[];
   successUrl: string;
   discountId?: string;
   customerEmail: string;
   customerName: string;
-  // isBusinessCustomer: boolean;
+  isBusinessCustomer: boolean;
 }) {
   return polar.checkouts.create({
     products,
     successUrl,
     customerEmail,
     customerName,
-    // isBusinessCustomer,
-    externalCustomerId: userId,
+    isBusinessCustomer,
+    externalCustomerId: userId ?? teamId,
     allowDiscountCodes: true,
     discountId,
     metadata: {
-      userId,
+      ...(userId && { userId }),
+      ...(teamId && { teamId }),
     },
   });
 }
@@ -140,6 +143,23 @@ export async function listProducts() {
   });
 }
 
-export async function getProduct(productId: string) {
-  return polar.products.get({ id: productId });
+export async function createCustomerSession(customerId: string) {
+  return polar.customerSessions.create({
+    customerId,
+  });
+}
+
+export async function getCustomer(customerId: string) {
+  return polar.customers.getExternal({ externalId: customerId });
+}
+
+export async function deleteCustomer(customerId: string) {
+  return polar.customers.deleteExternal({ externalId: customerId });
+}
+
+export async function getSubscription(subscriptionId: string) {
+  return polar.subscriptions.get({ id: subscriptionId });
+}
+export async function cancelSubscription(subscriptionId: string) {
+  return polar.subscriptions.revoke({ id: subscriptionId });
 }

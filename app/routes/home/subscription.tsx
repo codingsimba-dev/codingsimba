@@ -367,7 +367,10 @@ function PricingCard({
 
   function handleSubmit(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
-    submit({ products: productIds }, { method: "post", action: href });
+    submit(
+      { products: productIds, group: plan.metadata.group },
+      { method: "post", action: href },
+    );
   }
 
   const isLoading = navigation.state === "submitting";

@@ -8,6 +8,8 @@ import { Subscription } from "./subscription";
 import { FAQSection } from "./faqs";
 import { readMdxDirectory } from "~/utils/misc.server";
 import { listProducts } from "~/utils/subcription.server";
+import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
 
 export async function loader() {
   const articlesCount = countArticles();
@@ -22,6 +24,9 @@ export default function HomeRoute() {
       {generateMetadata({})}
       <HeroSection />
       {/* <CoursesSection /> */}
+      <Button asChild>
+        <Link to="/subscription/portal">Customer Portal</Link>
+      </Button>
       <FAQSection />
       <Subscription />
       <ContactSection />

@@ -39,6 +39,7 @@ import { invariantResponse } from "~/utils/misc";
 import { generateMetadata } from "~/utils/meta";
 import { redirectWithToast } from "~/utils/toast.server";
 import { useSearchParams } from "react-router";
+import { getSubscription } from "~/utils/subcription.server";
 
 const IntentSchema = z.object({
   intent: z.enum([
@@ -58,6 +59,9 @@ const AcccountUpdateSchema = z.union([
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request);
+  const subscription = await getSubscription(
+    "8ce5c81d-3ee8-4db0-bf29-3764669cc414",
+  );
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
     select: {
@@ -78,7 +82,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     },
   });
-  return { user };
+  return { user, subscription };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -215,23 +219,18 @@ export default function ProfileRoute() {
 
   const handleTabChange = React.useCallback(
     (newTab: TabValue) => {
+      setSearchParams(
+        (prev) => {
+          const newParams = new URLSearchParams(prev);
+          newParams.set("tab", newTab);
+          return newParams;
+        },
+        { preventScrollReset: true },
+      );
       setActiveTab(newTab);
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set("tab", newTab);
-        return newParams;
-      });
     },
     [setSearchParams],
   );
-
-  // Sync with URL params when they change externally
-  React.useEffect(() => {
-    const tabFromUrl = searchParams.get("tab") as TabValue;
-    if (tabFromUrl && tabValues.includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [searchParams, tabValues]);
 
   function renderTab() {
     switch (activeTab) {

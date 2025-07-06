@@ -182,16 +182,14 @@ export default function SubscriptionSuccessPage({
                       subscription details and receipt. Please check your inbox
                       (and spam folder if needed).
                     </p>
-                    <div className="flex flex-wrap justify-center gap-3">
+                    <div className="flex flex-wrap justify-center">
                       <Button
                         size="sm"
                         variant="outline"
                         className="border-blue-300 dark:border-blue-700"
                         asChild
                       >
-                        <Link target="_blank" to={checkout.url}>
-                          Manage Subscription
-                        </Link>
+                        <Link to="/profile">Manage Subscription</Link>
                       </Button>
                     </div>
                   </div>

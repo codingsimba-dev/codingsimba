@@ -12,19 +12,21 @@ datasource db {
 
 /// The central model representing a user of the application.
 model User {
-  id           String    @id @default(ulid())
-  email        String    @unique
-  name         String
+  id              String    @id @default(ulid())
+  email           String    @unique
+  name            String
+  /// The user's Polar customer ID.
+  polarCustomerId String?   @unique
   /// Whether the user is subscribed to marketing emails.
-  isSubscribed Boolean   @default(false)
+  isSubscribed    Boolean   @default(false)
   /// The timestamp of the user's last seen activity.
-  lastSeenAt   DateTime?
+  lastSeenAt      DateTime?
   /// The user's timezone (e.g., "America/New_York").
-  timezone     String?
+  timezone        String?
   /// JSON object for storing user-specific preferences.
-  preferences  Json?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  preferences     Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   image                Image?
   password             Password?

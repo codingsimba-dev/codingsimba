@@ -4,13 +4,18 @@ model Subscription {
   id String @id @default(ulid())
 
   /// The unique identifier for the subscription from the payment provider (e.g., Stripe, Polar).
-  subscriptionId   String             @unique
+  subscriptionId String             @unique
   /// The current status of the subscription.
-  status           SubscriptionStatus @default(active)
-  /// The timestamp when the current subscription period ends.
-  currentPeriodEnd DateTime
+  status         SubscriptionStatus @default(active)
+  /// The type of the subscription.
+  type           SubscriptionType   @default(individual)
+  /// The plan of the subscription.
+  plan           Plan               @default(basic)
 
-  plan Plan @default(BASIC)
+  /// The timestamp when the current subscription period starts.
+  currentPeriodStart DateTime?
+  /// The timestamp when the current subscription period ends.
+  currentPeriodEnd   DateTime?
 
   // Webhook metadata
   /// The timestamp of the last webhook received for this subscription.
@@ -49,15 +54,21 @@ enum SubscriptionStatus {
   incomplete_expired
 }
 
+/// The type of subscription.
+enum SubscriptionType {
+  individual
+  team
+}
+
 /// Defines the subscription plans available for temas and users.
 enum Plan {
   // User plans (PRO for Teams too)
-  BASIC
-  PREMIUM
-  PRO
+  basic
+  premium
+  pro
 
   // Team plans
-  STARTER
-  // PRO
-  ENTERPRISE
+  team_starter
+  team_pro
+  team_enterprise
 }
