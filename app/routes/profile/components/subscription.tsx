@@ -10,7 +10,7 @@ import { cn } from "~/utils/misc";
 
 export function Subscription() {
   const { subscription } = useLoaderData<Route.ComponentProps["loaderData"]>();
-
+  const statusesToCheck = ["canceled", "past_due", "unpaid"];
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -61,14 +61,36 @@ export function Subscription() {
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
-                  <div className="font-medium">Next billing date</div>
-                  <div>
-                    {subscription.currentPeriodEnd
-                      ? format(subscription.currentPeriodEnd, "MMM d, yyyy")
-                      : "N/A"}
+                {subscription.currentPeriodEnd &&
+                !subscription.cancelAtPeriodEnd ? (
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                    <div className="font-medium">Next billing date</div>
+                    <div>
+                      {format(subscription.currentPeriodEnd, "MMM d, yyyy")}
+                    </div>
                   </div>
-                </div>
+                ) : null}
+                {statusesToCheck.includes(subscription.status) ? (
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                    <div className="font-medium">Ended on</div>
+                    <div>
+                      {subscription.endedAt
+                        ? format(subscription.endedAt, "MMM d, yyyy")
+                        : "N/A"}
+                    </div>
+                  </div>
+                ) : null}
+                {subscription.cancelAtPeriodEnd &&
+                subscription.currentPeriodEnd ? (
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                    <div className="font-medium">
+                      Subscription will be canceled on
+                    </div>
+                    <div>
+                      {format(subscription.currentPeriodEnd, "MMM d, yyyy")}
+                    </div>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
                   <div className="font-medium">Billing history</div>
                   <Link to={`/subscription/portal`} target="_blank">

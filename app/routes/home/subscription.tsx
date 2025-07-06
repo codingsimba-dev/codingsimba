@@ -1,7 +1,7 @@
 import React from "react";
 import type { Route } from "./+types/index";
 import { motion } from "framer-motion";
-import { Check, Star, Users, Zap, Crown } from "lucide-react";
+import { Check, Star, Users, Zap, Crown, Loader2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -14,6 +14,7 @@ import {
 } from "react-router";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useOptionalUser } from "~/hooks/user";
+import { cn } from "~/utils/misc";
 
 /**
  * Feature definitions for each subscription plan
@@ -81,8 +82,7 @@ export const features = {
  * @returns {JSX.Element} The subscription section with loading states
  */
 export function Subscription() {
-  const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
-  const { products } = loaderData;
+  const { products } = useLoaderData<Route.ComponentProps["loaderData"]>();
   return (
     <React.Suspense fallback={<SubscriptionSkeleton />}>
       <Await resolve={products}>
@@ -286,16 +286,24 @@ export function SubscriptionPromise({
  * and call-to-action button. Supports different plan types (free,
  * fixed-price, custom) and team vs individual plans.
  *
+ * Features:
+ * - Shows different button text based on user authentication and subscription status
+ * - Displays "Current Plan" indicator for active subscriptions
+ * - Handles upgrade/downgrade actions for existing subscribers
+ * - Provides appropriate navigation for unauthenticated users
+ * - Visual indicators for popular plans and current subscriptions
+ *
  * @param {Object} props - Component props
  * @param {Awaited<Route.ComponentProps["loaderData"]["products"]>["result"]["items"][number]} props.plan - Product data from Polar
  * @param {number} props.index - Index for animation delays
+ * @param {string[]} props.productIds - Array of product IDs for form submission
  *
  * @example
  * ```tsx
- * <PricingCard plan={productData} index={0} />
+ * <PricingCard plan={productData} index={0} productIds={["prod_1", "prod_2"]} />
  * ```
  *
- * @returns {JSX.Element} A pricing card with plan details and CTA
+ * @returns {JSX.Element} A pricing card with plan details and contextual CTA
  */
 function PricingCard({
   plan,
@@ -308,6 +316,7 @@ function PricingCard({
   index: number;
   productIds: string[];
 }) {
+  const { subscription } = useLoaderData<Route.ComponentProps["loaderData"]>();
   const user = useOptionalUser();
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -317,22 +326,132 @@ function PricingCard({
   const isFree = price.amountType === "free";
   const isPopular = !!plan.metadata.popular;
 
+  const isSubmitting =
+    navigation.state === "submitting" &&
+    navigation.formData?.get("planName") === plan.name;
+
   /**
-   * Determines the appropriate link destination based on plan type
-   * - Free plans: Sign in page
-   * - Custom plans: Contact page
-   * - Paid plans: Subscription checkout page
+   * Determines the subscription action based on current subscription status and price comparison
+   *
+   * @returns Object containing button text, disabled state, and action type
    */
-  const href = isFree
-    ? "/signin"
-    : isCustom
-      ? "/contact"
-      : user
-        ? "/subscription/checkout"
-        : "/signin";
+  /**
+   * Determines the subscription action based on user authentication and current subscription status
+   *
+   * @returns Object containing button text, disabled state, href, and action type
+   */
+  const getSubscriptionAction = () => {
+    // If user is not authenticated, show sign in button
+    if (!user) {
+      return {
+        buttonText: isFree ? "Get Started" : "Sign In to Subscribe",
+        isDisabled: isSubmitting,
+        href: "/signin",
+        action: "signin" as const,
+      };
+    }
+
+    // If no active subscription, show subscribe button
+    if (!subscription || subscription.status !== "active") {
+      if (isFree) {
+        return {
+          buttonText: "Get Started",
+          isDisabled: isSubmitting,
+          href: "/courses", // Redirect to courses for free plan
+          action: "free" as const,
+        };
+      }
+
+      if (isCustom) {
+        return {
+          buttonText: plan.metadata.buttonText,
+          isDisabled: isSubmitting,
+          href: "/contact",
+          action: "custom" as const,
+        };
+      }
+
+      return {
+        buttonText: plan.metadata.buttonText,
+        isDisabled: isSubmitting,
+        href: "/subscription/checkout",
+        action: "subscribe" as const,
+      };
+    }
+
+    // User has active subscription - check if this is their current plan
+    const isCurrentSubscription =
+      subscription.product.name.toLowerCase() === plan.name.toLowerCase();
+
+    if (isCurrentSubscription) {
+      return {
+        buttonText: "Manage Subscription",
+        isDisabled: false,
+        href: "/subscription/portal",
+        action: "manage" as const,
+      };
+    }
+
+    // Compare prices to determine upgrade/downgrade
+    const currentPrice = subscription.amount / 100;
+    const planPrice = getPriceAmount(price!);
+
+    if (planPrice > currentPrice) {
+      return {
+        buttonText: "Upgrade Subscription",
+        isDisabled: isSubmitting,
+        href: "/subscription/portal",
+        action: "upgrade" as const,
+      };
+    } else if (planPrice < currentPrice && !isCustom) {
+      return {
+        buttonText: "Downgrade Subscription",
+        isDisabled: isSubmitting,
+        href: "/subscription/portal",
+        action: "downgrade" as const,
+      };
+    } else if (isCustom) {
+      return {
+        buttonText: plan.metadata.buttonText,
+        isDisabled: isSubmitting,
+        href: "/contact",
+        action: "custom" as const,
+      };
+    } else {
+      return {
+        buttonText: plan.metadata.buttonText,
+        isDisabled: isSubmitting,
+        href: "/subscription/portal",
+        action: "change" as const,
+      };
+    }
+  };
+
+  /**
+   * Handles button click based on the subscription action type
+   *
+   * @param event - The click event
+   */
+  function handleSubmit(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+
+    // For actions that don't need form submission, let the Link handle navigation
+    if (
+      ["signin", "free", "manage", "custom"].includes(subscriptionAction.action)
+    ) {
+      return;
+    }
+
+    // For subscription actions, submit the form
+    submit(
+      { products: productIds, group: plan.metadata.group, planName: plan.name },
+      { method: "post", action: subscriptionAction.href },
+    );
+  }
 
   /**
    * Extracts the price amount from a price object
+   * The price is in cents, so we divide by 100 to get the price in dollars
    *
    * @param {Object} price - Price object from Polar
    * @returns {number} Price amount in dollars (divided by 100)
@@ -365,33 +484,37 @@ function PricingCard({
     }
   };
 
-  function handleSubmit(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    submit(
-      { products: productIds, group: plan.metadata.group },
-      { method: "post", action: href },
+  const subscriptionAction = getSubscriptionAction();
+
+  /**
+   * Renders the appropriate action button based on the subscription action type
+   */
+  const renderActionButton = () => {
+    const buttonContent = (
+      <Button
+        onClick={handleSubmit}
+        className={cn("w-full py-6 text-lg", {
+          "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600":
+            isPopular,
+        })}
+        variant={plan.metadata.buttonVariant as "default" | "outline"}
+        disabled={subscriptionAction.isDisabled}
+      >
+        {subscriptionAction.buttonText}
+        {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
+      </Button>
     );
-  }
 
-  const isLoading = navigation.state === "submitting";
+    // For actions that need direct navigation, wrap in Link
+    if (
+      ["signin", "free", "manage", "custom"].includes(subscriptionAction.action)
+    ) {
+      return <Link to={subscriptionAction.href}>{buttonContent}</Link>;
+    }
 
-  const isDisabled = isLoading;
-  // !isFree;
-
-  const actionButton = (
-    <Button
-      onClick={isDisabled ? () => {} : handleSubmit}
-      className={`w-full py-6 text-lg ${
-        isPopular
-          ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-          : ""
-      }`}
-      variant={plan.metadata.buttonVariant as "default" | "outline"}
-      disabled={isDisabled}
-    >
-      {!isDisabled ? plan.metadata.buttonText : "Coming Soon"}
-    </Button>
-  );
+    // For subscription actions, return the button directly
+    return buttonContent;
+  };
 
   return (
     <motion.div
@@ -400,13 +523,23 @@ function PricingCard({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className={`relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900 ${
-        isPopular
-          ? `${
-              isTeam ? "scale-105" : ""
-            } border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400 dark:ring-blue-400/20`
-          : "border-gray-200 dark:border-gray-800"
-      }`}
+      className={cn(
+        "relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900",
+        "border-gray-200 dark:border-gray-800",
+        {
+          "border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400 dark:ring-blue-400/20":
+            isPopular,
+        },
+        {
+          "scale-105": isTeam && isPopular,
+        },
+        {
+          "border-green-500 ring-2 ring-green-500/20 dark:border-green-400 dark:ring-green-400/20":
+            user &&
+            subscription?.status === "active" &&
+            subscription.product.name.toLowerCase() === plan.name.toLowerCase(),
+        },
+      )}
     >
       {isPopular ? (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
@@ -417,7 +550,31 @@ function PricingCard({
         </div>
       ) : null}
 
+      {/* Show current plan badge for authenticated users */}
+      {user &&
+      subscription?.status === "active" &&
+      subscription.product.name.toLowerCase() === plan.name.toLowerCase() ? (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
+          <div className="flex items-center gap-1 rounded-full bg-green-600 px-4 py-1 text-sm font-medium text-white dark:bg-green-500">
+            <Check className="size-4 fill-current" />
+            Current Plan
+          </div>
+        </div>
+      ) : null}
+
       <div className="mb-8 text-center">
+        {/* Show current subscription indicator for authenticated users */}
+        {user && subscription?.status === "active" && (
+          <div className="mb-4">
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+            >
+              Current Plan: {subscription.product.name}
+            </Badge>
+          </div>
+        )}
+
         <div className="mb-4 flex items-center justify-center gap-2">
           {getIcon(plan.metadata.icon as string)}
           <h3 className="text-2xl font-bold capitalize">{plan.name}</h3>
@@ -432,7 +589,7 @@ function PricingCard({
           </span>
           {plan.metadata.originalPrice ? (
             <span className="ml-2 text-lg text-gray-500 line-through dark:text-gray-400">
-              {plan.metadata.originalPrice}
+              ${plan.metadata.originalPrice}
             </span>
           ) : null}
           {!isFree && !isCustom ? (
@@ -473,11 +630,7 @@ function PricingCard({
         )}
       </ul>
 
-      {isFree || isCustom ? (
-        <Link to={href}>{actionButton}</Link>
-      ) : (
-        actionButton
-      )}
+      {renderActionButton()}
 
       {plan.metadata.perSeat && price.amountType !== "custom" && (
         <div className="mt-4 text-center">

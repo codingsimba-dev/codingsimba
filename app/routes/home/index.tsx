@@ -7,15 +7,16 @@ import { generateMetadata } from "~/utils/meta";
 import { Subscription } from "./subscription";
 import { FAQSection } from "./faqs";
 import { readMdxDirectory } from "~/utils/misc.server";
-import { listProducts } from "~/utils/subcription.server";
-import { Button } from "~/components/ui/button";
-import { Link } from "react-router";
+import { getSubscription, listProducts } from "~/utils/subcription.server";
 
 export async function loader() {
   const articlesCount = countArticles();
   const faqs = readMdxDirectory("faqs");
   const products = listProducts();
-  return { articlesCount, faqs, products };
+  const subscription = await getSubscription(
+    "8ce5c81d-3ee8-4db0-bf29-3764669cc414",
+  );
+  return { articlesCount, faqs, products, subscription };
 }
 
 export default function HomeRoute() {
@@ -24,9 +25,6 @@ export default function HomeRoute() {
       {generateMetadata({})}
       <HeroSection />
       {/* <CoursesSection /> */}
-      <Button asChild>
-        <Link to="/subscription/portal">Customer Portal</Link>
-      </Button>
       <FAQSection />
       <Subscription />
       <ContactSection />
