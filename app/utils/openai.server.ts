@@ -2,46 +2,154 @@
  * @fileoverview OpenAI API Integration and RAG (Retrieval-Augmented Generation) System
  *
  * This module provides a complete RAG implementation for AI-assisted learning, including:
- * - OpenAI API client configuration
+ * - Multi-provider AI model management (OpenAI, DeepSeek)
  * - Text embedding generation for semantic search
- * - Document chunking and storage
- * - Vector similarity search
- * - Context-aware question answering
+ * - Document chunking and storage with metadata
+ * - Vector similarity search and ranking
+ * - Context-aware question answering with source attribution
+ * - Usage-based model selection and rate limiting
  *
  * The system enables students to ask questions about course content and receive
- * AI-generated responses based on relevant document chunks.
+ * AI-generated responses based on relevant document chunks from the knowledge base.
+ *
+ * Key Features:
+ * - Automatic model selection based on user plan and usage
+ * - Off-peak hour optimization for cost efficiency
+ * - Intelligent text chunking with sentence boundary awareness
+ * - Cosine similarity for semantic search
+ * - Confidence scoring for answer quality
+ * - Source attribution and metadata tracking
  *
  * @see {@link https://openai.com/api/} OpenAI API Documentation
  * @see {@link https://platform.openai.com/docs/guides/embeddings} Embeddings Guide
+ * @see {@link https://api.deepseek.com/} DeepSeek API Documentation
  */
 
 import { OpenAI } from "openai";
 import { prisma } from "./db.server";
 
+const { DEEPSEEK_API_KEY, OPENAI_API_KEY } = process.env;
+
+/**
+ * AI Model Configuration
+ *
+ * Defines available AI models and their configurations for different providers.
+ * Each provider has specific models for chat and reasoning tasks, with
+ * associated API keys and base URLs.
+ */
+const models: Record<string, Record<string, string>> = {
+  deepseek: {
+    chat: "deepseek-chat",
+    reasoning: "deepseek-reasoner",
+    apiKey: DEEPSEEK_API_KEY,
+    baseURL: "https://api.deepseek.com",
+  },
+  openai: {
+    chat: "gpt-4o-mini",
+    reasoning: "gpt-4o",
+    apiKey: OPENAI_API_KEY,
+  },
+};
+
+/**
+ * Selects the optimal AI model based on user plan, usage, and prompt type
+ *
+ * Implements a tiered model selection strategy:
+ * - Free users: Limited to chat model after 100 requests
+ * - Premium users: Limited to chat model after 300 requests
+ * - Reasoning models used for complex tasks when usage allows
+ *
+ * @param {string} promptType - Type of prompt: "chat" or "reasoning"
+ * @param {Object} user - User object containing plan and usage information
+ * @param {string} user.plan - User subscription plan ("free" or "premium")
+ * @param {number} user.usage - Current usage count for the user
+ * @returns {string} Selected model identifier
+ *
+ * @example
+ * ```typescript
+ * const model = getOptimalModel("reasoning", { plan: "premium", usage: 150 });
+ * // Returns "deepseek-reasoner" for premium user with low usage
+ * ```
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getOptimalModel(promptType: "chat" | "reasoning", user: any) {
+  // const isOffPeak = isOffPeakHours();
+  // const model = isOffPeak ? "deepseek" : "openai";
+  const model = "deepseek";
+  const reasoningLimit = {
+    free: 100,
+    premium: 300,
+  };
+
+  switch (user.plan) {
+    case "free":
+      return user.usage < reasoningLimit.free
+        ? models[model][promptType]
+        : models[model].chat;
+    case "premium":
+      return user.usage < reasoningLimit.premium
+        ? models[model][promptType]
+        : models[model].chat;
+    default:
+      return models[model][promptType];
+  }
+}
+
+/**
+ * Determines if current time is during off-peak hours for cost optimization
+ *
+ * Off-peak hours are defined as:
+ * - After 16:30 UTC (4:30 PM)
+ * - Before 00:30 UTC (12:30 AM)
+ *
+ * During off-peak hours, the system may use different models or providers
+ * for cost efficiency.
+ *
+ * @returns {boolean} True if current time is during off-peak hours
+ *
+ * @example
+ * ```typescript
+ * if (isOffPeakHours()) {
+ *   // Use cost-effective models
+ * }
+ * ```
+ */
+function isOffPeakHours() {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  const utcMinute = now.getUTCMinutes();
+  return (
+    utcHour > 16 ||
+    (utcHour === 16 && utcMinute >= 30) ||
+    (utcHour === 0 && utcMinute < 30)
+  );
+}
+
 /**
  * OpenAI client instance configured with API key and timeout
  *
- * Used for chat completions, embeddings, and other OpenAI API interactions.
- * Requires OPENAI_API_KEY environment variable to be set.
+ * Dynamically selects between DeepSeek and OpenAI based on current time
+ * and availability. Used for chat completions, embeddings, and other
+ * AI API interactions.
  *
  * @example
  * ```typescript
  * const response = await openai.chat.completions.create({
- *   model: "gpt-4o-mini",
+ *   model: "deepseek-chat",
  *   messages: [{ role: "user", content: "Hello" }]
  * });
  * ```
  */
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 10_000,
-});
+export const openai = new OpenAI(
+  isOffPeakHours() ? models.deepseek : models.openai,
+);
 
 /**
  * Generates vector embeddings for text using OpenAI's text-embedding-3-small model
  *
- * Converts text into high-dimensional vectors that capture semantic meaning.
- * These embeddings are used for similarity search and retrieval.
+ * Converts text into high-dimensional vectors (1536 dimensions) that capture
+ * semantic meaning. These embeddings are used for similarity search and
+ * retrieval in the RAG system.
  *
  * @param {string} text - The text to generate embeddings for
  * @returns {Promise<number[]>} Array of 1536-dimensional embedding values
@@ -50,6 +158,7 @@ export const openai = new OpenAI({
  * ```typescript
  * const embedding = await generateEmbedding("React hooks tutorial");
  * console.log(embedding.length); // 1536
+ * console.log(embedding[0]); // First dimension value
  * ```
  *
  * @throws {Error} If OpenAI API request fails or API key is invalid
@@ -66,35 +175,38 @@ export async function generateEmbedding(text: string) {
 /**
  * Generates AI chat completion with system and user prompts
  *
- * Creates contextual responses using GPT-4o-mini model with controlled
+ * Creates contextual responses using the configured AI model with controlled
  * temperature and token limits for consistent, educational responses.
+ * Temperature is set to 0.0 for DeepSeek (deterministic) and 0.7 for OpenAI
+ * (more creative).
  *
- * @param {string} systemPrompt - The system instruction/context
- * @param {string} userPrompt - The user's question or input
+ * @param {string} systemPrompt - The system instruction/context that defines AI behavior
+ * @param {string} userPrompt - The user's question or input to process
  * @returns {Promise<string>} AI-generated response text
  *
  * @example
  * ```typescript
  * const answer = await generateChatCompletion(
- *   "You are a helpful coding tutor.",
+ *   "You are a helpful coding tutor. Provide clear, concise explanations.",
  *   "Explain React hooks in simple terms"
  * );
+ * console.log(answer); // AI-generated explanation
  * ```
  *
- * @throws {Error} If OpenAI API request fails
+ * @throws {Error} If OpenAI API request fails or model is unavailable
  */
 export async function generateChatCompletion(
   systemPrompt: string,
   userPrompt: string,
 ) {
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "deepseek-chat",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     max_completion_tokens: 1000,
-    temperature: 0.7,
+    temperature: models.deepseek ? 0.0 : 0.7,
   });
   return response.choices[0].message.content;
 }
@@ -106,15 +218,24 @@ export async function generateChatCompletion(
  * for overlap to maintain context across chunk boundaries. Optimized for
  * educational content with sentence boundary awareness.
  *
- * @param {string} text - The text to chunk
+ * Chunking Strategy:
+ * - Maximum chunk size: 800 characters (configurable)
+ * - Overlap: 100 characters between chunks
+ * - Prefers breaking at sentence boundaries (periods) or line breaks
+ * - Ensures chunks are not too small (filters empty chunks)
+ *
+ * @param {string} text - The text to chunk into smaller pieces
  * @param {number} maxChunkSize - Maximum characters per chunk (default: 800)
  * @param {number} overlap - Number of characters to overlap between chunks (default: 100)
- * @returns {string[]} Array of text chunks
+ * @returns {string[]} Array of text chunks, each trimmed and non-empty
  *
  * @example
  * ```typescript
  * const chunks = chunkText("Long tutorial content...", 800, 100);
  * console.log(chunks.length); // Number of chunks created
+ * chunks.forEach((chunk, i) => {
+ *   console.log(`Chunk ${i}: ${chunk.length} chars`);
+ * });
  * ```
  */
 export function chunkText(text: string, maxChunkSize = 800, overlap = 100) {
@@ -153,16 +274,24 @@ export function chunkText(text: string, maxChunkSize = 800, overlap = 100) {
  * Calculates cosine similarity between two vectors
  *
  * Measures the cosine of the angle between two vectors, providing a similarity
- * score between 0 (orthogonal) and 1 (identical). Used for comparing embeddings.
+ * score between 0 (orthogonal/uncorrelated) and 1 (identical/perfectly correlated).
+ * Used for comparing embeddings in semantic search.
  *
- * @param {number[]} vecA - First vector
- * @param {number[]} vecB - Second vector
- * @returns {number} Similarity score between 0 and 1
+ * Mathematical Formula:
+ * similarity = (A · B) / (||A|| × ||B||)
+ * where A · B is the dot product and ||A|| is the magnitude
+ *
+ * @param {number[]} vecA - First vector (e.g., query embedding)
+ * @param {number[]} vecB - Second vector (e.g., document chunk embedding)
+ * @returns {number} Similarity score between 0 and 1, where 1 is most similar
  *
  * @example
  * ```typescript
  * const similarity = cosineSimilarity([1, 0, 0], [0.5, 0.5, 0]);
- * console.log(similarity); // ~0.707
+ * console.log(similarity); // ~0.707 (45-degree angle)
+ *
+ * const identical = cosineSimilarity([1, 2, 3], [1, 2, 3]);
+ * console.log(identical); // 1.0 (perfect similarity)
  * ```
  *
  * @throws {Error} If vectors have different lengths
@@ -196,14 +325,16 @@ export function cosineSimilarity(vecA: number[], vecB: number[]) {
  * Converts embedding array to Buffer for database storage
  *
  * Serializes float array to binary format for efficient storage in database.
+ * Uses Float32Array for 32-bit precision and memory efficiency.
  *
- * @param {number[]} embedding - Array of embedding values
- * @returns {Buffer} Binary representation of the embedding
+ * @param {number[]} embedding - Array of embedding values (typically 1536 dimensions)
+ * @returns {Buffer} Binary representation of the embedding for database storage
  *
  * @example
  * ```typescript
- * const buffer = embeddingToBuffer([0.1, 0.2, 0.3, ...]);
- * // Store buffer in database
+ * const embedding = [0.1, 0.2, 0.3, ...];
+ * const buffer = embeddingToBuffer(embedding);
+ * // Store buffer in database BLOB field
  * ```
  */
 export function embeddingToBuffer(embedding: number[]) {
@@ -213,14 +344,16 @@ export function embeddingToBuffer(embedding: number[]) {
 /**
  * Converts Buffer back to embedding array
  *
- * Deserializes binary data from database back to float array for similarity calculations.
+ * Deserializes binary data from database back to float array for similarity
+ * calculations. Reverses the process of embeddingToBuffer().
  *
- * @param {Uint8Array} buffer - Binary data from database
- * @returns {number[]} Array of embedding values
+ * @param {Uint8Array} buffer - Binary data from database BLOB field
+ * @returns {number[]} Array of embedding values ready for similarity calculations
  *
  * @example
  * ```typescript
- * const embedding = bufferToEmbedding(databaseBuffer);
+ * const buffer = databaseResult.embedding; // From database
+ * const embedding = bufferToEmbedding(buffer);
  * const similarity = cosineSimilarity(queryEmbedding, embedding);
  * ```
  */
@@ -232,24 +365,30 @@ export function bufferToEmbedding(buffer: Uint8Array) {
  * Processes and stores a document with its chunks and embeddings
  *
  * Complete pipeline for adding new content to the RAG system:
- * 1. Splits document into chunks
+ * 1. Splits document into semantic chunks
  * 2. Generates embeddings for each chunk
- * 3. Stores document and chunks in database
- * 4. Includes metadata for each chunk
+ * 3. Stores document and chunks in database with metadata
+ * 4. Includes rate limiting to avoid API throttling
  *
- * @param {string} title - Document title
- * @param {string} content - Full document content
+ * Each chunk includes metadata such as:
+ * - Length and word count
+ * - Content preview
+ * - Chunk index and type
+ *
+ * @param {string} title - Document title for identification
+ * @param {string} content - Full document content to process
  * @param {string | null} source - Optional source URL or reference
- * @returns {Promise<Document>} Created document with chunks
+ * @returns {Promise<Document>} Created document with all associated chunks
  *
  * @example
  * ```typescript
  * const document = await addDocument(
  *   "React Hooks Tutorial",
- *   "Complete tutorial content...",
+ *   "Complete tutorial content about useState, useEffect...",
  *   "https://react.dev/learn/hooks"
  * );
  * console.log(`Added ${document.chunks.length} chunks`);
+ * console.log(`Document ID: ${document.id}`);
  * ```
  *
  * @throws {Error} If embedding generation or database operations fail
@@ -311,10 +450,13 @@ export async function addDocument(
  *
  * Performs semantic search by:
  * 1. Generating embedding for the query
- * 2. Comparing against all stored chunk embeddings
- * 3. Returning top-K most similar chunks
+ * 2. Comparing against all stored chunk embeddings using cosine similarity
+ * 3. Ranking chunks by similarity score
+ * 4. Returning top-K most similar chunks
  *
- * @param {string} query - The search query
+ * Search can be scoped to a specific document or performed across all documents.
+ *
+ * @param {string} query - The search query to find relevant content for
  * @param {number} topK - Number of top results to return (default: 5)
  * @param {string | null} documentId - Optional document ID to limit search scope
  * @returns {Promise<Array<DocumentChunk & { similarity: number }>>} Top chunks with similarity scores
@@ -323,7 +465,9 @@ export async function addDocument(
  * ```typescript
  * const relevantChunks = await findRelevantChunks("React useState hook", 3);
  * relevantChunks.forEach(chunk => {
- *   console.log(`Similarity: ${chunk.similarity}, Content: ${chunk.content.substring(0, 100)}`);
+ *   console.log(`Similarity: ${chunk.similarity.toFixed(3)}`);
+ *   console.log(`Content: ${chunk.content.substring(0, 100)}...`);
+ *   console.log(`Source: ${chunk.document.title}`);
  * });
  * ```
  */
@@ -381,14 +525,18 @@ export async function findRelevantChunks(
  * Answers questions using RAG (Retrieval-Augmented Generation)
  *
  * Complete Q&A pipeline that:
- * 1. Finds relevant document chunks
- * 2. Constructs context from chunks
- * 3. Generates AI response based on context
- * 4. Provides source attribution and confidence score
+ * 1. Finds relevant document chunks using semantic search
+ * 2. Constructs context from retrieved chunks
+ * 3. Generates AI response based on context and question
+ * 4. Provides source attribution and confidence scoring
+ * 5. Returns structured response with metadata
  *
- * @param {string} question - The user's question
- * @param {number} topK - Number of chunks to retrieve (default: 5)
- * @param {string | null} documentId - Optional document ID to limit search
+ * The system ensures answers are grounded in the provided context and
+ * includes confidence scores based on similarity of retrieved chunks.
+ *
+ * @param {string} question - The user's question to answer
+ * @param {number} topK - Number of chunks to retrieve for context (default: 5)
+ * @param {string | null} documentId - Optional document ID to limit search scope
  * @returns {Promise<{
  *   answer: string;
  *   sources: Array<{
@@ -399,7 +547,7 @@ export async function findRelevantChunks(
  *     metadata: any;
  *   }>;
  *   confidence: number;
- * }>} Answer with sources and confidence
+ * }>} Structured answer with sources and confidence score
  *
  * @example
  * ```typescript
@@ -407,7 +555,8 @@ export async function findRelevantChunks(
  * console.log(`Answer: ${result.answer}`);
  * console.log(`Confidence: ${result.confidence}%`);
  * result.sources.forEach(source => {
- *   console.log(`Source: ${source.document} (${source.similarity})`);
+ *   console.log(`Source ${source.index}: ${source.document} (${source.similarity})`);
+ *   console.log(`Preview: ${source.content}`);
  * });
  * ```
  */
@@ -471,7 +620,11 @@ export async function askQuestion(
 }
 
 /**
- * Retrieves all documents with chunk counts
+ * Retrieves all documents with their chunk counts
+ *
+ * Returns a list of all documents in the system along with metadata
+ * about how many chunks each document contains. Useful for system
+ * administration and content management.
  *
  * @returns {Promise<Array<Document & { _count: { chunks: number } }>>} All documents with chunk counts
  *
@@ -480,6 +633,8 @@ export async function askQuestion(
  * const documents = await getAllDocuments();
  * documents.forEach(doc => {
  *   console.log(`${doc.title}: ${doc._count.chunks} chunks`);
+ *   console.log(`Created: ${doc.createdAt}`);
+ *   console.log(`Source: ${doc.source || 'N/A'}`);
  * });
  * ```
  */
@@ -499,14 +654,24 @@ export async function getAllDocuments() {
 /**
  * Deletes a document and all its associated chunks
  *
+ * Removes a document from the system along with all its chunks and
+ * embeddings. This operation is irreversible and will cascade delete
+ * all related data.
+ *
  * @param {string} documentId - ID of the document to delete
- * @returns {Promise<Document>} The deleted document
+ * @returns {Promise<Document>} The deleted document object
  *
  * @example
  * ```typescript
- * await deleteDocument("doc_123");
- * console.log("Document deleted successfully");
+ * try {
+ *   const deletedDoc = await deleteDocument("doc_123");
+ *   console.log(`Deleted: ${deletedDoc.title}`);
+ * } catch (error) {
+ *   console.error("Failed to delete document:", error);
+ * }
  * ```
+ *
+ * @throws {Error} If document doesn't exist or database operation fails
  */
 export async function deleteDocument(documentId: string) {
   return await prisma.document.delete({

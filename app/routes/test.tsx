@@ -8,7 +8,7 @@ import { openai } from "~/utils/openai.server";
 export async function action() {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "deepseek-chat",
       messages: [
         {
           role: "user",
