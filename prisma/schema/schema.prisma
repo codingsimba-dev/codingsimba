@@ -51,10 +51,8 @@ model User {
   teamInvites          TeamInvite[]
 
   // Audit log relations
-  auditLogs            AuditLog[]
-  targetAuditLogs      AuditLog[]       @relation("TargetUserAuditLogs")
-  targetAdminAuditLogs AuditLog[]       @relation("TargetAdminAuditLogs")
-  auditLogExports      AuditLogExport[]
+  auditLogs       AuditLog[]
+  auditLogExports AuditLogExport[]
 
   // Challenge relations
   challengeSubmissions ChallengeSubmission[]

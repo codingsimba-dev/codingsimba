@@ -17,16 +17,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getImgSrc, getInitials, getSeed } from "~/utils/misc";
 
 type DetailsHeaderProps = {
-  item: Article | Tutorial; // | Tutorial | Course
+  item: Article | Tutorial; // | Course
 };
 
 export function DetailsHeader({ item }: DetailsHeaderProps) {
   const location = useLocation();
   const itemType = location.pathname.split("/")[1];
   const isArticle = itemType === "articles";
-  // const isTutorial = itemType === "tutorials";
+  const isTutorial = itemType === "tutorials";
   // const isCourse = itemType === "courses";
-  // const isProgram = itemType === "programs"
 
   const stats = "markdown" in item ? readingTime(item.markdown) : null;
 
@@ -103,11 +102,22 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
                   </Link>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="text-lg">
-                    {item.title}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
+                {isTutorial ? (
+                  <BreadcrumbItem>
+                    <Link
+                      to={`/tutorials/${item.id}`}
+                      className="text-lg capitalize hover:text-blue-600 dark:hover:text-blue-400"
+                    >
+                      {item.title}
+                    </Link>
+                  </BreadcrumbItem>
+                ) : (
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-lg">
+                      {item.title}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                )}
               </BreadcrumbList>
             </Breadcrumb>
           </motion.div>
@@ -169,26 +179,24 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
                   <Clock className="mr-1 h-4 w-4" />
                   <span>{stats?.text}</span>
                 </motion.div>
-                <span className="text-gray-500 dark:text-gray-400">•</span>
-                <div className="flex items-center gap-2">
-                  <Avatar className="size-6">
-                    <AvatarImage
-                      src={
-                        env.MODE === "development"
-                          ? getImgSrc({
-                              seed: getSeed(item.author.name),
-                            })
-                          : item.author.image
-                      }
-                    />
-                    <AvatarFallback>
-                      {getInitials(item.author.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="text-sm font-medium">{item.author.name}</p>
-                </div>
               </>
             ) : null}
+            <span className="text-gray-500 dark:text-gray-400">•</span>
+            <div className="flex items-center gap-2">
+              <Avatar className="size-6">
+                <AvatarImage
+                  src={
+                    env.MODE === "development"
+                      ? getImgSrc({
+                          seed: getSeed(item.author.name),
+                        })
+                      : item.author.image
+                  }
+                />
+                <AvatarFallback>{getInitials(item.author.name)}</AvatarFallback>
+              </Avatar>
+              <p className="text-sm font-medium">{item.author.name}</p>
+            </div>
           </motion.div>
         </div>
       </div>

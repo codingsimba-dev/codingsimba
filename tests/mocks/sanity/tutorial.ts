@@ -37,7 +37,11 @@ export function clearTutorialCache(): void {
  */
 async function loadContentFromDirectory<T>(
   directoryName: string,
-  transform: (slug: string, frontmatter: Record<string, unknown>) => T | null,
+  transform: (
+    slug: string,
+    frontmatter: Record<string, unknown>,
+    content?: string,
+  ) => Promise<T | null> | T | null,
 ): Promise<T[]> {
   try {
     const contentDir = path.join(
@@ -59,8 +63,8 @@ async function loadContentFromDirectory<T>(
 
           if (!content) return null;
 
-          const { data: frontmatter } = matter(content);
-          return transform(slug, frontmatter);
+          const { data: frontmatter, content: bodyContent } = matter(content);
+          return transform(slug, frontmatter, bodyContent);
         } catch (error) {
           console.error(`Error processing ${directoryName} ${file}:`, error);
           return null;
@@ -93,7 +97,7 @@ export async function getTutorialsFromDirectory(): Promise<Tutorial[]> {
 
   const tutorials = await loadContentFromDirectory<Tutorial>(
     "tutorials",
-    (slug, frontmatter) => {
+    async (slug, frontmatter, content) => {
       // Find the author and category by ID
       const author = authors.find((a) => a.id === frontmatter.authorId);
       const category = categories.find((c) => c.id === frontmatter.categoryId);
@@ -121,6 +125,7 @@ export async function getTutorialsFromDirectory(): Promise<Tutorial[]> {
         published: frontmatter.published ?? true,
         premium: frontmatter.premium ?? false,
         createdAt: frontmatter.createdAt || new Date().toISOString(),
+        overview: content,
       } as Tutorial;
     },
   );
@@ -143,10 +148,11 @@ export async function getTutorialLessonsFromDirectory(): Promise<Lesson[]> {
 
   const lessons = await loadContentFromDirectory<Lesson>(
     "tutorial-lessons",
-    (slug, frontmatter) =>
+    (slug, frontmatter, content) =>
       ({
         ...frontmatter,
         slug,
+        content: content || "",
       }) as Lesson,
   );
 

@@ -9,6 +9,8 @@ import {
   lessonDetailsQuery,
 } from "./queries";
 import type { Tutorial, Lesson } from "./types";
+import { bundleMDX } from "mdx-bundler";
+import { bundleComponents } from "~/utils/misc.server";
 
 /**
  * Retrieves a list of tutorials based on specified filtering criteria
@@ -82,9 +84,14 @@ export async function countTutorials() {
  * console.log(tutorial.title); // "Complete Guide to React Hooks"
  */
 export async function getTutorialDetails(tutorialId: string) {
-  return await client.fetch<Tutorial>(tutorialDetailsQuery, {
+  const tutorial = await client.fetch<Tutorial>(tutorialDetailsQuery, {
     tutorialId,
   });
+  const { code } = await bundleMDX({ source: tutorial.overview });
+  return {
+    ...tutorial,
+    overview: code,
+  };
 }
 
 /**
@@ -110,5 +117,16 @@ export async function getTutorialLessons(tutorialId: string) {
  * console.log(lesson.content); // "This is the content of the lesson"
  */
 export async function getTutorialLessonDetails(lessonId: string) {
-  return client.fetch<Lesson>(lessonDetailsQuery, { lessonId });
+  const lesson = await client.fetch<Lesson>(lessonDetailsQuery, { lessonId });
+  const refinedComponents = bundleComponents(lesson.reactComponents);
+
+  const { code } = await bundleMDX({
+    source: lesson.content,
+    files: refinedComponents,
+  });
+
+  return {
+    ...lesson,
+    content: code,
+  };
 }

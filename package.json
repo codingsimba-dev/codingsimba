@@ -6,13 +6,13 @@
   "version": "1.0.0",
   "license": "AGPL-3.0-only",
   "author": "Christopher S. Aondona <me@tekbreed.com> (https://tekbreed.com/)",
-  "homepage": "https://tekbreed.com",
+  "homepage": "https://tekbreed.com/",
   "bugs": {
-    "url": "https://github.com/tekbreed-dev/tekbreed/issues"
+    "url": "https://github.com/tekbreed/website/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tekbreed/tekbreed"
+    "url": "https://github.com/tekbreed/website"
   },
   "keywords": [
     "education",
@@ -117,6 +117,7 @@
     "marked": "^15.0.12",
     "mdx-bundler": "^10.1.1",
     "mermaid": "^11.7.0",
+    "node-cron": "^3.0.3",
     "openai": "^5.8.2",
     "openimg": "^1.1.0",
     "react": "^19.0.0",
@@ -153,6 +154,7 @@
     "@testing-library/react": "^16.2.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@types/turndown": "^5.0.5",
@@ -177,7 +179,7 @@
     "prisma": "^6.9.0",
     "react-router-devtools": "^1.1.10",
     "tailwindcss": "^4.0.0",
-    "tsx": "^4.19.3",
+    "tsx": "^4.20.3",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.28.0",
     "vite": "^5.4.11",

@@ -1,18 +1,26 @@
 import React from "react";
-import type { Route } from "../+types/article";
 import { Check, Copy, Linkedin, Twitter } from "lucide-react";
-import { Link, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
+import type { Article } from "~/utils/content.server/articles/types";
+import type { Tutorial } from "~/utils/content.server/turorials/types";
+import { cn } from "~/utils/misc";
 
-export function Share() {
-  const loaderData = useLoaderData() as Route.ComponentProps["loaderData"];
+export function Share({
+  item,
+  itemType,
+  className,
+}: {
+  item: Article | Tutorial;
+  itemType: "article" | "tutorial";
+  className?: string;
+}) {
   const [copied, setCopied] = React.useState(false);
 
-  const article = loaderData.article;
-  const shareText = article.title;
+  const shareText = item.title;
 
-  const shareUrl = `https://codingsimba.com/articles/${article.slug}`;
-  const shareHashtags = article.tags
+  const shareUrl = `https://tekbreed.com/${itemType === "article" ? "articles" : "tutorials"}/${itemType === "article" ? item.slug : item.id}`;
+  const shareHashtags = item.tags
     .map((tag) => tag.slug)
     .join(",")
     .replace(/-/g, "_");
@@ -21,7 +29,7 @@ export function Share() {
     shareText,
   )}&url=${encodeURIComponent(shareUrl)}&hashtags=${encodeURIComponent(
     shareHashtags,
-  )}&via=codingsimba_`;
+  )}&via=tekbreed`;
 
   const shareViaLinkedIn = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
     shareUrl,
@@ -41,9 +49,16 @@ export function Share() {
   }
 
   return (
-    <section className="mb-8 border-b border-t border-gray-200 py-6 dark:border-gray-800">
+    <section
+      className={cn(
+        "mb-8 border-b border-t border-gray-200 py-6 dark:border-gray-800",
+        className,
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="font-medium">Share this article</div>
+        <div className="font-medium">
+          Share this {itemType === "article" ? "article" : "tutorial"}
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"

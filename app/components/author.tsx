@@ -1,17 +1,12 @@
-import type { Route } from "../routes/articles/+types/article";
+import type { Author } from "~/utils/content.server/authors/types";
 import { ArrowBigRight, Twitter, Globe, Github, Linkedin } from "lucide-react";
-import { Link, useLoaderData } from "react-router";
+import { Link } from "react-router";
 import { SupportMeButton } from "~/components/ui/support-me-button";
 import { Button } from "~/components/ui/button";
 import { Badge } from "./ui/badge";
 import { getImgSrc, getSeed } from "~/utils/misc";
 
-export function Author() {
-  const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
-  const {
-    article: { author },
-  } = loaderData;
-
+export function Author({ author }: { author: Author }) {
   if (!author) {
     return <div>No Author</div>;
   }

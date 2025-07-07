@@ -6,7 +6,7 @@
 model AuditLog {
   id            String        @id @default(ulid())
   /// The specific action that was performed (e.g., USER_CREATED, TEAM_UPDATED).
-  action        AuditAction
+  action        String
   /// The severity level of the event (e.g., INFO, WARNING, CRITICAL).
   severity      AuditSeverity @default(INFO)
   /// A high-level category for the event (e.g., USER_MANAGEMENT, SECURITY).
@@ -32,32 +32,9 @@ model AuditLog {
   actorId String?
   actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
-  // Target entities (what was affected)
-  /// The user account that was the target of the action (e.g., the user being modified).
-  targetUserId String?
-  targetUser   User?   @relation("TargetUserAuditLogs", fields: [targetUserId], references: [id], onDelete: SetNull)
-
-  // Team-specific relations (optional)
-  /// The team associated with this audit log entry.
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  /// The team member who was the target of the action.
-  targetMemberId String?
-  targetMember   TeamMember? @relation(fields: [targetMemberId], references: [id], onDelete: SetNull)
-
-  /// The course that was the target of the action.
-  targetCourseId String?
-  targetCourse   Course? @relation(fields: [targetCourseId], references: [id], onDelete: SetNull)
-
-  // Admin-specific relations (optional)
-  /// The admin user who was the target of the action.
-  targetAdminId String?
-  targetAdmin   User?   @relation("TargetAdminAuditLogs", fields: [targetAdminId], references: [id], onDelete: SetNull)
-
   // Generic entity tracking
   /// The type of the primary entity affected by the action (e.g., "user", "team", "system").
-  entityType String? // e.g., "user", "team", "course", "admin", "system"
+  entityType String
   /// The unique identifier of the primary entity affected.
   entityId   String? // ID of the affected entity
 
@@ -69,12 +46,10 @@ model AuditLog {
   @@index([action])
   @@index([category])
   @@index([actorId])
-  @@index([teamId])
   @@index([entityType])
   @@index([entityId])
   @@index([createdAt])
   @@index([module, createdAt])
-  @@index([teamId, createdAt])
 }
 
 /// Identifies the application module from which an audit log event originated.
@@ -83,7 +58,6 @@ enum AuditModule {
   TEAM
   SYSTEM
   USER
-  CONTENT
   BILLING
   SECURITY
 }
@@ -96,157 +70,11 @@ enum AuditSeverity {
   CRITICAL
 }
 
-/// A comprehensive list of specific actions that can be SIGNED.
-enum AuditAction {
-  // Generic Actions
-  CREATED
-  UPDATED
-  DELETED
-  ACTIVATED
-  DEACTIVATED
-  ENABLED
-  DISABLED
-  SIGNED_IN
-  SIGNED_OUT
-  SIGN_IN_ATTEMPT
-  SIGN_IN_SUCCESS
-  SIGN_IN_FAILED
-  PASSWORD_CHANGED
-  PASSWORD_RESET
-  TWO_FACTOR_ENABLED
-  TWO_FACTOR_DISABLED
-
-  // Team Management
-  TEAM_CREATED
-  TEAM_UPDATED
-  TEAM_DELETED
-  TEAM_ACTIVATED
-  TEAM_DEACTIVATED
-  MEMBER_ADDED
-  MEMBER_REMOVED
-  MEMBER_ROLE_CHANGED
-  MEMBER_ACTIVATED
-  MEMBER_DEACTIVATED
-  INVITE_SENT
-  INVITE_ACCEPTED
-  INVITE_DECLINED
-  INVITE_EXPIRED
-  INVITE_CANCELLED
-
-  // Learning Management
-  LEARNING_PATH_CREATED
-  LEARNING_PATH_UPDATED
-  LEARNING_PATH_DELETED
-  LEARNING_PATH_ACTIVATED
-  LEARNING_PATH_DEACTIVATED
-  COURSE_ADDED_TO_PATH
-  COURSE_REMOVED_FROM_PATH
-  ENROLLMENT_CREATED
-  ENROLLMENT_UPDATED
-  ENROLLMENT_CANCELLED
-  ENROLLMENT_COMPLETED
-  CERTIFICATE_CREATED
-  CERTIFICATE_UPDATED
-  CERTIFICATE_DELETED
-  CERTIFICATE_AWARDED
-  CERTIFICATE_REVOKED
-
-  // Admin Management
-  ADMIN_CREATED
-  ADMIN_UPDATED
-  ADMIN_DELETED
-  ADMIN_ROLE_CHANGED
-  ADMIN_PERMISSIONS_UPDATED
-  ADMIN_ACCESS_GRANTED
-  ADMIN_ACCESS_REVOKED
-  ADMIN_SIGN_IN
-  ADMIN_LOGOUT
-  ADMIN_ACTION_PERFORMED
-
-  // Content Management
-  CONTENT_CREATED
-  CONTENT_UPDATED
-  CONTENT_DELETED
-  CONTENT_PUBLISHED
-  CONTENT_UNPUBLISHED
-  CONTENT_APPROVED
-  CONTENT_REJECTED
-  CONTENT_MODERATED
-
-  // User Management
-  USER_CREATED
-  USER_UPDATED
-  USER_DELETED
-  USER_ACTIVATED
-  USER_DEACTIVATED
-  USER_SUSPENDED
-  USER_UNSUSPENDED
-  USER_VERIFIED
-  USER_UNVERIFIED
-
-  // Settings & Configuration
-  SETTINGS_UPDATED
-  PRIVACY_SETTINGS_CHANGED
-  NOTIFICATION_SETTINGS_CHANGED
-  SYSTEM_SETTINGS_UPDATED
-  FEATURE_TOGGLED
-  CONFIGURATION_CHANGED
-
-  // Integrations
-  INTEGRATION_ADDED
-  INTEGRATION_UPDATED
-  INTEGRATION_REMOVED
-  INTEGRATION_ACTIVATED
-  INTEGRATION_DEACTIVATED
-  WEBHOOK_CREATED
-  WEBHOOK_UPDATED
-  WEBHOOK_DELETED
-
-  // Security
-  SESSION_CREATED
-  SESSION_DESTROYED
-  API_KEY_CREATED
-  API_KEY_REVOKED
-  ACCESS_DENIED
-  SUSPICIOUS_ACTIVITY
-
-  // Data Management
-  DATA_EXPORTED
-  DATA_IMPORTED
-  DATA_DELETED
-  DATA_BACKED_UP
-  DATA_RESTORED
-  DATA_ANONYMIZED
-  DATA_ENCRYPTED
-  DATA_DECRYPTED
-
-  // Billing & Payments
-  SUBSCRIPTION_CREATED
-  SUBSCRIPTION_UPDATED
-  SUBSCRIPTION_CANCELLED
-  PAYMENT_PROCESSED
-  PAYMENT_FAILED
-  PAYMENT_REFUNDED
-  INVOICE_GENERATED
-  INVOICE_PAID
-
-  // System & Maintenance
-  SYSTEM_BACKUP
-  SYSTEM_RESTORE
-  MAINTENANCE_MODE_ENABLED
-  MAINTENANCE_MODE_DISABLED
-  CACHE_CLEARED
-  DATABASE_MIGRATION
-  SYSTEM_UPDATE
-  ERROR_SIGNED
-}
-
 /// A high-level categorization of audit log events.
 enum AuditCategory {
   TEAM_MANAGEMENT
   ADMIN_MANAGEMENT
   USER_MANAGEMENT
-  CONTENT_MANAGEMENT
   LEARNING_MANAGEMENT
   SECURITY
   BILLING

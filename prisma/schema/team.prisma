@@ -51,7 +51,6 @@ model Team {
   analytics             TeamAnalytics[]
   integrations          TeamIntegration[]
   settings              TeamSettings?
-  auditLogs             AuditLog[]
   auditLogExports       AuditLogExport[]
   teamMemberCertificate TeamMemberCertificate[]
 
@@ -91,9 +90,6 @@ model TeamMember {
 
   // Roles
   roles Role[]
-
-  // Audit logs
-  auditLogs AuditLog[]
 
   @@unique([teamId, userId])
   @@index([teamId])

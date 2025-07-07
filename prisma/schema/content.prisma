@@ -82,7 +82,6 @@ model Course {
   reviews           Review[]
   enrollments       Enrollment[]
   teamLearningPaths TeamLearningPathCourse[]
-  auditLogs         AuditLog[]
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String

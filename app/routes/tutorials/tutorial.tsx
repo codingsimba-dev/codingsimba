@@ -1,300 +1,144 @@
 import React from "react";
-import type { Route } from "./+types/tutorial";
-import { Outlet, Link, useLocation } from "react-router";
-import { getTutorialDetails } from "~/utils/content.server/turorials/utils";
-import { invariant, invariantResponse } from "~/utils/misc";
+import { Outlet, useFetcher } from "react-router";
+import {
+  getTutorialDetails,
+  getTutorialLessons,
+} from "~/utils/content.server/turorials/utils";
+import { invariantResponse } from "~/utils/misc";
 import { StatusCodes } from "http-status-codes";
 import { DetailsHeader } from "~/components/details-header";
-import { Button } from "~/components/ui/button";
-import { Badge } from "~/components/ui/badge";
-import { Card, CardContent } from "~/components/ui/card";
+import type { Route } from "./+types/tutorial";
+import { TutorialSidebar } from "./components/sidebar";
+import { type PageViewData } from "use-page-view";
 import {
-  CheckCircle,
-  Circle,
-  Play,
-  Crown,
-  BookOpen,
-  Clock,
-  Target,
-  ArrowRight,
-} from "lucide-react";
-import { cn } from "~/utils/misc";
-import type { Tutorial } from "~/utils/content.server/turorials/types";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet";
+import { Bot, BrainCircuit, Send } from "lucide-react";
+import { Textarea } from "~/components/ui/textarea";
+import { Button } from "~/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "~/components/ui/tooltip";
+import { Markdown } from "~/components/mdx";
+// import { Comments } from "~/components/comment";
 
 export async function loader({ params }: Route.LoaderArgs) {
-  const { tutorialId } = params;
-  invariant(tutorialId, "tutorialId is required");
+  const { tutorialId, lessonId } = params;
+
+  invariantResponse(tutorialId, "Tutorial ID is required", {
+    status: StatusCodes.BAD_REQUEST,
+  });
+
   const tutorial = await getTutorialDetails(tutorialId);
-  invariantResponse(tutorial, `Tutorial with id ${tutorialId} not found`, {
+  invariantResponse(tutorial, "Tutorial not found", {
     status: StatusCodes.NOT_FOUND,
   });
-  console.log("tutorial", tutorial);
 
-  return { tutorial };
+  const lessons = await getTutorialLessons(tutorialId);
+
+  return {
+    tutorial,
+    lessons,
+    lessonId,
+  };
 }
 
-export default function TutorialRoute({ loaderData }: Route.ComponentProps) {
-  const { tutorial } = loaderData;
-  const location = useLocation();
-  const currentLessonId = location.pathname.split("/").pop();
-  const isOverview = !currentLessonId || currentLessonId === tutorial.id;
+export default function TutorialPage({ loaderData }: Route.ComponentProps) {
+  const { tutorial, lessons, lessonId } = loaderData;
 
+  const fetcher = useFetcher();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handlePageView = React.useCallback(async (data: PageViewData) => {
+    await fetcher.submit(
+      { ...data, itemId: data.pageId, intent: "track-page-view" },
+      { method: "post" },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // usePageView({
+  //   pageId: tutorial.id,
+  //   trackOnce: true,
+  //   trackOnceDelay: 30,
+  //   onPageView: handlePageView,
+  // });
   return (
     <>
-      <DetailsHeader item={tutorial} />
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-8 lg:grid-cols-4">
-          {/* Sidebar Navigation */}
-          <aside className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Lessons
-                  </h3>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {tutorial.lessonsCount} lessons
-                    </Badge>
-                    {tutorial.premium && (
-                      <Badge className="flex items-center gap-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                        <Crown className="h-3 w-3" />
-                        Premium
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <nav className="space-y-2">
-                  {tutorial.lessons.map((lesson, index) => {
-                    const isActive = lesson.id === currentLessonId;
-                    const isCompleted = false; // TODO: Implement progress tracking
-
-                    return (
-                      <Link
-                        key={lesson.id}
-                        to={`/tutorials/${tutorial.id}/lessons/${lesson.id}`}
-                        className="block"
-                      >
-                        <Button
-                          variant={isActive ? "default" : "ghost"}
-                          className={cn(
-                            "w-full justify-start gap-3 px-3 py-2 text-left",
-                            isActive &&
-                              "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isCompleted ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Circle className="h-4 w-4 text-gray-400" />
-                            )}
-                            <span className="text-sm font-medium">
-                              Lesson {index + 1}
-                            </span>
-                          </div>
-                          {isActive && <Play className="h-3 w-3" />}
-                        </Button>
-                      </Link>
-                    );
-                  })}
-                </nav>
-
-                {/* Tutorial Info */}
-                <div className="mt-8 border-t pt-6">
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Category
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {tutorial.category.title}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        Author
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {tutorial.author.name}
-                      </p>
-                    </div>
-                    {tutorial.tags.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          Tags
-                        </h4>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {tutorial.tags.map((tag) => (
-                            <Badge
-                              key={tag.id}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {tag.title}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </aside>
-
-          {/* Main Content Area */}
-          <main className="lg:col-span-3">
-            {isOverview ? <TutorialOverview tutorial={tutorial} /> : <Outlet />}
-          </main>
+      <Sheet>
+        <DetailsHeader item={tutorial} />
+        <div className="container mx-auto w-full px-4 py-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+            <main className="w-full max-w-full lg:col-span-8">
+              <Outlet />
+              {/* <Comments comments={[]} onAddComment={() => {}} /> */}
+            </main>
+            <aside className="lg:col-span-4">
+              <div className="sticky top-20">
+                <TutorialSidebar
+                  tutorial={tutorial}
+                  lessons={lessons}
+                  activeLessonId={lessonId}
+                />
+              </div>
+            </aside>
+          </div>
         </div>
-      </div>
+        <SheetContent className="lg:min-w-2xl min-w-[90%] sm:min-w-[80%] md:min-w-[70%]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Bot className="size-6" />
+              <span className="text-lg font-medium">
+                Chat with your learning assistant
+              </span>
+            </SheetTitle>
+            <SheetDescription>
+              I am your helpful assistant that can answer questions about any
+              confusion you have.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="-mt-6 overflow-y-auto px-4">
+            <Markdown source={tutorial.overview} className="pt-0" />
+          </div>
+          <div className="mt-auto flex items-center gap-2 border-t border-gray-200 p-4">
+            <Textarea
+              placeholder="Ask me anything you want to be clarified about"
+              className="flex-1"
+              autoFocus
+            />
+            <div className="flex flex-col items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button size="sm">
+                    <Send className="size-4" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Send the question</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button size="sm">
+                    <BrainCircuit className="size-4" />
+                    <span className="sr-only">Reason</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reason about complex questions</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
-  );
-}
-
-function TutorialOverview({ tutorial }: { tutorial: Tutorial }) {
-  return (
-    <div className="space-y-8">
-      {/* Tutorial Overview */}
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Welcome to {tutorial.title}
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Get started with this comprehensive tutorial series designed to help
-            you master the fundamentals.
-          </p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Lessons
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {tutorial.lessonsCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Clock className="h-8 w-8 text-green-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Duration
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    ~2 hours
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Target className="h-8 w-8 text-purple-500" />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Level
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    Beginner
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* What You&apos;ll Learn */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              What You&apos;ll Learn
-            </h2>
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="mt-0.5 h-5 w-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Core concepts and fundamentals
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="mt-0.5 h-5 w-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Practical hands-on exercises
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="mt-0.5 h-5 w-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Real-world project examples
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="mt-0.5 h-5 w-5 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Best practices and tips
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Prerequisites */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              Prerequisites
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Circle className="mt-0.5 h-5 w-5 text-blue-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Basic understanding of programming concepts
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <Circle className="mt-0.5 h-5 w-5 text-blue-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  Familiarity with web development basics
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <Circle className="mt-0.5 h-5 w-5 text-blue-500" />
-                <span className="text-gray-700 dark:text-gray-300">
-                  A computer with internet access
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Start Tutorial */}
-        <div className="flex justify-center">
-          <Link
-            to={`/tutorials/${tutorial.id}/lessons/${tutorial.lessons[0].id}`}
-          >
-            <Button size="lg" className="flex items-center gap-2">
-              <Play className="h-5 w-5" />
-              Start Tutorial
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </div>
   );
 }

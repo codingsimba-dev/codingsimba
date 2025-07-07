@@ -2,7 +2,7 @@ import React from "react";
 import type { Route } from "./+types/article";
 import { DetailsHeader } from "../../components/details-header";
 import { Tags } from "./components/tags";
-import { Share } from "./components/share";
+import { Share } from "../../components/share-content";
 import { Author } from "../../components/author";
 import { RelatedArticles } from "./components/related-articles";
 import { TableOfContent } from "../../components/table-of-content";
@@ -180,8 +180,8 @@ export default function ArticleDetailsRoute({
             <Separator className="mb-4 mt-2" />
             <Comments />
             <Tags />
-            <Share />
-            <Author />
+            <Share item={article} itemType="article" />
+            <Author author={article.author} />
             {/* Related articles */}
             <div>
               <h2 className="mb-6 text-2xl font-bold">Related Articles</h2>

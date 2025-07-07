@@ -78,6 +78,7 @@ export const tutorialDetailsQuery = groq`*[_type == "tutorial" && _id == $tutori
   title,
   "slug": slug.current,
   "image": image.asset->url,
+  overview,
   "category": category->{
     "id": _id,
     title,

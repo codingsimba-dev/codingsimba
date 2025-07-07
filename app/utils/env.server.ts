@@ -6,6 +6,7 @@ export const schema = z.object({
   ADMIN_PASSWORD: z.string(),
   POLAR_ACCESS_TOKEN: z.string(),
   POLAR_WEBHOOK_SECRET: z.string(),
+  POLAR_ORGANIZATION_ID: z.string(),
   TURSO_DATABASE_URL: z.string(),
   TURSO_AUTH_TOKEN: z.string(),
   DATABASE_URL: z.string().default("file:./dev.db"),

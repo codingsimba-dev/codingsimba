@@ -30,6 +30,7 @@ export const TutorialSchema = z.object({
   title: z.string(),
   slug: z.string(),
   image: z.string(),
+  overview: z.string(),
   category: CategorySchema,
   author: AuthorSchema,
   tags: TagsSchema,

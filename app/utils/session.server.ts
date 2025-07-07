@@ -2,6 +2,8 @@ import { createCookieSessionStorage, redirect } from "react-router";
 import { safeRedirect } from "remix-utils/safe-redirect";
 import { combineResponseInits } from "./misc";
 import { sessionKey } from "~/utils/auth.server";
+import { logSystemEvent, SystemAction } from "./system.server";
+import { prisma } from "./db.server";
 
 export const authSessionStorage = createCookieSessionStorage({
   cookie: {
@@ -75,4 +77,45 @@ export async function handleNewSession(
     ),
   );
   // }
+}
+
+export async function cleanupExpiredSessions() {
+  const now = new Date();
+  try {
+    const result = await prisma.session.deleteMany({
+      where: { expirationDate: { lt: now } },
+    });
+    const deletedCount = result.count;
+    if (deletedCount > 0) {
+      await logSystemEvent({
+        action: SystemAction.SYSTEM_MAINTENANCE,
+        description: `Cleaned up ${deletedCount} expired sessions`,
+        metadata: { deletedCount },
+      });
+    }
+    return { success: true, deletedCount, timestamp: now };
+  } catch (error) {
+    console.error("Failed to cleanup expired sessions:", error);
+    await logSystemEvent({
+      action: SystemAction.SYSTEM_ERROR,
+      description: "Failed to cleanup expired sessions",
+      severity: "ERROR",
+      metadata: { error: String(error) },
+    });
+    return { success: false, error: String(error), timestamp: now };
+  }
+}
+
+export async function getExpiredSessionStats() {
+  const now = new Date();
+  try {
+    const expiredCount = await prisma.session.count({
+      where: { expirationDate: { lt: now } },
+    });
+    const totalCount = await prisma.session.count();
+    return { expiredCount, totalCount, timestamp: now };
+  } catch (error) {
+    console.error("Failed to get expired session stats:", error);
+    return { error: String(error), timestamp: now };
+  }
 }

@@ -33,6 +33,11 @@ export default [
   route("content/webhook", "routes/resources/sanity-webhook.ts"),
   route("download-user-data", "routes/resources/download-user-data.ts"),
 
+  // Maintenance
+  route("health", "routes/healthcheck/index.ts"),
+  // Healthcheck
+  route("maintenance", "routes/maintenance/index.ts"),
+
   //Subscription
   ...prefix("subscription", [
     route("checkout", "routes/subscription/checkout.ts"),
@@ -93,7 +98,7 @@ export default [
   ...prefix("tutorials", [
     index("routes/tutorials/index.tsx"),
     route(":tutorialId", "routes/tutorials/tutorial.tsx", [
-      // index("routes/tutorials/home.tsx"),
+      index("routes/tutorials/tutorial-details.tsx"),
       route("lessons/:lessonId", "routes/tutorials/lesson.tsx"),
     ]),
   ]),

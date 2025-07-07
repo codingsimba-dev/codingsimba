@@ -92,12 +92,16 @@ function SubscriptionDetails({ checkout, product }: SubscriptionDetailsProps) {
    * @returns CSS classes for the badge styling
    */
   const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case "team starter":
+    const planName = plan.toLowerCase().trim().replace(" ", "_");
+    switch (planName) {
+      case "team_starter":
+      case "team_pro":
+      case "team_enterprise":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
-      case "team pro":
+      case "pro":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       case "basic":
+      case "premium":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
@@ -239,9 +243,8 @@ function ConfirmationInfo({ customerEmail }: ConfirmationInfoProps) {
               </h3>
               <p className="mb-4 text-blue-700 dark:text-blue-200">
                 We&apos;ve sent a confirmation email to{" "}
-                <strong>{customerEmail}</strong> with your subscription details
-                and receipt. Please check your inbox (and spam folder if
-                needed).
+                <strong>{customerEmail}</strong> with your subscription details.
+                Please check your inbox (and spam folder if needed).
               </p>
               <div className="flex flex-wrap justify-center">
                 <Button

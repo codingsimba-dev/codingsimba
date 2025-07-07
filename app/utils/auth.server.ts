@@ -8,6 +8,7 @@ import type { ProviderUser } from "./providers/provider";
 import { providers } from "./connection.server";
 import { authSessionStorage } from "./session.server";
 import { combineHeaders } from "./misc";
+import { EntityType, logEvent } from "./audit-log.server";
 
 export const SESSION_EXPIRATION_TIME = 14 * 24 * 60 * 60 * 1000; // 14 days
 export const getSessionExpirationDate = () =>
@@ -240,4 +241,57 @@ export async function signout(
       responseInit?.headers,
     ),
   });
+}
+
+/**
+ * Convenience function for logging authentication events
+ */
+export async function logAuthEvent({
+  action,
+  userId,
+  success,
+  error,
+  ipAddress,
+  userAgent,
+}: {
+  action: string;
+  userId?: string;
+  success: boolean;
+  error?: unknown;
+  ipAddress?: string;
+  userAgent?: string;
+}) {
+  await logEvent({
+    action,
+    category: "SECURITY",
+    module: "USER",
+    description: `Authentication ${action.toLowerCase().replace("_", " ")} ${success ? "successful" : "failed"}`,
+    severity: success ? "INFO" : "ERROR",
+    actorId: userId,
+    entityType: EntityType.USER,
+    entityId: userId,
+    metadata: {
+      success,
+      error: error ? String(error) : null,
+    },
+    ipAddress,
+    userAgent,
+  });
+}
+
+export enum AuthAction {
+  SIGNED_IN = "SIGNED_IN",
+  SIGN_IN_FAILED = "SIGN_IN_FAILED",
+  SIGNED_OUT = "SIGNED_OUT",
+  SIGN_OUT_FAILED = "SIGN_OUT_FAILED",
+  SIGNED_UP = "SIGNED_UP",
+  SIGN_UP_FAILED = "SIGN_UP_FAILED",
+  UPDATED_PASSWORD = "UPDATED_PASSWORD",
+  UPDATED_PASSWORD_FAILED = "UPDATED_PASSWORD_FAILED",
+  UPDATED_EMAIL = "UPDATED_EMAIL",
+  UPDATED_EMAIL_FAILED = "UPDATED_EMAIL_FAILED",
+  UPDATED_NAME = "UPDATED_NAME",
+  UPDATED_NAME_FAILED = "UPDATED_NAME_FAILED",
+  UPDATED_IMAGE = "UPDATED_IMAGE",
+  UPDATED_IMAGE_FAILED = "UPDATED_IMAGE_FAILED",
 }
