@@ -12,9 +12,10 @@ import {
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { invariant } from "~/utils/misc";
+import { getErrorMessage, invariant } from "~/utils/misc";
 import { getCheckoutSession } from "~/utils/subcription.server";
 import { features } from "../home/subscription";
+import { redirectWithToast } from "~/utils/toast.server";
 
 /**
  * Loader function for the subscription success page
@@ -25,11 +26,18 @@ import { features } from "../home/subscription";
  * @throws Error if checkout ID is missing or invalid
  */
 export async function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  const checkoutId = url.searchParams.get("checkout_id");
-  invariant(checkoutId, "Checkout ID is required");
-  const checkout = await getCheckoutSession(checkoutId);
-  return { checkout };
+  try {
+    const url = new URL(request.url);
+    const checkoutId = url.searchParams.get("checkout_id");
+    invariant(checkoutId, "Checkout ID is required");
+    const checkout = await getCheckoutSession(checkoutId);
+    return { checkout };
+  } catch (error) {
+    throw redirectWithToast("/", {
+      type: "error",
+      description: getErrorMessage(error),
+    });
+  }
 }
 
 /**

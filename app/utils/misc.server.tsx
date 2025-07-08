@@ -290,3 +290,71 @@ export class MarkdownConverter {
     return turndownService.turndown(html);
   }
 }
+
+/**
+ * Execute an operation with retry logic
+ * @param operation - The operation to retry
+ * @param operationName - Name of the operation for logging
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @param retryDelays - Array of delay times in milliseconds between retries (default: [1000, 5000, 15000])
+ * @returns Promise<T> - Result of the operation
+ *
+ * @example
+ * ```ts
+ * const result = await withRetry(
+ *   () => fetchData(),
+ *   "fetch_data",
+ *   3,
+ *   [1000, 5000, 15000, 30000, 60000]
+ * );
+ * ```
+ */
+const ONE_SECOND = 1000;
+const ONE_MINUTE = 60 * ONE_SECOND;
+const TEN_MINUTES = 10 * ONE_MINUTE;
+const THIRTY_MINUTES = 30 * ONE_MINUTE;
+const ONE_HOUR = 60 * ONE_MINUTE;
+const SIX_HOURS = 6 * ONE_HOUR;
+const TWELVE_HOURS = 12 * ONE_HOUR;
+const ONE_DAY = 24 * ONE_HOUR;
+
+export async function withRetry<T>({
+  operation,
+  operationName,
+  maxRetries = 3,
+  retryDelays = [
+    ONE_SECOND,
+    ONE_MINUTE,
+    TEN_MINUTES,
+    THIRTY_MINUTES,
+    SIX_HOURS,
+    TWELVE_HOURS,
+    ONE_DAY,
+  ],
+}: {
+  operation: () => Promise<T>;
+  operationName: string;
+  maxRetries?: number;
+  retryDelays?: number[];
+}): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === maxRetries) {
+        lastError = error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      console.warn(
+        `Retrying ${operationName}, attempt ${attempt + 1}/${maxRetries + 1}`,
+      );
+    }
+  }
+  throw lastError;
+  // await sendEmail({})
+}
