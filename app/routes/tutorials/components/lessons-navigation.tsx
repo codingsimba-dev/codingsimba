@@ -15,7 +15,7 @@ export function LessonsNavigation({
   return (
     <SideBarContainer title="Tutorial Sections" type="nav">
       <nav className="p-2">
-        {lessons.map((lesson) => (
+        {lessons.map((lesson, index) => (
           <Link
             key={lesson.id}
             to={`/tutorials/${tutorial.id}/lessons/${lesson.id}`}
@@ -28,7 +28,7 @@ export function LessonsNavigation({
               },
             )}
           >
-            <span className="truncate">{lesson.title}</span>
+            {index + 1}. <span className="truncate"> {lesson.title}</span>
           </Link>
         ))}
       </nav>

@@ -28,7 +28,7 @@ export default function TurotialDetailsRoute({
 }: Route.ComponentProps) {
   const { tutorial, lessons } = loaderData;
   return (
-    <div className="mx-auto w-full px-4 pb-12">
+    <div className="mx-auto w-full pb-12">
       <TutorialOverview tutorial={tutorial} lessons={lessons} />
     </div>
   );
