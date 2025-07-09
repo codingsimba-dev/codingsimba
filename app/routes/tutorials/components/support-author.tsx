@@ -1,6 +1,6 @@
 import { SupportMeButton } from "~/components/ui/support-me-button";
 
-export default function SupportAuthor() {
+export function SupportAuthor() {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
       <div className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">

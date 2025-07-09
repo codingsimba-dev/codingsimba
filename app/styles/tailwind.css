@@ -47,6 +47,5 @@
 
 html,
 body {
-  @apply bg-white text-gray-950 dark:bg-gray-950 dark:text-white;
-  scroll-behavior: smooth;
+  @apply scroll-smooth bg-white text-gray-950 dark:bg-gray-950 dark:text-white;
 }

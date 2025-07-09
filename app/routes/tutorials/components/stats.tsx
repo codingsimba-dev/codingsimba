@@ -1,4 +1,4 @@
-import { SideBarContainer } from "./side-bar-container";
+import { SideBarContainer } from "./sidebar-container";
 import { Eye, Heart, MessageSquare } from "lucide-react";
 
 export function Stats({

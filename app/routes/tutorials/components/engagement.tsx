@@ -1,7 +1,12 @@
-import { SideBarContainer } from "./side-bar-container";
+import { SideBarContainer } from "./sidebar-container";
 import { Button } from "~/components/ui/button";
 import { Share2, Bookmark, ThumbsUp, MessageSquare } from "lucide-react";
-import { DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { Share } from "~/components/share-content";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Dialog } from "~/components/ui/dialog";
@@ -17,7 +22,13 @@ export function Engagement({ tutorial }: { tutorial: Tutorial }) {
               <Share2 className="h-4 w-4" />
             </Button>
           </DialogTrigger>
+
           <DialogContent className="p-4">
+            <DialogHeader>
+              <DialogTitle>
+                <Share2 className="size-4" />
+              </DialogTitle>
+            </DialogHeader>
             <Share
               item={tutorial}
               itemType="tutorial"

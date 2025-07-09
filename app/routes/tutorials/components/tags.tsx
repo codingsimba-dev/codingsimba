@@ -1,4 +1,4 @@
-import { SideBarContainer } from "./side-bar-container";
+import { SideBarContainer } from "./sidebar-container";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Link } from "react-router";
 import { Badge } from "~/components/ui/badge";

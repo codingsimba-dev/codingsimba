@@ -10,37 +10,22 @@ import { DetailsHeader } from "~/components/details-header";
 import type { Route } from "./+types/tutorial";
 import { TutorialSidebar } from "./components/sidebar";
 import { type PageViewData } from "use-page-view";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "~/components/ui/sheet";
-import { Bot, BrainCircuit, Send } from "lucide-react";
-import { Textarea } from "~/components/ui/textarea";
-import { Button } from "~/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "~/components/ui/tooltip";
-import { Markdown } from "~/components/mdx";
+import { Sheet } from "~/components/ui/sheet";
+
+import { LearningAssistant } from "./components/learning-assistant";
+// import { WebSocketDemo } from "~/components/websocket-demo";
 // import { Comments } from "~/components/comment";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const { tutorialId, lessonId } = params;
-
   invariantResponse(tutorialId, "Tutorial ID is required", {
     status: StatusCodes.BAD_REQUEST,
   });
-
+  const lessons = getTutorialLessons(tutorialId);
   const tutorial = await getTutorialDetails(tutorialId);
   invariantResponse(tutorial, "Tutorial not found", {
     status: StatusCodes.NOT_FOUND,
   });
-
-  const lessons = await getTutorialLessons(tutorialId);
 
   return {
     tutorial,
@@ -69,6 +54,7 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
   //   trackOnceDelay: 30,
   //   onPageView: handlePageView,
   // });
+
   return (
     <>
       <Sheet>
@@ -90,54 +76,7 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
             </aside>
           </div>
         </div>
-        <SheetContent className="lg:min-w-2xl min-w-[90%] sm:min-w-[80%] md:min-w-[70%]">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <Bot className="size-6" />
-              <span className="text-lg font-medium">
-                Chat with your learning assistant
-              </span>
-            </SheetTitle>
-            <SheetDescription>
-              I am your helpful assistant that can answer questions about any
-              confusion you have.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="-mt-6 overflow-y-auto px-4">
-            <Markdown source={tutorial.overview} className="pt-0" />
-          </div>
-          <div className="mt-auto flex items-center gap-2 border-t border-gray-200 p-4">
-            <Textarea
-              placeholder="Ask me anything you want to be clarified about"
-              className="flex-1"
-              autoFocus
-            />
-            <div className="flex flex-col items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button size="sm">
-                    <Send className="size-4" />
-                    <span className="sr-only">Send</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Send the question</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button size="sm">
-                    <BrainCircuit className="size-4" />
-                    <span className="sr-only">Reason</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Reason about complex questions</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </SheetContent>
+        <LearningAssistant response={""} tutorial={tutorial} />
       </Sheet>
     </>
   );

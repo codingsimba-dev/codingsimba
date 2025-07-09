@@ -19,9 +19,8 @@ export function SideBarContainer({
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
         <h3 className="font-medium">{title}</h3>
-
         {type === "nav" ? (
           <SheetTrigger>
             <Tooltip>

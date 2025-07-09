@@ -28,102 +28,7 @@
 import { OpenAI } from "openai";
 import { prisma } from "./db.server";
 
-const { DEEPSEEK_API_KEY, OPENAI_API_KEY } = process.env;
-
-/**
- * AI Model Configuration
- *
- * Defines available AI models and their configurations for different providers.
- * Each provider has specific models for chat and reasoning tasks, with
- * associated API keys and base URLs.
- */
-const models: Record<string, Record<string, string>> = {
-  deepseek: {
-    chat: "deepseek-chat",
-    reasoning: "deepseek-reasoner",
-    apiKey: DEEPSEEK_API_KEY,
-    baseURL: "https://api.deepseek.com",
-  },
-  openai: {
-    chat: "gpt-4o-mini",
-    reasoning: "gpt-4o",
-    apiKey: OPENAI_API_KEY,
-  },
-};
-
-/**
- * Selects the optimal AI model based on user plan, usage, and prompt type
- *
- * Implements a tiered model selection strategy:
- * - Free users: Limited to chat model after 100 requests
- * - Premium users: Limited to chat model after 300 requests
- * - Reasoning models used for complex tasks when usage allows
- *
- * @param {string} promptType - Type of prompt: "chat" or "reasoning"
- * @param {Object} user - User object containing plan and usage information
- * @param {string} user.plan - User subscription plan ("free" or "premium")
- * @param {number} user.usage - Current usage count for the user
- * @returns {string} Selected model identifier
- *
- * @example
- * ```typescript
- * const model = getOptimalModel("reasoning", { plan: "premium", usage: 150 });
- * // Returns "deepseek-reasoner" for premium user with low usage
- * ```
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getOptimalModel(promptType: "chat" | "reasoning", user: any) {
-  // const isOffPeak = isOffPeakHours();
-  // const model = isOffPeak ? "deepseek" : "openai";
-  const model = "deepseek";
-  const reasoningLimit = {
-    free: 100,
-    premium: 300,
-  };
-
-  switch (user.plan) {
-    case "free":
-      return user.usage < reasoningLimit.free
-        ? models[model][promptType]
-        : models[model].chat;
-    case "premium":
-      return user.usage < reasoningLimit.premium
-        ? models[model][promptType]
-        : models[model].chat;
-    default:
-      return models[model][promptType];
-  }
-}
-
-/**
- * Determines if current time is during off-peak hours for cost optimization
- *
- * Off-peak hours are defined as:
- * - After 16:30 UTC (4:30 PM)
- * - Before 00:30 UTC (12:30 AM)
- *
- * During off-peak hours, the system may use different models or providers
- * for cost efficiency.
- *
- * @returns {boolean} True if current time is during off-peak hours
- *
- * @example
- * ```typescript
- * if (isOffPeakHours()) {
- *   // Use cost-effective models
- * }
- * ```
- */
-function isOffPeakHours() {
-  const now = new Date();
-  const utcHour = now.getUTCHours();
-  const utcMinute = now.getUTCMinutes();
-  return (
-    utcHour > 16 ||
-    (utcHour === 16 && utcMinute >= 30) ||
-    (utcHour === 0 && utcMinute < 30)
-  );
-}
+const { DEEPSEEK_API_KEY } = process.env;
 
 /**
  * OpenAI client instance configured with API key and timeout
@@ -140,9 +45,10 @@ function isOffPeakHours() {
  * });
  * ```
  */
-export const openai = new OpenAI(
-  isOffPeakHours() ? models.deepseek : models.openai,
-);
+export const openai = new OpenAI({
+  apiKey: DEEPSEEK_API_KEY,
+  baseURL: "https://api.deepseek.com/v1",
+});
 
 /**
  * Generates vector embeddings for text using OpenAI's text-embedding-3-small model
@@ -201,14 +107,16 @@ export async function generateChatCompletion(
 ) {
   const response = await openai.chat.completions.create({
     model: "deepseek-chat",
+    stream: true,
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_completion_tokens: 1000,
-    temperature: models.deepseek ? 0.0 : 0.7,
+    // max_completion_tokens: 1000,
+    temperature: 0.0,
   });
-  return response.choices[0].message.content;
+  return response;
 }
 
 /**
@@ -474,7 +382,7 @@ export async function addDocument(
 export async function findRelevantChunks(
   query: string,
   topK = 5,
-  documentId = null,
+  documentId = null as string | null,
 ) {
   console.log(`Finding relevant chunks for: "${query}"`);
 
@@ -560,11 +468,15 @@ export async function findRelevantChunks(
  * });
  * ```
  */
-export async function askQuestion(
-  question: string,
+export async function askQuestion({
+  question,
   topK = 5,
   documentId = null,
-) {
+}: {
+  question: string;
+  topK?: number;
+  documentId?: string | null;
+}) {
   console.log(`Processing question: "${question}"`);
 
   const relevantChunks = await findRelevantChunks(question, topK, documentId);
@@ -583,19 +495,32 @@ export async function askQuestion(
     .join("\n\n");
 
   // Generate system prompt
-  const systemPrompt = `You are a helpful assistant that answers questions based on provided context.
-  Rules:
-   1. Only answer based on the context provided
-   2. If you can't find the answer in the context, say so clearly
-   3. Reference the context sections [1], [2], etc. when relevant
-   4. Be concise but thorough
-   5. If the context is insufficient, ask for clarification`;
-  const userPrompt = `Context:
+  const systemPrompt = `You are an educational AI that helps students understand course content using retrieved materials.
+
+    Response Protocol:
+    1. Use ONLY the retrieved context - no external knowledge
+    2. If context spans multiple topics, organize your response clearly
+    3. Cite sources [1], [2] for each major point
+    4. When context is insufficient, suggest specific types of materials the student might need
+    5. If retrieved chunks seem unrelated to the question, acknowledge this clearly
+
+    Educational Enhancement:
+    - Synthesize information across retrieved chunks when they relate to the same concept
+    - Highlight key terms and definitions as they appear in context
+    - Note when context provides examples, formulas, or step-by-step procedures
+    - Explain relationships between concepts when multiple chunks support this`;
+
+  const userPrompt = `Course Materials Context:
     ${context}
-
-    Question: ${question}
-
-    Please provide a helpful answer based on the context above.`;
+    
+    Student Question: ${question}
+    
+    Based solely on the tutorial/course materials above, please:
+    1. Provide a clear, educational explanation
+    2. Include relevant examples from the materials
+    3. Cite specific sections [1], [2], etc.
+    4. If information is incomplete, specify what's missing
+    5. If the question is not related to the tutorial/course materials, say so clearly`;
 
   // Generate response
   const answer = await generateChatCompletion(systemPrompt, userPrompt);

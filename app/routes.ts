@@ -19,15 +19,15 @@ export default [
   route("forgot-password", "routes/auth/forgot-password.tsx"),
   route("authors/:authorSlug", "routes/article-author.tsx"),
   route("roadmap", "routes/roadmap/index.tsx"),
-  route("*", "routes/not-found.tsx"),
-
   route("test", "routes/test.tsx"),
+  route("*", "routes/not-found.tsx"),
 
   // SEO
   route("robots.txt", "routes/seo/robots[.]txt.ts"),
   route("sitemap.xml", "routes/seo/sitemap[.]xml.ts"),
 
   // Resource routes
+  route("rag", "routes/rag.ts"),
   route("set-theme", "routes/resources/set-theme.ts"),
   route("unsubscribe", "routes/resources/unsubscribe.ts"),
   route("content/webhook", "routes/resources/sanity-webhook.ts"),
