@@ -28,6 +28,18 @@
 import { OpenAI } from "openai";
 import { prisma } from "./db.server";
 
+// Custom error class for API errors with status codes
+export class APIError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string,
+  ) {
+    super(message);
+    this.name = "APIError";
+  }
+}
+
 const { DEEPSEEK_API_KEY } = process.env;
 
 /**
@@ -107,7 +119,6 @@ export async function generateChatCompletion(
 ) {
   const response = await openai.chat.completions.create({
     model: "deepseek-chat",
-    stream: true,
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: systemPrompt },
@@ -116,7 +127,7 @@ export async function generateChatCompletion(
     // max_completion_tokens: 1000,
     temperature: 0.0,
   });
-  return response;
+  return response.choices[0].message.content;
 }
 
 /**
@@ -471,10 +482,12 @@ export async function findRelevantChunks(
 export async function askQuestion({
   question,
   topK = 5,
+  previousAnswer = null,
   documentId = null,
 }: {
   question: string;
   topK?: number;
+  previousAnswer?: string | null;
   documentId?: string | null;
 }) {
   console.log(`Processing question: "${question}"`);
@@ -498,11 +511,12 @@ export async function askQuestion({
   const systemPrompt = `You are an educational AI that helps students understand course content using retrieved materials.
 
     Response Protocol:
-    1. Use ONLY the retrieved context - no external knowledge
-    2. If context spans multiple topics, organize your response clearly
-    3. Cite sources [1], [2] for each major point
-    4. When context is insufficient, suggest specific types of materials the student might need
-    5. If retrieved chunks seem unrelated to the question, acknowledge this clearly
+    1. Return answer in json format
+    2. Use ONLY the retrieved context - no external knowledge
+    3. If context spans multiple topics, organize your response clearly
+    4. Cite sources [1], [2] for each major point
+    5. When context is insufficient, suggest specific types of materials the student might need
+    6. If retrieved chunks seem unrelated to the question, acknowledge this clearly
 
     Educational Enhancement:
     - Synthesize information across retrieved chunks when they relate to the same concept
@@ -532,7 +546,7 @@ export async function askQuestion({
   const confidence = Math.min(avgSimilarity * 100, 100);
 
   return {
-    answer,
+    answer: previousAnswer ? previousAnswer + "\n\n" + answer : answer,
     sources: relevantChunks.map((chunk, index) => ({
       index: index + 1,
       document: chunk.document.title,
