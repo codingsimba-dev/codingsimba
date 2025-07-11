@@ -10,11 +10,6 @@ import { DetailsHeader } from "~/components/details-header";
 import type { Route } from "./+types/tutorial";
 import { TutorialSidebar } from "./components/sidebar";
 import { type PageViewData } from "use-page-view";
-import { Sheet } from "~/components/ui/sheet";
-
-import { LearningAssistant } from "./components/learning-assistant";
-// import { WebSocketDemo } from "~/components/websocket-demo";
-// import { Comments } from "~/components/comment";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const { tutorialId, lessonId } = params;
@@ -57,27 +52,24 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Sheet>
-        <DetailsHeader item={tutorial} />
-        <div className="container mx-auto w-full px-4 py-12">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-            <main className="w-full max-w-full lg:col-span-8">
-              <Outlet />
-              {/* <Comments comments={[]} onAddComment={() => {}} /> */}
-            </main>
-            <aside className="lg:col-span-4">
-              <div className="sticky top-20">
-                <TutorialSidebar
-                  tutorial={tutorial}
-                  lessons={lessons}
-                  activeLessonId={lessonId}
-                />
-              </div>
-            </aside>
-          </div>
+      <DetailsHeader item={tutorial} />
+      <div className="container mx-auto w-full px-4 py-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <main className="w-full max-w-full lg:col-span-8">
+            <Outlet />
+            {/* <Comments comments={[]} onAddComment={() => {}} /> */}
+          </main>
+          <aside className="lg:col-span-4">
+            <div className="sticky top-20">
+              <TutorialSidebar
+                tutorial={tutorial}
+                lessons={lessons}
+                activeLessonId={lessonId}
+              />
+            </div>
+          </aside>
         </div>
-        <LearningAssistant response={""} tutorial={tutorial} />
-      </Sheet>
+      </div>
     </>
   );
 }

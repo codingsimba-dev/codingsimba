@@ -27,7 +27,7 @@ export default [
   route("sitemap.xml", "routes/seo/sitemap[.]xml.ts"),
 
   // Resource routes
-  route("rag", "routes/rag.ts"),
+  route("chatbot", "routes/chatbot.ts"),
   route("set-theme", "routes/resources/set-theme.ts"),
   route("unsubscribe", "routes/resources/unsubscribe.ts"),
   route("content/webhook", "routes/resources/sanity-webhook.ts"),

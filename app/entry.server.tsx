@@ -17,6 +17,10 @@ init();
 global.env = getEnv();
 
 (async () => {
+  if (isMocks) {
+    await import("../tests/mocks/index");
+  }
+
   if (isProduction && !isMocks) {
     import("./utils/scheduler.server")
       .then(({ initializeScheduler }) => {
@@ -25,9 +29,6 @@ global.env = getEnv();
       .catch((error) => {
         console.error("Failed to initialize scheduler:", error);
       });
-  }
-  if (isMocks) {
-    await import("../tests/mocks/index");
   }
 })();
 
