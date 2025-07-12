@@ -42,7 +42,7 @@ export function TutorialCard({ tutorial }: TutorialCardProps) {
       </div>
 
       <CardContent className="flex h-32 flex-col justify-between p-6 text-center">
-        <h3 className="line-clamp-2 text-xl font-bold leading-tight text-gray-900 transition-colors duration-200 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
+        <h3 className="text-xl font-bold leading-tight text-gray-900 transition-colors duration-200 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
           {tutorial.title}
         </h3>
 

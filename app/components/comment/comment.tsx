@@ -47,7 +47,7 @@ export function Comment({ comment }: { comment: CommentData }) {
   const user = useOptionalUser();
   const navigate = useNavigate();
 
-  const replyTake = Number(searchParams.get("replyTake")) || 3;
+  const replyTake = Number(searchParams.get("replyTake") ?? 3);
 
   const userId = user?.id;
   const author = comment?.author;

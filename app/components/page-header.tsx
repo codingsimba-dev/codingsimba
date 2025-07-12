@@ -104,7 +104,7 @@ export function Header({
       </div>
 
       <div className="container relative z-10 mx-auto px-4">
-        <div className="mx-auto max-w-4xl text-center">
+        <div className="mx-auto text-center">
           <motion.h1
             className="text-2xl font-bold capitalize md:text-3xl"
             initial={{ opacity: 0, y: 20 }}

@@ -18,7 +18,8 @@ export function ContentEmailSubscriptionForm() {
         <Bookmark className="h-5 w-5 text-gray-400" />
       </div>
       <p className="mb-4 text-gray-600 dark:text-gray-300">
-        Get the latest articles and resources sent straight to your inbox.
+        Get the latest articles, tutorials, and new content sent straight to
+        your inbox.
       </p>
       <fetcher.Form method="post" className="space-y-3">
         <Input

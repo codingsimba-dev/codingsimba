@@ -1,3 +1,4 @@
+import React from "react";
 import type { Route } from "../routes/+types/chatbot";
 import { Bot, Send } from "lucide-react";
 import {
@@ -15,41 +16,17 @@ import { Button } from "~/components/ui/button";
 import { type Tutorial } from "~/utils/content.server/turorials/types";
 import { useFetcher } from "react-router";
 import { useIsPending } from "~/utils/misc";
-import { parseWithZod } from "@conform-to/zod";
-import { getTextareaProps, useForm } from "@conform-to/react";
 import { FormError } from "./form-errors";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 
-import { z } from "zod";
-
-export const ChatSchema = z.object({
-  documentId: z.string().optional(),
-  question: z
-    .string({ required_error: "Ask a question to get started" })
-    .min(5, { message: "Ask a more specific question" })
-    .max(1000, { message: "Question is too long" }),
-  previousAnswer: z.string().optional(),
-});
-
 export function ChatBot({ item }: { item: Tutorial }) {
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   const answer = fetcher.data?.answer;
   const isLoading = useIsPending({
     formAction: fetcher.formAction,
     formMethod: fetcher.formMethod,
   });
-
-  const [form, fields] = useForm({
-    id: "chatbot",
-    onValidate({ formData }) {
-      return parseWithZod(formData, {
-        schema: ChatSchema,
-      });
-    },
-    shouldValidate: "onSubmit",
-  });
-
-  console.log(fetcher.data);
 
   return (
     <Sheet>
@@ -104,32 +81,33 @@ export function ChatBot({ item }: { item: Tutorial }) {
           )}
         </div>
         <fetcher.Form
-          {...form}
           method="post"
           action="/chatbot"
           className="mt-auto border-t border-gray-200 p-4"
         >
+          <FormError
+            errors={fetcher.data?.error ? fetcher.data.error.split(",") : []}
+            className="-mt-2 mb-4"
+          />
           <div className="flex items-center gap-2">
             <HoneypotInputs />
+            <input type="hidden" name="documentId" value={item.id} />
             <Textarea
-              {...getTextareaProps(fields.question)}
+              name="question"
               placeholder="What learning challenge can I help you tackle?"
               className="flex-1"
               autoFocus
+              ref={textAreaRef}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  e.currentTarget.form?.requestSubmit();
+                  textAreaRef.current?.form?.requestSubmit();
                 }
               }}
             />
             <Tooltip>
               <TooltipTrigger>
-                <Button
-                  size="sm"
-                  type="submit"
-                  disabled={isLoading || !fields.question.value}
-                >
+                <Button size="sm" type="submit" disabled={isLoading}>
                   <Send className="size-4" />
                   <span className="sr-only">Send</span>
                 </Button>
@@ -139,7 +117,6 @@ export function ChatBot({ item }: { item: Tutorial }) {
               </TooltipContent>
             </Tooltip>
           </div>
-          <FormError errors={fields.question.errors} />
         </fetcher.Form>
       </SheetContent>
     </Sheet>

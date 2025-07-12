@@ -13,7 +13,6 @@ import {
   getArticleDetails,
   getPopularTags,
 } from "~/utils/content.server/articles/utils";
-import { EngagementMetrics } from "~/components/engagement-metrics";
 import { invariant, invariantResponse } from "~/utils/misc";
 import { useFetcher } from "react-router";
 import { Comments } from "~/components/comment";
@@ -38,6 +37,7 @@ import { useOptionalUser } from "~/hooks/user";
 import { usePageView, type PageViewData } from "use-page-view";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { generateMetadata } from "~/utils/meta";
+import { Metrics } from "./components/metrics";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -172,10 +172,10 @@ export default function ArticleDetailsRoute({
                 sandpackTemplates={article.sandpackTemplates}
               />
             </article>
-            <EngagementMetrics className="md:hidden" />
+            <Metrics className="md:hidden" />
             <p>
-              Comment below the topics you may like me to create articles or
-              tutorials on!
+              Share the topics you&apos;d like to see covered in future
+              articles!
             </p>
             <Separator className="mb-4 mt-2" />
             <Comments />
@@ -193,7 +193,7 @@ export default function ArticleDetailsRoute({
           <aside className="lg:col-span-4">
             <div className="sticky top-20">
               <TableOfContent className="hidden lg:block" />
-              <EngagementMetrics className="hidden md:block" />
+              <Metrics className="hidden md:block" />
               {!user?.isSubscribed ? <ContentEmailSubscriptionForm /> : null}
               <PopularTags />
             </div>

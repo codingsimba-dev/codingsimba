@@ -10,9 +10,10 @@ import {
 import { Share } from "~/components/share-content";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Dialog } from "~/components/ui/dialog";
-import { Link } from "react-router";
+import { Link, useParams } from "react-router";
 
 export function Engagement({ tutorial }: { tutorial: Tutorial }) {
+  const { tutorialId, lessonId } = useParams();
   return (
     <SideBarContainer title="Engagement">
       <Dialog>
@@ -42,7 +43,14 @@ export function Engagement({ tutorial }: { tutorial: Tutorial }) {
           <Button variant="outline" size="icon">
             <ThumbsUp className="h-4 w-4" />
           </Button>
-          <Link to={`#comments`}>
+          <Link
+            to={{
+              pathname: `/tutorials/${tutorialId}${
+                lessonId ? `/lessons/${lessonId}` : ""
+              }`,
+              hash: "#comments",
+            }}
+          >
             <Button variant="outline" size="icon">
               <MessageSquare className="h-4 w-4" />
             </Button>

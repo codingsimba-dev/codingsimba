@@ -1,5 +1,6 @@
 import React from "react";
-import type { Route } from "../../routes/articles/+types/article";
+import type { Route as ArticleRoute } from "../../routes/articles/+types/article";
+import type { Route as TutorialRoute } from "../../routes/tutorials/+types/tutorial";
 import { MessageSquareOff } from "lucide-react";
 import { EmptyState } from "../empty-state";
 import { CommentForm } from "./comment-form";
@@ -13,16 +14,20 @@ import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 export function Comments() {
-  const loaderData = useLoaderData() as Route.ComponentProps["loaderData"];
+  const loaderData = useLoaderData<
+    | ArticleRoute.ComponentProps["loaderData"]
+    | TutorialRoute.ComponentProps["loaderData"]
+  >();
   const [comment, setComment] = React.useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const commentTake = Number(searchParams.get("commentTake")) || 5;
   const user = useOptionalUser();
 
-  const articleId = loaderData.article.id;
+  const itemId =
+    "article" in loaderData ? loaderData.article.id : loaderData.tutorial.id;
 
   const { submit } = useCreate({
-    itemId: articleId,
+    itemId: itemId,
     userId: user?.id as string,
     intent: "add-comment",
     body: comment,

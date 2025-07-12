@@ -5,9 +5,22 @@ import { askQuestion } from "~/utils/openai.server";
 import { StatusCodes } from "http-status-codes";
 import { bundleMDX } from "~/utils/mdx.server";
 import { checkHoneypot } from "~/utils/honeypot.server";
-import { parseWithZod } from "@conform-to/zod";
-import { ChatSchema } from "~/components/chatbot";
+import { z } from "zod";
 // import { requireUserId } from "~/utils/auth.server";
+
+type Response = {
+  answer: string | null;
+  error: string | null;
+};
+
+export const ChatSchema = z.object({
+  documentId: z.string().optional(),
+  question: z
+    .string({ required_error: "Ask a question to get started" })
+    .min(5, { message: "Ask a more specific question" })
+    .max(1000, { message: "Question is too long" }),
+  previousAnswer: z.string().optional(),
+});
 
 export const loader = () => redirect("/");
 
@@ -15,14 +28,16 @@ export async function action({ request }: Route.ActionArgs) {
   // const userId = await requireUserId(request);
   const formData = await request.formData();
   await checkHoneypot(formData);
-  const submission = parseWithZod(formData, { schema: ChatSchema });
-  if (submission.status !== "success") {
+  const response = ChatSchema.safeParse(formData);
+  if (!response.success) {
     return {
       answer: null,
-      error: submission.reply().fields,
-    } as const;
+      error: Object.values(response.error.flatten().fieldErrors)
+        .flat()
+        .join(", "),
+    } as Response;
   }
-  const { documentId, question, previousAnswer } = submission.value;
+  const { documentId, question, previousAnswer } = response.data;
 
   try {
     const response = await askQuestion({
@@ -34,14 +49,14 @@ export async function action({ request }: Route.ActionArgs) {
       return {
         answer: null,
         error: "An error occurred, please try again",
-      } as const;
+      } as Response;
     }
 
     // TODO: Track user usage
     // console.log(response.sources);
     const md = json2md(response.answer);
     const { code } = await bundleMDX({ source: md });
-    return { answer: code, error: null } as const;
+    return { answer: code, error: null } as Response;
   } catch (error) {
     if (
       error instanceof Response &&
@@ -51,7 +66,7 @@ export async function action({ request }: Route.ActionArgs) {
         answer: null,
         error:
           "We're experiencing high traffic. Please wait a moment and try again, or contact support if this persists.",
-      } as const;
+      } as Response;
     }
 
     if (error instanceof Error) {
@@ -59,17 +74,17 @@ export async function action({ request }: Route.ActionArgs) {
         return {
           answer: null,
           error: "Network error, please check your connection",
-        } as const;
+        } as Response;
       }
 
       if (error.message.includes("timeout")) {
         return {
           answer: null,
           error: "Request timed out, please try again",
-        } as const;
+        } as Response;
       }
     }
 
-    return { answer: null, error: "Internal server error" } as const;
+    return { answer: null, error: "Internal server error" } as Response;
   }
 }

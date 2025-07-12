@@ -85,7 +85,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
       </div>
 
       <div className="container relative z-10 mx-auto px-4">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

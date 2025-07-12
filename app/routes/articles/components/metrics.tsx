@@ -1,32 +1,49 @@
 import React from "react";
-import type { Route } from "../routes/articles/+types/article";
-import { Await, useFetcher, useLoaderData } from "react-router";
-import { Eye, Heart, MessageSquare } from "lucide-react";
+import type { Route } from "../+types/article";
+import { Await, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { ChartBar, Eye, Heart, MessageSquare } from "lucide-react";
 import { cn } from "~/utils/misc";
 import { Link } from "react-router";
 import { useOptionalUser } from "~/hooks/user";
 import { AnimatePresence, motion } from "framer-motion";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "~/components/ui/skeleton";
+import { EmptyState } from "~/components/empty-state";
 
 type Like = {
   count: number;
   userId: string;
 };
 
-export function EngagementMetrics({ className }: { className?: string }) {
+export function Metrics({ className }: { className?: string }) {
   const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
-
+  const metrics = loaderData.metrics;
+  const revalidator = useRevalidator();
   return (
     <React.Suspense fallback={<MetricsSkeleton className={className} />}>
       <Await
-        resolve={loaderData.metrics}
-        errorElement={<MetricsError className={className} />}
+        resolve={metrics}
+        errorElement={
+          <EmptyState
+            icon={<ChartBar className="size-10 text-gray-400" />}
+            title="Failed to load metrics"
+            description="Failed to load metrics, click the reload button to reload the page."
+            action={{
+              label: "Reload",
+              onClick: () => revalidator.revalidate(),
+            }}
+          />
+        }
       >
         {(metrics) =>
           metrics ? (
             <ArticleMetricsContent metrics={metrics} className={className} />
           ) : (
-            <NoMetrics className={className} />
+            <EmptyState
+              icon={<ChartBar className="size-10 text-gray-400" />}
+              title="No metrics"
+              description="This article has no metrics."
+              className="pt-4"
+            />
           )
         }
       </Await>
@@ -46,40 +63,6 @@ function MetricsSkeleton({ className }: { className?: string }) {
         <Skeleton className="h-4 w-8 rounded-xl" />
         <Skeleton className="h-4 w-8 rounded-xl" />
         <Skeleton className="h-4 w-14 rounded-xl" />
-      </div>
-    </div>
-  );
-}
-
-function NoMetrics({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "mb-8 flex flex-col items-start justify-between border-b border-gray-200 py-4 dark:border-gray-800",
-        className,
-      )}
-    >
-      <div className="flex items-center space-x-6">
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          No metrics
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function MetricsError({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "mb-8 flex flex-col items-start justify-between border-b border-gray-200 py-4 dark:border-gray-800",
-        className,
-      )}
-    >
-      <div className="flex items-center space-x-6">
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          Failed to load metrics
-        </span>
       </div>
     </div>
   );
@@ -203,7 +186,13 @@ function ArticleMetricsContent({
             )}
           </AnimatePresence>
         </div>
-        <Link to={"#comments"} className="flex items-center space-x-1">
+        <Link
+          to={{
+            pathname: `/articles/${metrics.id}`,
+            hash: "#comments",
+          }}
+          className="flex items-center space-x-1"
+        >
           <MessageSquare className="size-5" />
           <span>
             {metrics?._count.comments.toLocaleString() ?? LEAST_COUNT}
