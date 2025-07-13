@@ -1,5 +1,6 @@
 import React from "react";
-import { Outlet, useFetcher, Await } from "react-router";
+import type { Route } from "./+types/tutorial";
+import { Outlet, Await } from "react-router";
 import {
   getTutorialDetails,
   getTutorialLessons,
@@ -7,15 +8,29 @@ import {
 import { invariantResponse } from "~/utils/misc";
 import { StatusCodes } from "http-status-codes";
 import { DetailsHeader } from "~/components/details-header";
-import type { Route } from "./+types/tutorial";
 import { TutorialSidebar } from "./components/sidebar";
-import { type PageViewData } from "use-page-view";
+import { usePageView } from "use-page-view";
 import { z } from "zod";
 import { getTutorialComments, getTutorialMetrics } from "./loader.server";
-import { Comments } from "~/components/comment";
+import { CommentIntent, Comments, ReplyIntent } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { LessonsNavigation } from "./components/lessons-navigation";
 import { SideBarContainer } from "./components/sidebar-container";
+import { SubmitSchema, useCreate } from "~/hooks/content";
+import {
+  addComment,
+  trackPageView,
+  addReply,
+  updateComment,
+  deleteComment,
+  upvoteComment,
+  updateReply,
+  deleteReply,
+  upvoteReply,
+} from "./action.server";
+import { checkHoneypot } from "~/utils/honeypot.server";
+import { GeneralErrorBoundary } from "~/components/error-boundary";
+import { generateMetadata } from "~/utils/meta";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -57,29 +72,78 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   };
 }
 
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  await checkHoneypot(formData);
+  const formDataObj = Object.fromEntries(formData);
+  const submittedData = {
+    data: JSON.parse(formDataObj.data as string),
+    intent: formDataObj.intent,
+  };
+  const result = await SubmitSchema.safeParseAsync(submittedData);
+  invariantResponse(result.success, "Invalid form data", {
+    status: StatusCodes.BAD_REQUEST,
+  });
+
+  const { data, intent } = result.data;
+
+  switch (intent as CommentIntent | ReplyIntent | "track-page-view") {
+    case CommentIntent.ADD_COMMENT:
+      return await addComment(data);
+    case ReplyIntent.ADD_REPLY:
+      return await addReply(data);
+    case CommentIntent.UPDATE_COMMENT:
+      return await updateComment(request, data);
+    case CommentIntent.DELETE_COMMENT:
+      return await deleteComment(request, data);
+    case CommentIntent.UPVOTE_COMMENT:
+      return await upvoteComment(data);
+    case ReplyIntent.UPDATE_REPLY:
+      return await updateReply(request, data);
+    case ReplyIntent.DELETE_REPLY:
+      return await deleteReply(request, data);
+    case ReplyIntent.UPVOTE_REPLY:
+      return await upvoteReply(data);
+    case "track-page-view":
+      return await trackPageView({ itemId: data.itemId as string });
+
+    default:
+      return new Response("Invalid intent", {
+        status: StatusCodes.BAD_REQUEST,
+      });
+  }
+}
+
 export default function TutorialPage({ loaderData }: Route.ComponentProps) {
   const { tutorial, lessons, lessonId } = loaderData;
+  const metadata = generateMetadata({
+    title: tutorial.title,
+    image: tutorial.image,
+    imageAlt: tutorial.title,
+    url: `tutorials/${tutorial.id}`,
+    description: tutorial.overview,
+    keywords: tutorial.tags
+      .map((t) => t.slug)
+      .join(",")
+      .replace(/-/g, "_"),
+    type: "article",
+  });
 
-  const fetcher = useFetcher();
+  const { submit: submitPageView } = useCreate({
+    intent: "track-page-view",
+    data: { itemId: tutorial.id },
+  });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handlePageView = React.useCallback(async (data: PageViewData) => {
-    await fetcher.submit(
-      { ...data, itemId: data.pageId, intent: "track-page-view" },
-      { method: "post" },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // usePageView({
-  //   pageId: tutorial.id,
-  //   trackOnce: true,
-  //   trackOnceDelay: 30,
-  //   onPageView: handlePageView,
-  // });
+  usePageView({
+    pageId: tutorial.id,
+    trackOnce: true,
+    trackOnceDelay: 30,
+    onPageView: submitPageView,
+  });
 
   return (
     <>
+      {metadata}
       <DetailsHeader item={tutorial} />
       <div className="container mx-auto w-full px-4 py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
@@ -121,5 +185,18 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  return (
+    <GeneralErrorBoundary
+      statusHandlers={{
+        403: () => <p>You do not have permission</p>,
+        404: ({ params }) => (
+          <p>Article with ${params.articleId} does not exist</p>
+        ),
+      }}
+    />
   );
 }

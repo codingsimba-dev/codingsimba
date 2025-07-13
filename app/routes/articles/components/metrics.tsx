@@ -1,6 +1,12 @@
 import React from "react";
 import type { Route } from "../+types/article";
-import { Await, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import {
+  Await,
+  useFetcher,
+  useLoaderData,
+  useParams,
+  useRevalidator,
+} from "react-router";
 import { ChartBar, Eye, Heart, MessageSquare } from "lucide-react";
 import { cn } from "~/utils/misc";
 import { Link } from "react-router";
@@ -77,6 +83,7 @@ function ArticleMetricsContent({
 }) {
   const [showFloating, setShowFloating] = React.useState(false);
   const [animationKey, setAnimationKey] = React.useState(0);
+  const { articleSlug } = useParams();
   const fetcher = useFetcher();
   const user = useOptionalUser();
   const userId = user?.id;
@@ -122,7 +129,10 @@ function ArticleMetricsContent({
     }, 1000);
 
     fetcher.submit(
-      { intent: "upvote-article", itemId: metrics?.id ?? "", userId: userId! },
+      {
+        intent: "upvote-article",
+        data: JSON.stringify({ itemId: metrics?.id ?? "", userId: userId! }),
+      },
       { method: "post" },
     );
   }
@@ -188,7 +198,7 @@ function ArticleMetricsContent({
         </div>
         <Link
           to={{
-            pathname: `/articles/${metrics.id}`,
+            pathname: `/articles/${articleSlug}`,
             hash: "#comments",
           }}
           className="flex items-center space-x-1"

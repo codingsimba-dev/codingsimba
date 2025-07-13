@@ -130,16 +130,6 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
           >
             {item.title}
           </motion.h1>
-          {"excerpt" in item ? (
-            <motion.h1
-              className="mb-4 max-w-3xl text-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              {item.excerpt}
-            </motion.h1>
-          ) : null}
 
           <motion.div
             className="flex flex-wrap items-center gap-4"

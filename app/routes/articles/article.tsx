@@ -1,4 +1,3 @@
-import React from "react";
 import type { Route } from "./+types/article";
 import { DetailsHeader } from "../../components/details-header";
 import { Tags } from "./components/tags";
@@ -14,8 +13,7 @@ import {
   getPopularTags,
 } from "~/utils/content.server/articles/utils";
 import { invariant, invariantResponse } from "~/utils/misc";
-import { useFetcher } from "react-router";
-import { Comments } from "~/components/comment";
+import { CommentIntent, Comments, ReplyIntent } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { StatusCodes } from "http-status-codes";
 import {
@@ -28,16 +26,16 @@ import {
   deleteReply,
   upvoteReply,
   trackPageView,
-  upvoteArticle,
 } from "./action.server";
 import { getArticleMetrics, getArticleComments } from "./loader.server";
-import { UpdateSchema } from "~/hooks/content";
+import { SubmitSchema, useCreate } from "~/hooks/content";
 import { z } from "zod";
 import { useOptionalUser } from "~/hooks/user";
-import { usePageView, type PageViewData } from "use-page-view";
+import { usePageView } from "use-page-view";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { generateMetadata } from "~/utils/meta";
 import { Metrics } from "./components/metrics";
+import { checkHoneypot } from "~/utils/honeypot.server";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -65,6 +63,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     ...parsedParams.data,
   });
   const article = await getArticleDetails(articleSlug);
+
   invariantResponse(article, `Article with title: '${articleSlug}' not found`, {
     status: StatusCodes.NOT_FOUND,
   });
@@ -78,39 +77,45 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const result = await UpdateSchema.safeParseAsync(
-    Object.fromEntries(await request.formData()),
-  );
+  const formData = await request.formData();
+
+  await checkHoneypot(formData);
+  const formDataObj = Object.fromEntries(formData);
+  const submittedData = {
+    data: JSON.parse(formDataObj.data as string),
+    intent: formDataObj.intent,
+  };
+
+  const result = await SubmitSchema.safeParseAsync(submittedData);
   invariantResponse(result.success, "Invalid form data", {
     status: StatusCodes.BAD_REQUEST,
   });
 
-  const data = result.data;
+  const { data, intent } = result.data;
 
-  switch (data.intent) {
-    case "add-comment":
+  switch (intent as CommentIntent | ReplyIntent | "track-page-view") {
+    case CommentIntent.ADD_COMMENT:
       return await addComment(data);
-    case "add-reply":
+    case ReplyIntent.ADD_REPLY:
       return await addReply(data);
-    case "update-comment":
+    case CommentIntent.UPDATE_COMMENT:
       return await updateComment(request, data);
-    case "delete-comment":
+    case CommentIntent.DELETE_COMMENT:
       return await deleteComment(request, data);
-    case "upvote-comment":
+    case CommentIntent.UPVOTE_COMMENT:
       return await upvoteComment(data);
-    case "update-reply":
+    case ReplyIntent.UPDATE_REPLY:
       return await updateReply(request, data);
-    case "delete-reply":
+    case ReplyIntent.DELETE_REPLY:
       return await deleteReply(request, data);
-    case "upvote-reply":
+    case ReplyIntent.UPVOTE_REPLY:
       return await upvoteReply(data);
-    case "upvote-article":
-      return await upvoteArticle(data);
     case "track-page-view":
-      return await trackPageView(data);
-
+      return await trackPageView({ itemId: data.itemId as string });
     default:
-      throw new Error("Invalid intent");
+      return new Response("Invalid intent", {
+        status: StatusCodes.BAD_REQUEST,
+      });
   }
 }
 
@@ -132,21 +137,20 @@ export default function ArticleDetailsRoute({
   });
 
   const user = useOptionalUser();
-  const fetcher = useFetcher();
 
-  const handlePageView = React.useCallback(async (data: PageViewData) => {
-    await fetcher.submit(
-      { ...data, itemId: data.pageId, intent: "track-page-view" },
-      { method: "post" },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { submit: submitPageView } = useCreate(
+    {
+      intent: "track-page-view",
+      data: { itemId: article.id },
+    },
+    { showSuccessToast: false },
+  );
 
   usePageView({
     pageId: article.id,
     trackOnce: true,
     trackOnceDelay: 30,
-    onPageView: handlePageView,
+    onPageView: submitPageView,
   });
 
   return (
@@ -166,6 +170,14 @@ export default function ArticleDetailsRoute({
                   className="aspect-video h-full w-full object-cover"
                 />
               </div>
+
+              {/* Article excerpt */}
+              <div className="rounded-lg bg-gray-100 p-6 dark:bg-gray-800">
+                <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+                  {article.excerpt}
+                </p>
+              </div>
+
               <TableOfContent className="block lg:hidden" />
               <Markdown
                 source={article.content}
@@ -179,7 +191,7 @@ export default function ArticleDetailsRoute({
             </p>
             <Separator className="mb-4 mt-2" />
             <Comments />
-            <Tags />
+            <Tags tags={article.tags} />
             <Share item={article} itemType="article" />
             <Author author={article.author} />
             {/* Related articles */}

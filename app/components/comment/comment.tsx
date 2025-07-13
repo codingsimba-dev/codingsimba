@@ -32,6 +32,7 @@ import {
 } from "../ui/alert-dialog";
 import { getImgSrc, getInitials, requireAuth } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
+import { CommentIntent, ReplyIntent } from ".";
 
 export type CommentData = NonNullable<
   Awaited<Route.ComponentProps["loaderData"]["comments"]>
@@ -71,49 +72,64 @@ export function Comment({ comment }: { comment: CommentData }) {
   const {
     submit: submitReply,
     isPending: isCreating,
-    submittedItemId: createdItemId,
+    submittedData: createdData,
   } = useCreate({
-    itemId: comment.contentId,
-    parentId: comment.id,
-    userId: userId!,
-    intent: "add-reply",
-    body: reply,
+    intent: ReplyIntent.ADD_REPLY,
+    data: {
+      userId: userId!,
+      itemId: comment.contentId,
+      parentId: comment.id,
+      body: reply,
+    },
   });
-  const isCreatingReply = isCreating && createdItemId === comment.contentId;
+  const isCreatingReply =
+    isCreating && createdData?.get("parentId") === comment.id;
 
   const {
     submit: deleteComment,
     isPending: isDeleting,
-    submittedItemId: deletedItemId,
-  } = useDelete({
-    itemId: comment.id,
-    intent: "delete-comment",
-    userId: userId!,
-  });
-  const isDeletingComment = isDeleting && deletedItemId === comment.id;
+    submittedData: deletedData,
+  } = useDelete(
+    {
+      intent: CommentIntent.DELETE_COMMENT,
+      data: {
+        itemId: comment.id,
+        userId: userId!,
+      },
+    },
+    { showSuccessToast: true },
+  );
+  const isDeletingComment =
+    isDeleting && deletedData?.get("itemId") === comment.id;
 
   const {
     submit: upvoteComment,
     isPending: isUpvoting,
-    submittedItemId: upvotedItemId,
+    submittedData: upvotedData,
   } = useUpvote({
-    itemId: comment.id,
-    intent: "upvote-comment",
-    userId: userId!,
+    intent: CommentIntent.UPVOTE_COMMENT,
+    data: {
+      itemId: comment.id,
+      userId: userId!,
+    },
   });
-  const isUpvotingComment = isUpvoting && upvotedItemId === comment.id;
+  const isUpvotingComment =
+    isUpvoting && upvotedData?.get("itemId") === comment.id;
 
   const {
     submit: updateComment,
     isPending: isUpdating,
-    submittedItemId: updatedItemId,
+    submittedData: updatedData,
   } = useUpdate({
-    itemId: comment.id,
-    userId: userId!,
-    body: commentBody,
-    intent: "update-comment",
+    intent: CommentIntent.UPDATE_COMMENT,
+    data: {
+      itemId: comment.id,
+      userId: userId!,
+      body: commentBody,
+    },
   });
-  const isUpdatingComment = isUpdating && updatedItemId === comment.id;
+  const isUpdatingComment =
+    isUpdating && updatedData?.get("itemId") === comment.id;
 
   const handleReplySubmit = () => {
     if (!reply.trim()) return;
@@ -161,7 +177,7 @@ export function Comment({ comment }: { comment: CommentData }) {
 
         <div className="flex-1 overflow-hidden">
           <div className="mb-1 flex items-center justify-between">
-            <h4 className="font-medium">{author?.name ?? "Anonymous"}</h4>
+            <h4 className="font-medium">{author?.name ?? anonymous}</h4>
             <div className="flex gap-2 text-sm">
               {comment.replies?.length ? (
                 <Badge>

@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
-import type { Update } from "~/hooks/content";
 import { prisma } from "~/utils/db.server";
+import type { SubmitPayload } from "~/hooks/content";
 import { invariant, invariantResponse } from "~/utils/misc";
 import { MarkdownConverter } from "~/utils/misc.server";
 import { requireUserWithPermission } from "~/utils/permissions.server";
@@ -13,7 +13,8 @@ import { requireUserWithPermission } from "~/utils/permissions.server";
  * @returns The created comment with its ID
  * @throws {Error} If comment body is missing
  */
-export async function addComment({ itemId, body, userId }: Update) {
+export async function addComment(data: SubmitPayload["data"]) {
+  const { itemId, body, userId } = data;
   invariant(body, "Comment body is required to add  a comment");
   const article = await prisma.content.upsert({
     where: { sanityId: itemId },
@@ -44,9 +45,12 @@ export async function addComment({ itemId, body, userId }: Update) {
  * @returns The created reply with its ID
  * @throws {Error} If parent ID or reply content is missing
  */
-export async function addReply({ itemId, body, userId, parentId }: Update) {
+export async function addReply(data: SubmitPayload["data"]) {
+  const { itemId, body, userId, parentId } = data;
   invariant(parentId, "Parent ID is required to reply to a comment");
   invariant(body, "Reply content is required to update a reply");
+  invariant(itemId, "Item ID is required to reply to a comment");
+  invariant(userId, "User ID is required to reply to a comment");
   const article = await prisma.content.upsert({
     where: { sanityId: itemId },
     create: { sanityId: itemId, type: "ARTICLE" },
@@ -76,7 +80,7 @@ export async function addReply({ itemId, body, userId, parentId }: Update) {
  */
 export async function updateComment(
   request: Request,
-  { itemId, body }: Update,
+  { itemId, body }: SubmitPayload["data"],
 ) {
   invariant(body, "Comment body is required");
   const comment = await prisma.comment.findUnique({
@@ -107,7 +111,7 @@ export async function updateComment(
  */
 export async function deleteComment(
   request: Request,
-  { itemId, userId }: Omit<Update, "body">,
+  { itemId, userId }: SubmitPayload["data"],
 ) {
   invariant(userId, "User ID is required");
   const comment = await prisma.comment.findUnique({
@@ -135,8 +139,10 @@ export async function deleteComment(
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteComment({ itemId, userId }: Omit<Update, "body">) {
+export async function upvoteComment(data: SubmitPayload["data"]) {
+  const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
   const upsertLike = await prisma.like.upsert({
     where: { commentId_userId: { commentId: itemId, userId } },
     update: { count: { increment: 1 } },
@@ -157,9 +163,8 @@ export async function upvoteComment({ itemId, userId }: Omit<Update, "body">) {
  */
 export async function updateReply(
   request: Request,
-  { itemId, body, userId }: Update,
+  { itemId, body }: SubmitPayload["data"],
 ) {
-  invariant(userId, "User ID is required");
   invariant(body, "Reply body is required");
 
   const reply = await prisma.comment.findUnique({
@@ -195,7 +200,7 @@ export async function updateReply(
  */
 export async function deleteReply(
   request: Request,
-  { itemId, userId }: Omit<Update, "body">,
+  { itemId, userId }: SubmitPayload["data"],
 ) {
   invariant(userId, "User ID is required");
 
@@ -227,7 +232,10 @@ export async function deleteReply(
  * @returns The updated like record with its ID
  * @throws {Error} If the comment is not a reply
  */
-export async function upvoteReply({ itemId, userId }: Omit<Update, "body">) {
+export async function upvoteReply(data: SubmitPayload["data"]) {
+  const { itemId, userId } = data;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
   const reply = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { parentId: true },
@@ -250,7 +258,8 @@ export async function upvoteReply({ itemId, userId }: Omit<Update, "body">) {
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteArticle({ itemId, userId }: Omit<Update, "body">) {
+export async function upvoteArticle(data: SubmitPayload["data"]) {
+  const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   const upsertLike = await prisma.like.upsert({
     where: { contentId_userId: { contentId: itemId, userId } },
@@ -267,7 +276,8 @@ export async function upvoteArticle({ itemId, userId }: Omit<Update, "body">) {
  * @returns The updated content record with its ID
  * @description Creates a new content record if it doesn't exist, otherwise increments the view count
  */
-export async function trackPageView({ itemId }: { itemId: string }) {
+export async function trackPageView(data: SubmitPayload["data"]) {
+  const { itemId } = data;
   const content = await prisma.content.upsert({
     where: { sanityId: itemId },
     create: { sanityId: itemId, type: "ARTICLE", views: 1 },

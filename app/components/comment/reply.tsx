@@ -22,6 +22,7 @@ import { useNavigate } from "react-router";
 import { getImgSrc, getInitials, requireAuth } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
+import { ReplyIntent } from ".";
 
 type ReplyData = NonNullable<CommentData["replies"]>[0];
 
@@ -53,37 +54,43 @@ export function Reply({ reply }: { reply: ReplyData }) {
   const {
     submit: deleteReply,
     isPending: isDeleting,
-    submittedItemId: deletedItemId,
+    submittedData: deletedData,
   } = useDelete({
-    itemId: reply.id,
-    intent: "delete-reply",
-    userId: userId!,
+    intent: ReplyIntent.DELETE_REPLY,
+    data: {
+      itemId: reply.id,
+      userId: userId!,
+    },
   });
 
-  const isDeletingReply = isDeleting && deletedItemId === reply.id;
+  const isDeletingReply = isDeleting && deletedData?.get("itemId") === reply.id;
 
   const {
     submit: upvoteReply,
     isPending: isUpvoting,
-    submittedItemId: upvotedItemId,
+    submittedData: upvotedData,
   } = useUpvote({
-    itemId: reply.id,
-    intent: "upvote-reply",
-    userId: userId!,
+    intent: ReplyIntent.UPVOTE_REPLY,
+    data: {
+      itemId: reply.id,
+      userId: userId!,
+    },
   });
-  const isUpvotingReply = isUpvoting && upvotedItemId === reply.id;
+  const isUpvotingReply = isUpvoting && upvotedData?.get("itemId") === reply.id;
 
   const {
     submit: updateReply,
     isPending: isUpdating,
-    submittedItemId: updatedItemId,
+    submittedData: updatedData,
   } = useUpdate({
-    itemId: reply.id,
-    userId: userId!,
-    body: replyBody,
-    intent: "update-reply",
+    intent: ReplyIntent.UPDATE_REPLY,
+    data: {
+      itemId: reply.id,
+      userId: userId!,
+      body: replyBody,
+    },
   });
-  const isUpdatingReply = isUpdating && updatedItemId === reply.id;
+  const isUpdatingReply = isUpdating && updatedData?.get("itemId") === reply.id;
 
   function handleUpdateReply() {
     if (!replyBody) return;
@@ -112,9 +119,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
                 {getInitials(author?.name ?? anonymous)}
               </AvatarFallback>
             </Avatar>
-            <h5 className="text-sm font-medium">
-              {author?.name ?? "Anonymous"}
-            </h5>
+            <h5 className="text-sm font-medium">{author?.name ?? anonymous}</h5>
           </div>
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {formatDistanceToNowStrict(new Date(reply.createdAt), {

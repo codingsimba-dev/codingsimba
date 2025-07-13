@@ -13,6 +13,20 @@ import { Button } from "../ui/button";
 import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
 
+export enum CommentIntent {
+  ADD_COMMENT = "add-comment",
+  UPDATE_COMMENT = "update-comment",
+  DELETE_COMMENT = "delete-comment",
+  UPVOTE_COMMENT = "upvote-comment",
+}
+
+export enum ReplyIntent {
+  ADD_REPLY = "add-reply",
+  UPDATE_REPLY = "update-reply",
+  DELETE_REPLY = "delete-reply",
+  UPVOTE_REPLY = "upvote-reply",
+}
+
 export function Comments() {
   const loaderData = useLoaderData<
     | ArticleRoute.ComponentProps["loaderData"]
@@ -26,12 +40,21 @@ export function Comments() {
   const itemId =
     "article" in loaderData ? loaderData.article.id : loaderData.tutorial.id;
 
-  const { submit } = useCreate({
-    itemId: itemId,
-    userId: user?.id as string,
-    intent: "add-comment",
-    body: comment,
-  });
+  const { submit } = useCreate(
+    {
+      intent: CommentIntent.ADD_COMMENT,
+      data: {
+        itemId: itemId,
+        userId: user?.id ?? "",
+        body: comment,
+      },
+    },
+    {
+      errorMessage: "Failed to add comment",
+      successMessage: "Comment added successfully",
+      showErrorToast: true,
+    },
+  );
 
   const handleSubmit = () => {
     if (!comment.trim()) return;
