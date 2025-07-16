@@ -1,357 +1,3 @@
-// import React from "react";
-// import { createId as cuid } from "@paralleldrive/cuid2";
-// import { z } from "zod";
-// import { useFetcher } from "react-router";
-// import { toast } from "sonner";
-// import { getErrorMessage } from "~/utils/misc";
-
-// // ============================================================================
-// // CORE TYPES AND SCHEMAS
-// // ============================================================================
-
-// /**
-//  * Generic constraint for any data payload
-//  */
-// export const DataSchema = z.record(z.string());
-// export type DataPayload = z.infer<typeof DataSchema>;
-
-// /**
-//  * Generic submission payload schema
-//  */
-// export const SubmitSchema = z.object({
-//   /** The data payload for the operation */
-//   data: DataSchema,
-//   /** The intent/action type */
-//   intent: z.string(),
-// });
-
-// export type SubmitPayload = z.infer<typeof SubmitSchema>;
-
-// /**
-//  * Configuration for optimistic submissions
-//  */
-// export interface OptimisticConfig {
-//   /** Custom error handler */
-//   onError?: (error: Error) => void;
-//   /** Custom success handler */
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   onSuccess?: (data: any) => void;
-//   /** Whether to show default error toast */
-//   showErrorToast?: boolean;
-//   /** Whether to show default success toast */
-//   showSuccessToast?: boolean;
-//   /** Custom success toast message */
-//   successMessage?: string;
-//   /** Custom error toast message */
-//   errorMessage?: string;
-//   /** Custom fetcher key generation */
-//   keyGenerator?: (intent: string, data: DataPayload) => string;
-// }
-
-// /**
-//  * Return type from optimistic hooks
-//  */
-// export interface OptimisticReturn {
-//   /** Function to trigger the submission */
-//   submit: () => void;
-//   /** True during submission, false otherwise */
-//   isPending: boolean;
-//   /** Submitted data if available */
-//   submittedData: FormData | undefined;
-//   /** Error object if submission failed, null otherwise */
-//   error: Error | null;
-//   /** Success response data if available */
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   data: any;
-// }
-
-// // ============================================================================
-// // CORE HOOK
-// // ============================================================================
-
-// /**
-//  * Base hook for optimistic submissions with any data and intent type.
-//  * Handles the core submission logic and error handling.
-//  *
-//  * @template TData - Data payload type
-//  * @template TIntent - Intent/action type
-//  * @param params - Submission parameters
-//  * @param config - Optional configuration
-//  * @returns Operation state and controls
-//  *
-//  * @example
-//  * ```tsx
-//  * // Basic usage
-//  * const { submit, isPending, error } = useOptimisticSubmit({
-//  *   intent: 'create-post',
-//  *   data: { title: 'Hello', content: 'World' }
-//  * });
-//  *
-//  * // With configuration
-//  * const { submit, isPending } = useOptimisticSubmit({
-//  *   intent: 'delete-item',
-//  *   data: { itemId: '123' }
-//  * }, {
-//  *   successMessage: 'Item deleted!',
-//  *   onSuccess: (data) => console.log('Success:', data)
-//  * });
-//  * ```
-//  */
-// export function useOptimisticSubmit<
-//   TData extends DataPayload = DataPayload,
-//   TIntent extends string = string,
-// >(
-//   params: {
-//     intent: TIntent;
-//     data: TData;
-//   },
-//   config: OptimisticConfig = {},
-// ): OptimisticReturn {
-//   const {
-//     onError,
-//     onSuccess,
-//     showErrorToast = true,
-//     showSuccessToast = false,
-//     successMessage,
-//     errorMessage,
-//   } = config;
-
-//   const fetcherKey = React.useMemo(() => {
-//     return `${params.intent}-${cuid()}`;
-//   }, [params.intent]);
-
-//   const fetcher = useFetcher({ key: fetcherKey });
-
-//   const submit = React.useCallback(() => {
-//     try {
-//       const parsed = SubmitSchema.parse({
-//         data: params.data,
-//         intent: params.intent,
-//       });
-
-//       fetcher.submit(
-//         { data: JSON.stringify(parsed.data), intent: parsed.intent },
-//         { method: "post" },
-//       );
-//     } catch (error) {
-//       console.error("ERROR", error);
-//       const errorObj =
-//         error instanceof Error ? error : new Error(String(error));
-
-//       if (onError) {
-//         onError(errorObj);
-//       } else if (showErrorToast) {
-//         toast.error(errorMessage || getErrorMessage(errorObj), {
-//           id: fetcherKey,
-//         });
-//       }
-//     }
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [params.data, params.intent, onError, showErrorToast, errorMessage]);
-
-//   // Handle success
-//   React.useEffect(() => {
-//     if (fetcher.data && fetcher.state === "idle" && !fetcher.data.error) {
-//       if (onSuccess) {
-//         onSuccess(fetcher.data);
-//       }
-//       if (showSuccessToast && successMessage) {
-//         toast.success(successMessage, { id: fetcherKey });
-//       }
-//     }
-//   }, [
-//     fetcher.data,
-//     fetcher.state,
-//     onSuccess,
-//     showSuccessToast,
-//     successMessage,
-//     params.intent,
-//     fetcherKey,
-//   ]);
-
-//   return {
-//     submit,
-//     isPending: fetcher.state !== "idle",
-//     submittedData: fetcher.formData,
-//     error: fetcher.data?.error || null,
-//     data: fetcher.data,
-//   };
-// }
-
-// // ============================================================================
-// // SPECIALIZED HOOKS
-// // ============================================================================
-
-// /**
-//  * Hook for creation operations.
-//  * Provides sensible defaults for creating resources.
-//  *
-//  * @template TData - Data payload type
-//  * @param params - Creation parameters
-//  * @param config - Optional configuration
-//  * @returns Operation state and controls
-//  *
-//  * @example
-//  * ```tsx
-//  * // Create a comment
-//  * const { submit, isPending } = useCreate({
-//  *   intent: 'add-comment',
-//  *   data: { body: 'Hello', parentId: '123', userId: 'user1' }
-//  * });
-//  *
-//  * // Create a blog post
-//  * const { submit, isPending } = useCreate({
-//  *   intent: 'create-post',
-//  *   data: { title: 'My Post', content: 'Content here', authorId: 'user1' }
-//  * }, {
-//  *   successMessage: 'Post created!',
-//  *   showSuccessToast: true
-//  * });
-//  * ```
-//  */
-// export function useCreate<TData extends DataPayload = DataPayload>(
-//   params: {
-//     intent: string;
-//     data: TData;
-//   },
-//   config: OptimisticConfig = {},
-// ): OptimisticReturn {
-//   const defaultConfig: OptimisticConfig = {
-//     showSuccessToast: true,
-//     successMessage: "Created successfully!",
-//     ...config,
-//   };
-
-//   return useOptimisticSubmit(params, defaultConfig);
-// }
-
-// /**
-//  * Hook for update operations.
-//  * Provides sensible defaults for updating resources.
-//  *
-//  * @template TData - Data payload type
-//  * @param params - Update parameters
-//  * @param config - Optional configuration
-//  * @returns Operation state and controls
-//  *
-//  * @example
-//  * ```tsx
-//  * // Update a comment
-//  * const { submit, isPending } = useUpdate({
-//  *   intent: 'update-comment',
-//  *   data: { itemId: '123', body: 'Updated content', userId: 'user1' }
-//  * });
-//  *
-//  * // Update user profile
-//  * const { submit, isPending } = useUpdate({
-//  *   intent: 'update-profile',
-//  *   data: { userId: 'user1', name: 'John Doe', email: 'john@example.com' }
-//  * }, {
-//  *   successMessage: 'Profile updated!'
-//  * });
-//  * ```
-//  */
-// export function useUpdate<TData extends DataPayload = DataPayload>(
-//   params: {
-//     intent: string;
-//     data: TData;
-//   },
-//   config: OptimisticConfig = {},
-// ): OptimisticReturn {
-//   const defaultConfig: OptimisticConfig = {
-//     showSuccessToast: true,
-//     successMessage: "Updated successfully!",
-//     ...config,
-//   };
-
-//   return useOptimisticSubmit(params, defaultConfig);
-// }
-
-// /**
-//  * Hook for upvote/like operations.
-//  * Provides sensible defaults for voting on resources.
-//  *
-//  * @template TData - Data payload type
-//  * @param params - Upvote parameters
-//  * @param config - Optional configuration
-//  * @returns Operation state and controls
-//  *
-//  * @example
-//  * ```tsx
-//  * // Upvote a comment
-//  * const { submit, isPending } = useUpvote({
-//  *   intent: 'upvote-comment',
-//  *   data: { itemId: '123', userId: 'user1' }
-//  * });
-//  *
-//  * // Like a post
-//  * const { submit, isPending } = useUpvote({
-//  *   intent: 'like-post',
-//  *   data: { postId: '456', userId: 'user1', value: 1 }
-//  * }, {
-//  *   showSuccessToast: false // Silent operation
-//  * });
-//  * ```
-//  */
-// export function useUpvote<TData extends DataPayload = DataPayload>(
-//   params: {
-//     intent: string;
-//     data: TData;
-//   },
-//   config: OptimisticConfig = {},
-// ): OptimisticReturn {
-//   const defaultConfig: OptimisticConfig = {
-//     showSuccessToast: false, // Usually silent operation
-//     showErrorToast: true,
-//     ...config,
-//   };
-
-//   return useOptimisticSubmit(params, defaultConfig);
-// }
-
-// /**
-//  * Hook for delete operations.
-//  * Provides sensible defaults for deleting resources.
-//  *
-//  * @template TData - Data payload type
-//  * @param params - Delete parameters
-//  * @param config - Optional configuration
-//  * @returns Operation state and controls
-//  *
-//  * @example
-//  * ```tsx
-//  * // Delete a comment
-//  * const { submit, isPending } = useDelete({
-//  *   intent: 'delete-comment',
-//  *   data: { itemId: '123', userId: 'user1' }
-//  * });
-//  *
-//  * // Delete a post with confirmation
-//  * const { submit, isPending } = useDelete({
-//  *   intent: 'delete-post',
-//  *   data: { postId: '456', userId: 'user1' }
-//  * }, {
-//  *   successMessage: 'Post deleted successfully!',
-//  *   showSuccessToast: true
-//  * });
-//  * ```
-//  */
-// export function useDelete<TData extends DataPayload = DataPayload>(
-//   params: {
-//     intent: string;
-//     data: TData;
-//   },
-//   config: OptimisticConfig = {},
-// ): OptimisticReturn {
-//   const defaultConfig: OptimisticConfig = {
-//     showSuccessToast: true,
-//     successMessage: "Deleted successfully!",
-//     ...config,
-//   };
-
-//   return useOptimisticSubmit(params, defaultConfig);
-// }
-
 import React from "react";
 import { z } from "zod";
 import { useFetcher } from "react-router";
@@ -725,16 +371,27 @@ export function useBatchOptimistic<TData extends DataPayload = DataPayload>(
 
   const baseHook = useOptimisticSubmit(params, optimizedConfig);
 
+  // Use useRef to store timeout ID to avoid memory leaks
+  const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
+
   // Debounced submit function
-  const debouncedSubmit = React.useMemo(() => {
-    let timeoutId: NodeJS.Timeout;
+  const debouncedSubmit = React.useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      baseHook.submit();
+    }, debounceMs);
+  }, [baseHook, debounceMs]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
     return () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        baseHook.submit();
-      }, debounceMs);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, [baseHook.submit, debounceMs]);
+  }, []);
 
   return React.useMemo(
     () => ({
@@ -762,6 +419,7 @@ export function useOptimisticWithRetry<TData extends DataPayload = DataPayload>(
 ): OptimisticReturn & { retryCount: number } {
   const { maxRetries = 3, retryDelayMs = 1000, ...restConfig } = config;
   const [retryCount, setRetryCount] = React.useState(0);
+  const retryTimeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
   const optimizedConfig = React.useMemo(
     () => ({
@@ -769,9 +427,13 @@ export function useOptimisticWithRetry<TData extends DataPayload = DataPayload>(
       ...restConfig,
       onError: (error: Error) => {
         if (retryCount < maxRetries) {
-          setTimeout(() => {
+          // Clear any existing retry timeout
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          retryTimeoutRef.current = setTimeout(() => {
             setRetryCount((prev) => prev + 1);
-            baseHook.submit();
+            // baseHook.submit() will be called after re-render
           }, retryDelayMs);
         } else {
           restConfig.onError?.(error);
@@ -783,12 +445,32 @@ export function useOptimisticWithRetry<TData extends DataPayload = DataPayload>(
 
   const baseHook = useOptimisticSubmit(params, optimizedConfig);
 
+  // Trigger retry submit when retry count changes
+  React.useEffect(() => {
+    if (retryCount > 0) {
+      baseHook.submit();
+    }
+  }, [retryCount, baseHook]);
+
   // Reset retry count on successful submission
   React.useEffect(() => {
     if (baseHook.data && !baseHook.error) {
       setRetryCount(0);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = undefined;
+      }
     }
   }, [baseHook.data, baseHook.error]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return React.useMemo(
     () => ({

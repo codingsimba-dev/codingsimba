@@ -1,6 +1,5 @@
-import React from "react";
 import type { Route } from "./+types/tutorial";
-import { Outlet, Await } from "react-router";
+import { Outlet } from "react-router";
 import {
   getTutorialDetails,
   getTutorialLessons,
@@ -148,23 +147,18 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
       <div className="container mx-auto w-full px-4 py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <main className="w-full max-w-full lg:col-span-8">
-            <React.Suspense fallback={<div>Loading lessons...</div>}>
-              <Await resolve={lessons}>
-                {(resolvedLessons) => (
-                  <SideBarContainer
-                    title="Tutorial Sections"
-                    type="nav"
-                    className="mb-8 block lg:hidden"
-                  >
-                    <LessonsNavigation
-                      lessons={resolvedLessons}
-                      activeLessonId={lessonId}
-                      tutorial={tutorial}
-                    />
-                  </SideBarContainer>
-                )}
-              </Await>
-            </React.Suspense>
+            <SideBarContainer
+              title="Tutorial Sections"
+              type="nav"
+              className="mb-8 block lg:hidden"
+            >
+              <LessonsNavigation
+                lessons={lessons}
+                activeLessonId={lessonId}
+                tutorial={tutorial}
+              />
+            </SideBarContainer>
+
             <Outlet />
             <p>
               Share the topics you&apos;d like to see covered in future
