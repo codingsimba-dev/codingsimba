@@ -185,7 +185,8 @@ export async function listProducts() {
  */
 export async function createCustomerSession(customerId: string) {
   return polar.customerSessions.create({
-    customerId,
+    externalCustomerId: customerId,
+    // customerId,
   });
 }
 

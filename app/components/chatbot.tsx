@@ -14,9 +14,9 @@ import { Tooltip, TooltipContent } from "~/components/ui/tooltip";
 import { TooltipTrigger } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
 import { useFetcher } from "react-router";
-import { useIsPending } from "~/utils/misc";
 import { FormError } from "./form-errors";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { VisuallyHidden } from "./ui/visually-hidden";
 
 type ChatBotProps = {
   documentId: string;
@@ -24,13 +24,12 @@ type ChatBotProps = {
 };
 
 export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
-  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [question, setQuestion] = React.useState("");
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   const answer = fetcher.data?.answer;
-  const isLoading = useIsPending({
-    formAction: fetcher.formAction,
-    formMethod: fetcher.formMethod,
-  });
+  const isLoading = fetcher.state !== "idle";
+  const isError = !!fetcher.data?.error;
+  const errors = fetcher.data?.error ? fetcher.data.error.split(",") : [];
 
   return (
     <Sheet>
@@ -61,6 +60,8 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
         <div className="-mt-6 flex flex-1 flex-col overflow-y-auto px-4">
           {isLoading ? (
             <LoadingSkeleton />
+          ) : isError ? (
+            <ErrorUI errors={errors} />
           ) : answer ? (
             <Markdown source={answer} className="pt-0" />
           ) : (
@@ -89,10 +90,6 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
           action="/chatbot"
           className="mt-auto border-t border-gray-200 p-4"
         >
-          <FormError
-            errors={fetcher.data?.error ? fetcher.data.error.split(",") : []}
-            className="-mt-2 mb-4"
-          />
           <div className="flex items-center gap-2">
             <HoneypotInputs />
             <input type="hidden" name="documentId" value={documentId} />
@@ -101,11 +98,12 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
               placeholder="What learning challenge can I help you tackle?"
               className="flex-1"
               autoFocus
-              ref={textAreaRef}
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  textAreaRef.current?.form?.requestSubmit();
+                  fetcher.submit({ documentId, question }, { method: "post" });
                 }
               }}
             />
@@ -114,12 +112,12 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
                 <Button
                   size="sm"
                   type="submit"
-                  disabled={
-                    isLoading || !textAreaRef.current?.value?.trim()?.length
-                  }
+                  disabled={isLoading || !question?.trim()?.length}
                 >
                   <Send className="size-4" />
-                  <span className="sr-only">Send</span>
+                  <VisuallyHidden>
+                    {isLoading ? "Sending..." : "Send"}
+                  </VisuallyHidden>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -130,6 +128,15 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
         </fetcher.Form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function ErrorUI({ errors }: { errors: string[] }) {
+  return (
+    <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6">
+      <Bot className="size-20" />
+      <FormError errors={errors} className="text-base" />
+    </div>
   );
 }
 

@@ -1,37 +1,27 @@
-import { CustomerPortal } from "@polar-sh/remix";
 import type { Route } from "./+types/portal";
 import { requireUserId } from "~/utils/auth.server";
 import { prisma } from "~/utils/db.server";
 import { redirectWithToast } from "~/utils/toast.server";
 import { getErrorMessage } from "~/utils/misc";
-
-const { NODE_ENV } = process.env;
+import { createCustomerSession } from "~/utils/subcription.server";
+import { redirect } from "react-router";
 
 async function validatePortalAccess(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { polarCustomerId: true },
+  const subscription = await prisma.subscription.findFirst({
+    where: { userId },
+    select: { id: true },
   });
-
-  if (!user || !user.polarCustomerId) {
-    throw redirectWithToast(`/profile?tab=Subscription`, {
-      type: "error",
-      description: "You don't have an active subscription",
-    });
+  if (!subscription) {
+    throw new Error("You don't have an active subscription");
   }
-  return { user };
 }
 
-export async function loader(loaderArgs: Route.LoaderArgs) {
-  const { request } = loaderArgs;
+export async function loader({ request }: Route.LoaderArgs) {
   try {
     const userId = await requireUserId(request);
-    const { user } = await validatePortalAccess(userId);
-    return CustomerPortal({
-      accessToken: process.env.POLAR_ACCESS_TOKEN,
-      getCustomerId: async () => user.polarCustomerId!,
-      server: NODE_ENV === "development" ? "sandbox" : "production",
-    })(loaderArgs);
+    await validatePortalAccess(userId);
+    const session = await createCustomerSession(userId);
+    return redirect(session.customerPortalUrl);
   } catch (error) {
     const searchParams = new URLSearchParams({ tab: "Subscription" });
     throw await redirectWithToast(`/profile?${searchParams.toString()}`, {

@@ -33,7 +33,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     const checkout = await getCheckoutSession(checkoutId);
     return { checkout };
   } catch (error) {
-    throw redirectWithToast("/", {
+    throw await redirectWithToast("/", {
       type: "error",
       description: getErrorMessage(error),
     });
@@ -58,7 +58,7 @@ function SuccessHeader({ productName }: SuccessHeaderProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.3 }}
       className="mb-12 text-center"
     >
       <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
@@ -120,7 +120,7 @@ function SubscriptionDetails({ checkout, product }: SubscriptionDetailsProps) {
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
       className="h-full"
     >
       <Card className="h-full">
@@ -193,7 +193,7 @@ function FeaturesList({ productName }: FeaturesListProps) {
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
       className="h-full"
     >
       <Card className="h-full">
@@ -238,7 +238,7 @@ function ConfirmationInfo({ customerEmail }: ConfirmationInfoProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.4 }}
+      transition={{ duration: 0.3, delay: 0.3 }}
       className="mb-12"
     >
       <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
@@ -286,6 +286,7 @@ interface CallToActionProps {
  * @param productName - The name of the subscribed product/plan
  */
 function CallToAction({ productName }: CallToActionProps) {
+  const notForCourse = ["premium", "basic"];
   /**
    * Get the appropriate learning path based on the product type
    *
@@ -293,14 +294,16 @@ function CallToAction({ productName }: CallToActionProps) {
    * @returns The route path for the learning destination
    */
   const getLearningPath = (productName: string) => {
-    return productName.toLowerCase() !== "premium" ? "/courses" : "/tutorials";
+    return notForCourse.includes(productName.toLowerCase())
+      ? "/tutorials"
+      : "/courses";
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.5 }}
+      transition={{ duration: 0.3, delay: 0.3 }}
       className="text-center"
     >
       <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 p-8 text-white">

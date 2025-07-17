@@ -61,6 +61,12 @@ export function Subscription() {
                 </div>
               </div>
               <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                  <div className="font-medium"> Started on</div>
+                  <div>
+                    {format(subscription.currentPeriodStart, "MMM d, yyyy")}
+                  </div>
+                </div>
                 {subscription.currentPeriodEnd &&
                 !subscription.cancelAtPeriodEnd ? (
                   <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">

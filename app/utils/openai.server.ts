@@ -59,7 +59,7 @@ const { DEEPSEEK_API_KEY } = process.env;
  */
 export const openai = new OpenAI({
   apiKey: DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com/v1",
+  baseURL: "https://api.deepseek.com",
 });
 
 /**

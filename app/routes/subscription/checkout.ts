@@ -12,7 +12,7 @@ export async function action({ request }: Route.ActionArgs) {
     const url = getDomainUrl(request);
     const user = await requireUser(request, { redirectTo: "/signin" });
     const formData = await request.formData();
-    const products = String(formData.get("products")).split(",");
+    const products = formData.getAll("products").map((p) => String(p));
     const group = String(formData.get("group")) as SubscriptionType;
     invariant(products.length > 0 && group, "Products and group are required");
     const successUrl = `${url}/subscription/success?checkout_id={CHECKOUT_ID}`;

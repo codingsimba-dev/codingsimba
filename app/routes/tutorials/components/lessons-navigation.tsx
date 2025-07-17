@@ -24,7 +24,7 @@ export function LessonsNavigation({
             {lessons.map((lesson) => (
               <Link
                 key={lesson.id}
-                to={`/tutorials/${tutorial.slug}/lessons/${lesson.id}`}
+                to={`/tutorials/${tutorial.id}/lessons/${lesson.id}`}
                 className={cn(
                   "rounded-md px-4 py-2 text-sm font-medium",
                   activeLessonId === lesson.id

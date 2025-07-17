@@ -20,9 +20,9 @@ type Response = {
 };
 
 export const ChatSchema = z.object({
-  documentId: z.string().optional(),
+  documentId: z.string(),
   question: z
-    .string({ required_error: "Ask a question to get started" })
+    .string({ message: "Ask a question to get started" })
     .min(5, { message: "Ask a more specific question" })
     .max(1000, { message: "Question is too long" }),
 });
@@ -33,7 +33,7 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   await checkHoneypot(formData);
   const userId = await requireUserId(request);
-  const response = ChatSchema.safeParse(formData);
+  const response = ChatSchema.safeParse(Object.fromEntries(formData));
   if (!response.success) {
     return {
       answer: null,
