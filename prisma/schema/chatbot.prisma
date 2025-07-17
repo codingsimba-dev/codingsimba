@@ -1,0 +1,63 @@
+model ConversationMessage {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  documentId String?
+
+  role    MessageRole
+  content String
+
+  // AI usage tracking
+  aiUsageType AIUsageType @default(learning_assistant)
+  tokensUsed  Int         @default(0)
+  costInCents Int         @default(0)
+
+  // Optional conversation grouping
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([role])
+  @@index([aiUsageType])
+  @@index([userId, documentId])
+  @@index([conversationId, createdAt])
+}
+
+model Conversation {
+  id String @id @default(ulid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  documentId String?
+  title      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ConversationMessage[]
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([createdAt])
+  @@index([userId, documentId])
+}
+
+enum AIUsageType {
+  learning_assistant
+  chatbot
+  code_review
+}
+
+enum MessageRole {
+  user
+  assistant
+}

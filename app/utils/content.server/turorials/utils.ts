@@ -7,8 +7,9 @@ import {
   countQuery,
   lessonsQuery,
   lessonDetailsQuery,
+  chatbotLessonQuery,
 } from "./queries";
-import type { Tutorial, Lesson } from "./types";
+import type { Tutorial, Lesson, ChatBotLesson } from "./types";
 import { bundleMDX } from "mdx-bundler";
 import { bundleComponents } from "~/utils/misc.server";
 
@@ -105,6 +106,19 @@ export async function getTutorialDetails(tutorialId: string) {
  */
 export async function getTutorialLessons(tutorialId: string) {
   return client.fetch<Lesson[]>(lessonsQuery, { tutorialId });
+}
+
+/**
+ * Retrieve a single lesson content
+ * @param {string} lessonId - The ID of the lesson to retrieve
+ * @returns {Promise<Lesson>} The lesson content
+ * @example
+ * // Get the content of a lesson about React hooks
+ * const lesson = await getChatBotLessonDetails("1234567890");
+ * console.log(lesson.title); // "This is the title of the lesson"
+ */
+export async function getChatBotLessonDetails(lessonId: string) {
+  return await client.fetch<ChatBotLesson>(chatbotLessonQuery, { lessonId });
 }
 
 /**

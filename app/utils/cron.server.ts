@@ -34,41 +34,8 @@ interface CronJob {
   enabled: boolean;
 }
 
-const { NODE_ENV } = process.env;
-const isProduction = NODE_ENV === "production";
-
-/**
- * Makes an HTTP request to a maintenance endpoint
- */
-async function makeMaintenanceRequest(
-  endpoint: string,
-  method: "GET" | "POST" = "POST",
-): Promise<Record<string, unknown>> {
-  const baseUrl = process.env.APP_URL || "http://localhost:3000";
-  const url = `${baseUrl}${endpoint}`;
-
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "TekBreed-Cron/1.0",
-      },
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const json = await response.json();
-    console.log(json);
-    return json;
-  } catch (error) {
-    console.error(`Failed to make request to ${endpoint}:`, error);
-    throw error;
-  }
-}
+// const { NODE_ENV } = process.env;
+// const isProduction = NODE_ENV === "production";
 
 /**
  * Array of all configured cron jobs
@@ -91,18 +58,14 @@ const cronJobs: CronJob[] = [
     name: "log-cleanup",
     schedule: "0 2 * * *", // Daily at 2 AM UTC
     handler: async () => {
-      console.log("Running scheduled log cleanup...");
-      const result = await makeMaintenanceRequest(
-        `/maintenance/cleanup-logs?task=log-cleanup&dry-run=${isProduction ? "false" : "true"}`,
-      );
-      if (result.success) {
-        const deletedCount =
-          ((result.result as Record<string, unknown>)
-            ?.deletedCount as number) || 0;
-        console.log(`Log cleanup completed: ${deletedCount} logs deleted`);
-      } else {
-        throw new Error((result.error as string) || "Log cleanup failed");
-      }
+      /**
+       * TODO: Add log cleanup tasks here
+       * Potential tasks:
+       * - Clean up old logs
+       * - Clean up logs that have no user
+       * - Clean up logs that have no active connections
+       * - Clean up logs that have no active connections
+       */
     },
     enabled: true,
   },
@@ -110,20 +73,15 @@ const cronJobs: CronJob[] = [
     name: "session-cleanup",
     schedule: "0 1 * * *", // Daily at 1 AM UTC
     handler: async () => {
-      console.log("Running session cleanup...");
-      const result = await makeMaintenanceRequest(
-        `/maintenance/cleanup-sessions?task=session-cleanup&dry-run=${isProduction ? "false" : "true"}`,
-      );
-      if (result.success) {
-        const deletedCount =
-          ((result.result as Record<string, unknown>)
-            ?.deletedCount as number) || 0;
-        console.log(
-          `Session cleanup completed: ${deletedCount} sessions deleted`,
-        );
-      } else {
-        throw new Error((result.error as string) || "Session cleanup failed");
-      }
+      /**
+       * TODO: Add session cleanup tasks here
+       * Potential tasks:
+       * - Clean up expired sessions
+       * - Clean up orphaned sessions
+       * - Clean up sessions that have no user
+       * - Clean up sessions that have no active connections
+       * - Clean up sessions that have no active connections
+       */
     },
     enabled: true,
   },

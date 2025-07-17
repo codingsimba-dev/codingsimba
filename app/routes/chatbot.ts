@@ -6,7 +6,13 @@ import { StatusCodes } from "http-status-codes";
 import { bundleMDX } from "~/utils/mdx.server";
 import { checkHoneypot } from "~/utils/honeypot.server";
 import { z } from "zod";
-// import { requireUserId } from "~/utils/auth.server";
+import { requireUserId } from "~/utils/auth.server";
+import {
+  getOrCreateConversation,
+  addUserMessage,
+  addAssistantMessage,
+  createConversation,
+} from "~/utils/conversation.server";
 
 type Response = {
   answer: string | null;
@@ -19,15 +25,14 @@ export const ChatSchema = z.object({
     .string({ required_error: "Ask a question to get started" })
     .min(5, { message: "Ask a more specific question" })
     .max(1000, { message: "Question is too long" }),
-  previousAnswer: z.string().optional(),
 });
 
 export const loader = () => redirect("/");
 
 export async function action({ request }: Route.ActionArgs) {
-  // const userId = await requireUserId(request);
   const formData = await request.formData();
   await checkHoneypot(formData);
+  const userId = await requireUserId(request);
   const response = ChatSchema.safeParse(formData);
   if (!response.success) {
     return {
@@ -37,24 +42,48 @@ export async function action({ request }: Route.ActionArgs) {
         .join(", "),
     } as Response;
   }
-  const { documentId, question, previousAnswer } = response.data;
+
+  const { documentId, question } = response.data;
 
   try {
-    const response = await askQuestion({
+    // Get or create conversation for this user and document
+    const conversation = await getOrCreateConversation({
+      userId,
+      documentId,
+      title: `Chat about ${documentId || "general topics"}`,
+    });
+
+    // Add user message to conversation
+    await addUserMessage({
+      userId,
+      conversationId: conversation.id,
+      content: question,
+    });
+
+    // Get AI response
+    const aiResponse = await askQuestion({
       question,
       documentId,
-      previousAnswer,
     });
-    if (!response.answer) {
+    if (!aiResponse.answer) {
       return {
         answer: null,
         error: "An error occurred, please try again",
       } as Response;
     }
 
-    // TODO: Track user usage
-    // console.log(response.sources);
-    const md = json2md(response.answer);
+    // Add assistant message to conversation
+    await addAssistantMessage({
+      userId,
+      conversationId: conversation.id,
+      content: aiResponse.answer,
+    });
+
+    // Create AI interaction record for tracking
+    await createConversation({ userId, documentId });
+
+    // Convert to MDX and return
+    const md = json2md(aiResponse.answer);
     const { code } = await bundleMDX({ source: md });
     return { answer: code, error: null } as Response;
   } catch (error) {

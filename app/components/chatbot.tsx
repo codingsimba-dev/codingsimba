@@ -13,13 +13,17 @@ import { Textarea } from "~/components/ui/textarea";
 import { Tooltip, TooltipContent } from "~/components/ui/tooltip";
 import { TooltipTrigger } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
-import { type Tutorial } from "~/utils/content.server/turorials/types";
 import { useFetcher } from "react-router";
 import { useIsPending } from "~/utils/misc";
 import { FormError } from "./form-errors";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 
-export function ChatBot({ item }: { item: Tutorial }) {
+type ChatBotProps = {
+  documentId: string;
+  documentTitle: string;
+};
+
+export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
   const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   const answer = fetcher.data?.answer;
@@ -64,7 +68,7 @@ export function ChatBot({ item }: { item: Tutorial }) {
               <Bot className="size-20" />
               <p className="text-center text-lg font-medium text-gray-700 dark:text-gray-300">
                 Hi! I&apos;m here to support your learning journey in{" "}
-                <p className="font-bold">{item.title}</p>.
+                <p className="font-bold">{documentTitle}</p>.
               </p>
               <p className="text-left text-sm text-gray-500 dark:text-gray-400">
                 I can help you:
@@ -91,7 +95,7 @@ export function ChatBot({ item }: { item: Tutorial }) {
           />
           <div className="flex items-center gap-2">
             <HoneypotInputs />
-            <input type="hidden" name="documentId" value={item.id} />
+            <input type="hidden" name="documentId" value={documentId} />
             <Textarea
               name="question"
               placeholder="What learning challenge can I help you tackle?"
@@ -107,7 +111,13 @@ export function ChatBot({ item }: { item: Tutorial }) {
             />
             <Tooltip>
               <TooltipTrigger>
-                <Button size="sm" type="submit" disabled={isLoading}>
+                <Button
+                  size="sm"
+                  type="submit"
+                  disabled={
+                    isLoading || !textAreaRef.current?.value?.trim()?.length
+                  }
+                >
                   <Send className="size-4" />
                   <span className="sr-only">Send</span>
                 </Button>

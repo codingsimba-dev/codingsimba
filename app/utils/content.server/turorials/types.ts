@@ -22,6 +22,17 @@ const LessonSchema = z.object({
 });
 
 /**
+ * Schema for a chatbot tutorial lesson
+ * Defines the structure of an id and title of a  lesson within a tutorial.
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ChatBotLessonSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+});
+
+/**
  * Schema for a complete tutorial
  * Defines the structure of a tutorial in the system.
  */
@@ -50,3 +61,8 @@ export type Tutorial = z.infer<typeof TutorialSchema>;
  * Type representing a single lesson
  */
 export type Lesson = z.infer<typeof LessonSchema>;
+
+/**
+ * Type representing a single chat bot lesson
+ */
+export type ChatBotLesson = z.infer<typeof ChatBotLessonSchema>;

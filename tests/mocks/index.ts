@@ -6,6 +6,7 @@ import { handlers as resendHandlers } from "./resend";
 import { handlers as bunnyHandlers } from "./bunny";
 import { handlers as githubHandlers } from "./github";
 import { handlers as openaiHandlers } from "./openai";
+import { handlers as polarHandlers } from "./polar";
 
 // React Router Dev Tools
 const miscHandlers: HttpHandler[] =
@@ -20,6 +21,7 @@ export const server = setupServer(
   ...sanityHandlers,
   ...githubHandlers,
   ...openaiHandlers,
+  ...polarHandlers,
 );
 server.listen({ onUnhandledRequest: "warn" });
 console.info("🔶 Mock server installed");

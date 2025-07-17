@@ -1,6 +1,8 @@
 import type { Route } from "./+types/tutorial";
+import type { ChatBotLesson } from "~/utils/content.server/turorials/types";
 import { Outlet } from "react-router";
 import {
+  getChatBotLessonDetails,
   getTutorialDetails,
   getTutorialLessons,
 } from "~/utils/content.server/turorials/utils";
@@ -61,6 +63,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   invariantResponse(tutorial, "Tutorial not found", {
     status: StatusCodes.NOT_FOUND,
   });
+  let lesson: ChatBotLesson | undefined = undefined;
+  if (lessonId) {
+    lesson = await getChatBotLessonDetails(lessonId);
+  }
 
   return {
     lessons,
@@ -68,6 +74,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     comments,
     metrics,
     tutorial,
+    lesson,
   };
 }
 

@@ -15,8 +15,9 @@ export function SideBarContainer({
   type?: "nav" | "default";
   className?: string;
 }) {
-  const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
-  const { tutorial } = loaderData;
+  const isNav = type === "nav";
+  const { lesson } = useLoaderData<Route.ComponentProps["loaderData"]>();
+
   return (
     <div
       className={cn(
@@ -26,7 +27,9 @@ export function SideBarContainer({
     >
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
         <h3 className="font-medium">{title}</h3>
-        {type === "nav" ? <ChatBot item={tutorial} /> : null}
+        {isNav && lesson ? (
+          <ChatBot documentId={lesson.id} documentTitle={lesson.title} />
+        ) : null}
       </div>
       {children}
     </div>

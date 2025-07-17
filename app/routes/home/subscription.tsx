@@ -86,7 +86,7 @@ export function Subscription() {
   return (
     <React.Suspense fallback={<SubscriptionSkeleton />}>
       <Await resolve={products}>
-        {(products) => <SubscriptionPromise products={products} />}
+        {(products) => <ResolveSubscription products={products} />}
       </Await>
     </React.Suspense>
   );
@@ -104,12 +104,12 @@ export function Subscription() {
  *
  * @example
  * ```tsx
- * <SubscriptionPromise products={productsData} />
+ * <ResolveSubscription products={productsData} />
  * ```
  *
  * @returns {JSX.Element} The complete subscription pricing interface
  */
-export function SubscriptionPromise({
+export function ResolveSubscription({
   products,
 }: {
   products: Awaited<Route.ComponentProps["loaderData"]["products"]>;
@@ -521,7 +521,7 @@ function PricingCard({
       key={index}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      transition={{ duration: 0.3, delay: index * 0.1 }}
       viewport={{ once: true }}
       className={cn(
         "relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900",

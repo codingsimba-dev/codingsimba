@@ -36,7 +36,7 @@ export async function action({ request }: Route.ActionArgs) {
     });
     return redirect(response.url);
   } catch (error) {
-    throw redirectWithToast("/", {
+    throw await redirectWithToast("/", {
       type: "error",
       description: getErrorMessage(error),
     });

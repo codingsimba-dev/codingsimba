@@ -109,7 +109,7 @@ export function Header({
             className="text-2xl font-bold capitalize md:text-3xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.3 }}
           >
             {title}
           </motion.h1>
@@ -117,7 +117,7 @@ export function Header({
             className="mb-2 text-lg text-gray-600 dark:text-gray-300"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
           >
             {description}
           </motion.p>
@@ -126,7 +126,7 @@ export function Header({
               className="relative mx-auto max-w-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
             >
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"

@@ -8,33 +8,33 @@ import { getErrorMessage } from "~/utils/misc";
 const { NODE_ENV } = process.env;
 
 async function validatePortalAccess(userId: string) {
-  const subscription = await prisma.subscription.findFirst({
-    where: { userId },
-    select: { id: true },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { polarCustomerId: true },
   });
 
-  if (!subscription) {
+  if (!user || !user.polarCustomerId) {
     throw redirectWithToast(`/profile?tab=Subscription`, {
       type: "error",
       description: "You don't have an active subscription",
     });
   }
-  return { subscription };
+  return { user };
 }
 
 export async function loader(loaderArgs: Route.LoaderArgs) {
   const { request } = loaderArgs;
   try {
     const userId = await requireUserId(request);
-    await validatePortalAccess(userId);
+    const { user } = await validatePortalAccess(userId);
     return CustomerPortal({
       accessToken: process.env.POLAR_ACCESS_TOKEN,
-      getCustomerId: async () => userId,
+      getCustomerId: async () => user.polarCustomerId!,
       server: NODE_ENV === "development" ? "sandbox" : "production",
     })(loaderArgs);
   } catch (error) {
     const searchParams = new URLSearchParams({ tab: "Subscription" });
-    throw redirectWithToast(`/profile?${searchParams.toString()}`, {
+    throw await redirectWithToast(`/profile?${searchParams.toString()}`, {
       type: "error",
       description: getErrorMessage(error),
     });

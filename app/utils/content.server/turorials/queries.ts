@@ -135,6 +135,15 @@ export const lessonDetailsQuery = groq`*[_type == "lesson" && _id == $lessonId][
 }`;
 
 /**
+ * GROQ query to fetch chat bot lesson details
+ * @returns {string} GROQ query string that returns chatbot lesson details
+ */
+export const chatbotLessonQuery = groq`*[_type == "lesson" && _id == $lessonId][0] {
+  "id": _id,
+  title
+}`;
+
+/**
  * GROQ query to fetch popular tags with their usage count for tutorials
  * @returns {string} GROQ query string that returns:
  * - Tag information (id, title, slug)
