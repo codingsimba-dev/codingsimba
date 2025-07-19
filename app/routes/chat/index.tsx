@@ -1,4 +1,4 @@
-import type { Route } from "./+types/chatbot";
+import type { Route } from "./+types/index";
 import json2md from "json2md";
 import { redirect } from "react-router";
 import { askQuestion } from "~/utils/openai.server";
@@ -11,7 +11,6 @@ import {
   getOrCreateConversation,
   addUserMessage,
   addAssistantMessage,
-  createConversation,
 } from "~/utils/conversation.server";
 
 type Response = {
@@ -57,6 +56,7 @@ export async function action({ request }: Route.ActionArgs) {
     await addUserMessage({
       userId,
       conversationId: conversation.id,
+      documentId,
       content: question,
     });
 
@@ -76,11 +76,9 @@ export async function action({ request }: Route.ActionArgs) {
     await addAssistantMessage({
       userId,
       conversationId: conversation.id,
+      documentId,
       content: aiResponse.answer,
     });
-
-    // Create AI interaction record for tracking
-    await createConversation({ userId, documentId });
 
     // Convert to MDX and return
     const md = json2md(aiResponse.answer);
@@ -113,6 +111,7 @@ export async function action({ request }: Route.ActionArgs) {
         } as Response;
       }
     }
+    console.error(error);
 
     return { answer: null, error: "Internal server error" } as Response;
   }

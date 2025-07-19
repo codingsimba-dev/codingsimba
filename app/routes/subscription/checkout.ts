@@ -1,35 +1,41 @@
 import type { Route } from "./+types/checkout";
-import { SubscriptionType } from "~/generated/prisma";
+import { SubscriptionType } from "~/generated/prisma/client";
 import { createCheckoutSession } from "~/utils/subcription.server";
 import { requireUser } from "~/utils/auth.server";
-import { getDomainUrl, getErrorMessage, invariant } from "~/utils/misc";
+import { getDomainUrl, getErrorMessage } from "~/utils/misc";
 import { redirect } from "react-router";
-import { prisma } from "~/utils/db.server";
 import { redirectWithToast } from "~/utils/toast.server";
+import { z } from "zod";
+
+const CheckoutSchema = z.object({
+  products: z.array(z.string()),
+  group: z.nativeEnum(SubscriptionType),
+  teamId: z.string().optional(),
+});
 
 export async function action({ request }: Route.ActionArgs) {
   try {
     const url = getDomainUrl(request);
     const user = await requireUser(request, { redirectTo: "/signin" });
     const formData = await request.formData();
-    const products = formData.getAll("products").map((p) => String(p));
-    const group = String(formData.get("group")) as SubscriptionType;
-    invariant(products.length > 0 && group, "Products and group are required");
+    const { products, group, teamId } = CheckoutSchema.parse(
+      Object.fromEntries(formData),
+    );
     const successUrl = `${url}/subscription/success?checkout_id={CHECKOUT_ID}`;
     const isTeam = group === SubscriptionType.team;
 
-    const member = isTeam
-      ? await prisma.teamMember.findFirst({
-          where: { userId: user.id },
-          select: { teamId: true },
-        })
-      : null;
+    /**
+     * TODO:
+     * - If it is a team subscription, we will provide them with a modal
+     *   to select the team they want to subscribe to.
+     * - A user can have more than one team, we need to handle this.
+     */
 
     const response = await createCheckoutSession({
+      teamId,
       products,
       successUrl,
       userId: user.id,
-      teamId: isTeam ? member?.teamId : undefined,
       customerEmail: user.email,
       customerName: user.name,
       isBusinessCustomer: isTeam,

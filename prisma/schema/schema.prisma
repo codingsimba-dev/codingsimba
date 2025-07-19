@@ -37,6 +37,9 @@ model User {
   connections          Connection[]
   likes                Like[]
   comments             Comment[]
+  bookmarks            Bookmark[]
+  flags                ContentFlag[]
+  resolvedFlags        ContentFlag[]        @relation("FlagResolver")
   reviews              Review[]
   programs             Program[]
   courses              Course[]

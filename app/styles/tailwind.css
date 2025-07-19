@@ -49,3 +49,63 @@ html,
 body {
   @apply scroll-smooth bg-white text-gray-950 dark:bg-gray-950 dark:text-white;
 }
+
+/* Global scrollbar styling */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) rgb(243 244 246);
+}
+
+html::-webkit-scrollbar {
+  width: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 9999px;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219);
+  border-radius: 9999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  html {
+    scrollbar-color: rgb(75 85 99) rgb(31 41 55);
+  }
+
+  html::-webkit-scrollbar-track {
+    background: rgb(31 41 55);
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+  }
+
+  html::-webkit-scrollbar-thumb:hover {
+    background: rgb(107 114 128);
+  }
+}
+
+/* Dark mode when theme is explicitly set */
+[data-theme="dark"] html {
+  scrollbar-color: rgb(75 85 99) rgb(31 41 55);
+}
+
+[data-theme="dark"] html::-webkit-scrollbar-track {
+  background: rgb(31 41 55);
+}
+
+[data-theme="dark"] html::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+}
+
+[data-theme="dark"] html::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}

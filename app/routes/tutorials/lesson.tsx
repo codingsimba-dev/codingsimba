@@ -6,8 +6,22 @@ import { StatusCodes } from "http-status-codes";
 import { Markdown } from "~/components/mdx";
 import { Await } from "react-router";
 import { Skeleton } from "~/components/ui/skeleton";
+import { getLessonConversation } from "~/utils/chatbot.server";
+import { getUserId } from "~/utils/auth.server";
+import type {
+  Conversation,
+  ConversationMessage,
+} from "~/generated/prisma/client";
 
-export async function loader({ params }: Route.LoaderArgs) {
+export type LessonConversation = Pick<
+  Conversation,
+  "id" | "title" | "createdAt"
+> & {
+  messages: Pick<ConversationMessage, "content" | "createdAt" | "role">[];
+};
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const userId = await getUserId(request);
   const { lessonId } = params;
   invariantResponse(lessonId, "Lesson ID is required", {
     status: StatusCodes.BAD_REQUEST,
@@ -16,7 +30,11 @@ export async function loader({ params }: Route.LoaderArgs) {
   invariantResponse(lesson, "Lesson not found", {
     status: StatusCodes.NOT_FOUND,
   });
-  return { lesson, lessonId };
+  let conversation: LessonConversation | null = null;
+  if (userId) {
+    conversation = await getLessonConversation({ userId, lessonId });
+  }
+  return { lesson, lessonId, conversation };
 }
 
 export default function LessonPage({ loaderData }: Route.ComponentProps) {

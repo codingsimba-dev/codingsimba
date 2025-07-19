@@ -9,6 +9,8 @@ import {
   GraduationCap,
   Layers,
   Briefcase,
+  ShoppingBag,
+  MessageSquare,
 } from "lucide-react";
 import {
   Dialog,
@@ -31,7 +33,9 @@ type RoadmapItem = {
       | "challenges"
       | "courses"
       | "programs"
-      | "job-board";
+      | "job-board"
+      | "store"
+      | "chat";
     startDate?: string;
     endDate?: string;
     status?: "completed" | "in-progress" | "planned";
@@ -47,6 +51,8 @@ const categoryIcons = {
   courses: GraduationCap,
   programs: Layers,
   "job-board": Briefcase,
+  store: ShoppingBag,
+  chat: MessageSquare,
 };
 
 const statusColors = {
@@ -107,7 +113,7 @@ function TimelineItem({
         )}
       >
         <Dialog>
-          <DialogContent className="scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 dark:scrollbar-track-gray-800 dark:scrollbar-thumb-gray-600 dark:hover:scrollbar-thumb-gray-500 max-h-[80vh] !max-w-3xl overflow-y-auto">
+          <DialogContent className="max-h-[80vh] !max-w-3xl overflow-y-auto [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:hover:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-500 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar]:w-2">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <IconComponent className="h-4 w-4 text-blue-500" />

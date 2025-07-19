@@ -1,5 +1,5 @@
 import { Webhooks } from "@polar-sh/remix";
-import type { Plan, SubscriptionType } from "~/generated/prisma";
+import type { Plan, SubscriptionType } from "~/generated/prisma/client";
 import { prisma } from "~/utils/db.server";
 import { withRetry } from "~/utils/misc.server";
 import { invariant } from "~/utils/misc";

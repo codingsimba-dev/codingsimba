@@ -1,6 +1,6 @@
 # TekBreed 🚀
 
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/codingsimba-dev/codingsimba/actions)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/tekbreed/website/actions)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue)](./LICENSE)
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://prettier.io/)
 
@@ -10,12 +10,12 @@ Welcome to our learning platform where we share knowledge and experiences in sof
 
 This repository is public for transparency and educational purposes. While we do not accept code contributions from external contributors, we welcome issues for bug reports, feature requests, and discussions. Please note:
 
-- ❌ Pull requests will not be accepted
 - ✅ Issues are welcome for:
   - Bug reports
   - Feature requests
   - Questions and discussions
   - Documentation improvements
+- ❌ Pull requests will not be accepted
 - ❌ No external code contributions will be reviewed
 
 ## Live Site

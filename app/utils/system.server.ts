@@ -1,6 +1,6 @@
 import { logEvent } from "./audit-log.server";
 import { EntityType } from "./audit-log.server";
-import { AuditSeverity } from "~/generated/prisma";
+import { AuditSeverity } from "~/generated/prisma/client";
 
 /**
  * Convenience function for logging system events

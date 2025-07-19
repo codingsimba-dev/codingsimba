@@ -41,6 +41,7 @@ export class APIError extends Error {
 }
 
 const { DEEPSEEK_API_KEY } = process.env;
+export const OPEN_AI_BASE_URL = "https://api.deepseek.com";
 
 /**
  * OpenAI client instance configured with API key and timeout
@@ -59,7 +60,7 @@ const { DEEPSEEK_API_KEY } = process.env;
  */
 export const openai = new OpenAI({
   apiKey: DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com",
+  baseURL: OPEN_AI_BASE_URL,
 });
 
 /**

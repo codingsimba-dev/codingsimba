@@ -57,7 +57,6 @@ export function GeneralErrorBoundary({
       y: 0,
       transition: {
         duration: 0.3,
-        ease: "easeOut",
         staggerChildren: 0.1,
       },
     },
@@ -68,7 +67,7 @@ export function GeneralErrorBoundary({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3, ease: "easeOut" },
+      transition: { duration: 0.3 },
     },
   };
 
@@ -78,7 +77,7 @@ export function GeneralErrorBoundary({
       scale: 1,
       rotate: 0,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 200,
         damping: 15,
         delay: 0.2,
@@ -196,7 +195,7 @@ export function GeneralErrorBoundary({
               className="mb-6 border-t border-gray-200 pt-6 text-center dark:border-gray-700"
             >
               <p className="mb-3 text-gray-600 dark:text-gray-400">
-                Need help? I and my team are ready to assist you.
+                Need help? We are ready to assist you.
               </p>
               <motion.div
                 variants={buttonVariants}
@@ -204,11 +203,11 @@ export function GeneralErrorBoundary({
                 whileTap="tap"
               >
                 <Link
-                  to="mailto:support@codingsimba.com"
+                  to="/support"
                   className="inline-flex items-center gap-2 font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   <Mail className="size-4" />
-                  support@codingsimba.com
+                  Contact Support
                 </Link>
               </motion.div>
             </motion.div>

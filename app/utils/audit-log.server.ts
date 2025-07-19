@@ -2,7 +2,7 @@ import type {
   AuditCategory,
   AuditSeverity,
   AuditModule,
-} from "~/generated/prisma";
+} from "~/generated/prisma/client";
 import { prisma } from "./db.server";
 import { logSystemEvent } from "./system.server";
 

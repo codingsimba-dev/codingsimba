@@ -7,6 +7,7 @@ import { handlers as bunnyHandlers } from "./bunny";
 import { handlers as githubHandlers } from "./github";
 import { handlers as openaiHandlers } from "./openai";
 import { handlers as polarHandlers } from "./polar";
+import { handlers as chatbotHandlers } from "./chatbot";
 
 // React Router Dev Tools
 const miscHandlers: HttpHandler[] =
@@ -22,6 +23,7 @@ export const server = setupServer(
   ...githubHandlers,
   ...openaiHandlers,
   ...polarHandlers,
+  ...chatbotHandlers,
 );
 server.listen({ onUnhandledRequest: "warn" });
 console.info("🔶 Mock server installed");

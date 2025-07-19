@@ -17,7 +17,7 @@ import type {
   AIUsageType,
   Conversation,
   ConversationMessage,
-} from "~/generated/prisma";
+} from "~/generated/prisma/client";
 
 /**
  * Creates a new conversation for a user and document

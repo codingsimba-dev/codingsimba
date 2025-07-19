@@ -19,10 +19,10 @@ export const learning = [
 ];
 
 export const content = [
-  // ...learning,
   { name: "support", path: "support" },
   { name: "roadmap", path: "roadmap" },
   { name: "job board", path: "job-board" },
+  { name: "store", path: "store" },
 ];
 
 export const platform = [

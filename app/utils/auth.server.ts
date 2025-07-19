@@ -1,5 +1,9 @@
 import bcrypt from "bcryptjs";
-import { type Connection, type Password, type User } from "~/generated/prisma";
+import {
+  type Connection,
+  type Password,
+  type User,
+} from "~/generated/prisma/client";
 import { redirect } from "react-router";
 import { Authenticator } from "remix-auth";
 import { safeRedirect } from "remix-utils/safe-redirect";

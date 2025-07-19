@@ -1,7 +1,7 @@
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { remember } from "@epic-web/remember";
 import { styleText } from "node:util";
-import { PrismaClient } from "~/generated/prisma";
+import { PrismaClient } from "~/generated/prisma/client";
 import { invariant } from "./misc";
 import fs from "node:fs";
 import path from "node:path";

@@ -25,12 +25,9 @@ export function LessonsNavigation({
               <Link
                 key={lesson.id}
                 to={`/tutorials/${tutorial.id}/lessons/${lesson.id}`}
-                className={cn(
-                  "rounded-md px-4 py-2 text-sm font-medium",
-                  activeLessonId === lesson.id
-                    ? "bg-blue-500 text-white"
-                    : "text-gray-700 hover:bg-gray-100",
-                )}
+                className={cn("rounded-md px-4 py-2 text-sm font-medium", {
+                  "bg-amber-50": activeLessonId === lesson.id,
+                })}
               >
                 {lesson.title}
               </Link>
@@ -44,8 +41,7 @@ export function LessonsNavigation({
 
 function LessonNavigationSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
-      <Skeleton className="h-12 w-full" />
+    <div className="flex flex-col gap-4 p-3">
       {Array.from({ length: 6 }).map((_, index) => (
         <Skeleton key={index} className="h-4 w-full" />
       ))}

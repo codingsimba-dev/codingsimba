@@ -33,7 +33,7 @@ Examples of unacceptable behavior:
 If you experience or witness unacceptable behavior, please report it by:
 
 1. Using the reporting tools in our [Discord community](https://discord.gg/7uZ6PWf4Xv)
-2. Contacting us through our website
+2. Contacting us through our website [tekbreed.com/support](https://tekbreed.com/support)
 3. Creating a confidential GitHub issue
 
 ### Enforcement Process
@@ -72,7 +72,7 @@ This Code of Conduct is adapted from the [Contributor Covenant](https://www.cont
 For any questions about our Code of Conduct, please:
 
 - Join our [Discord community](https://discord.gg/7uZ6PWf4Xv)
-- Use the contact form on our website
+- Use the contact form on our website [tekbreed.com/support](https://tekbreed.com/support)
 - Create a GitHub issue
 
 ---

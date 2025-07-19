@@ -27,11 +27,16 @@ export default [
   route("sitemap.xml", "routes/seo/sitemap[.]xml.ts"),
 
   // Resource routes
-  route("chatbot", "routes/chatbot.ts"),
   route("set-theme", "routes/resources/set-theme.ts"),
   route("unsubscribe", "routes/resources/unsubscribe.ts"),
   route("content/webhook", "routes/resources/sanity-webhook.ts"),
   route("download-user-data", "routes/resources/download-user-data.ts"),
+
+  // Chat
+  ...prefix("chat", [
+    index("routes/chat/index.tsx"),
+    // route("chatbot", "routes/chat/chatbot.ts"),
+  ]),
 
   //Subscription
   ...prefix("subscription", [

@@ -12,8 +12,10 @@ model Content {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  likes    Like[]
-  comments Comment[]
+  likes     Like[]
+  comments  Comment[]
+  bookmarks Bookmark[]
+  flags     ContentFlag[]
 
   @@unique([sanityId, type])
 }
@@ -252,6 +254,89 @@ model Like {
   @@unique([commentId, userId])
 }
 
+/// Represents a bookmark action from a user on a piece of content (article or tutorial).
+model Bookmark {
+  id        String   @id @default(ulid())
+  /// Optional notes or tags the user can add to their bookmark.
+  notes     String?
+  /// Custom tags for organizing bookmarks (stored as comma-separated string).
+  tags      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  contentId String
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, userId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([createdAt])
+}
+
+/// Represents a flag/report submitted by a user on content or comments.
+model ContentFlag {
+  id         String     @id @default(ulid())
+  /// The reason for flagging the content.
+  reason     FlagReason
+  /// Additional details provided by the user.
+  details    String?
+  /// The current status of the flag.
+  status     FlagStatus @default(PENDING)
+  /// Admin notes for internal use.
+  adminNotes String?
+  /// When the flag was resolved.
+  resolvedAt DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  /// The user who submitted the flag.
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The admin who resolved the flag (optional).
+  resolvedById String?
+  resolvedBy   User?   @relation("FlagResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  /// The content being flagged (articles, tutorials).
+  contentId String?
+  content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  /// The comment being flagged.
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([contentId])
+  @@index([commentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// The reason for flagging content.
+enum FlagReason {
+  SPAM
+  INAPPROPRIATE
+  HARASSMENT
+  MISINFORMATION
+  COPYRIGHT
+  VIOLENCE
+  HATE_SPEECH
+  ADULT_CONTENT
+  SCAM
+  OTHER
+}
+
+/// The status of a content flag.
+enum FlagStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
 /// Represents a comment made by a user on a piece of content. Supports nested replies.
 model Comment {
   id        String   @id @default(ulid())
@@ -270,7 +355,8 @@ model Comment {
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   contentId String
-  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  content   Content       @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  flags     ContentFlag[]
 
   @@index([authorId])
   @@index([contentId])

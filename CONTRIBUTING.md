@@ -80,7 +80,7 @@ You can connect with us and the community through:
 - 💬 [Join our Discord community](https://discord.gg/7uZ6PWf4Xv)
 - 📝 Create GitHub Issues for bugs and features
 - 🌐 Visit our website at [tekbreed.com](https://tekbreed.com)
-- 📧 Contact us through our website
+- 📧 Contact us through our website [tekbreed.com/support](https://tekbreed.com/support)
 
 Our Discord community is a great place to:
 
