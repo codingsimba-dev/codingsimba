@@ -1,4 +1,6 @@
 import React from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 /**
  * Demo component: Connects to the WebSocket proxy server and streams updates to the UI.
@@ -43,39 +45,25 @@ export function RealtimeUpdatesDemo() {
   };
 
   return (
-    <div
-      style={{
-        border: "1px solid #ccc",
-        padding: 16,
-        borderRadius: 8,
-        maxWidth: 400,
-      }}
-    >
-      <h2>Realtime Updates Demo</h2>
-      <div style={{ marginBottom: 8 }}>
-        <input
+    <div className="border-border bg-card max-w-md rounded-lg border p-4">
+      <h2 className="mb-4 text-lg font-semibold">Realtime Updates Demo</h2>
+      <div className="mb-2 flex gap-2">
+        <Input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message..."
-          style={{ width: "70%", marginRight: 8 }}
+          className="flex-1"
         />
-        <button onClick={sendMessage} disabled={!input}>
+        <Button onClick={sendMessage} disabled={!input}>
           Send
-        </button>
+        </Button>
       </div>
-      <div
-        style={{
-          maxHeight: 200,
-          overflowY: "auto",
-          background: "#f9f9f9",
-          padding: 8,
-        }}
-      >
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+      <div className="bg-muted max-h-48 overflow-y-auto rounded p-2">
+        <ul className="space-y-1">
           {messages.map((msg, idx) => (
-            <li key={idx} style={{ marginBottom: 4 }}>
-              <span style={{ color: "#555" }}>{msg}</span>
+            <li key={idx} className="text-muted-foreground text-sm">
+              {msg}
             </li>
           ))}
         </ul>

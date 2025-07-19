@@ -6,7 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { Markdown } from "~/components/mdx";
 import { Await } from "react-router";
 import { Skeleton } from "~/components/ui/skeleton";
-import { getLessonConversation } from "~/utils/chatbot.server";
+import { getLessonConversation } from "~/utils/chat.server";
 import { getUserId } from "~/utils/auth.server";
 import type {
   Conversation,

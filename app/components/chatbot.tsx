@@ -72,13 +72,13 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
                 <div className="mt-4">
                   <div className="flex items-start justify-end gap-2">
                     <div className="size-4" />
-                    <div className="max-w-[80%] rounded-lg bg-blue-500 p-3 text-white">
+                    <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg p-3">
                       {question}
                     </div>
                   </div>
                   <div className="mt-4 flex items-start gap-2">
                     <Bot className="mt-1 size-4" />
-                    <div className="max-w-[80%] rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                    <div className="bg-muted max-w-[80%] rounded-lg p-3">
                       <LoadingMessage />
                     </div>
                   </div>
@@ -88,13 +88,13 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
                 <div className="mt-4">
                   <div className="flex items-start justify-end gap-2">
                     <div className="size-4" />
-                    <div className="max-w-[80%] rounded-lg bg-blue-500 p-3 text-white">
+                    <div className="bg-primary text-primary-foreground max-w-[80%] rounded-lg p-3">
                       {question}
                     </div>
                   </div>
                   <div className="mt-4 flex items-start gap-2">
                     <Bot className="mt-1 size-4" />
-                    <div className="max-w-[80%] rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                    <div className="bg-muted max-w-[80%] rounded-lg p-3">
                       <Markdown source={answer} />
                     </div>
                   </div>
@@ -103,13 +103,13 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
               {!conversation && !answer && (
                 <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6">
                   <Bot className="size-20" />
-                  <p className="text-center text-lg font-medium text-gray-700 dark:text-gray-300">
+                  <p className="text-foreground text-center text-lg font-medium">
                     Hi! I&apos;m here to support your learning journey in{" "}
                     <p className="font-bold">{documentTitle}</p>.
                   </p>
-                  <p className="text-left text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-muted-foreground text-left text-sm">
                     I can help you:
-                    <ul className="list-disc pl-5 text-gray-700 dark:text-gray-400">
+                    <ul className="text-muted-foreground list-disc pl-5">
                       <li>Connect ideas across different lessons</li>
                       <li>Work through practice problems together</li>
                       <li>
@@ -128,7 +128,7 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
         <fetcher.Form
           method="post"
           action="/chatbot"
-          className="mt-auto border-t border-gray-200 p-4"
+          className="border-border mt-auto border-t p-4"
         >
           <div className="flex items-center gap-2">
             <HoneypotInputs />
@@ -185,8 +185,8 @@ function ChatHistory({ conversation }: { conversation: LessonConversation }) {
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
                 message.role === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 dark:bg-gray-800"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
               }`}
             >
               <Markdown source={message.content} />
@@ -212,7 +212,7 @@ function LoadingSkeleton() {
   return (
     <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6">
       <Bot className="size-20 animate-pulse" />
-      <p className="text-center text-lg font-medium text-gray-700 dark:text-gray-300">
+      <p className="text-foreground text-center text-lg font-medium">
         Thinking...
       </p>
     </div>
@@ -222,13 +222,13 @@ function LoadingSkeleton() {
 function LoadingMessage() {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
+      <div className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"></div>
       <div
-        className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+        className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"
         style={{ animationDelay: "0.1s" }}
       ></div>
       <div
-        className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+        className="bg-muted-foreground h-2 w-2 animate-bounce rounded-full"
         style={{ animationDelay: "0.2s" }}
       ></div>
     </div>

@@ -19,27 +19,15 @@ interface FormErrorProps {
 export function FormError({ errors, className }: FormErrorProps) {
   if (!errors) return null;
 
-  // Normalize to array if single string
-  const errorArray = typeof errors === "string" ? [errors] : errors;
+  const errorArray = Array.isArray(errors) ? errors : [errors];
+
+  if (errorArray.length === 0) return null;
 
   return (
-    <ul
-      aria-live="polite"
-      aria-atomic="true"
-      role="alert"
-      className={cn(
-        "mt-1.5 space-y-1 font-mono text-sm text-red-500",
-        className,
-      )}
-    >
+    <div className={cn("text-destructive text-sm", className)}>
       {errorArray.map((error, index) => (
-        <li key={index} className="flex items-start gap-1.5">
-          <span className="mt-0.5" aria-hidden="true">
-            •
-          </span>
-          {error}
-        </li>
+        <p key={index}>{error}</p>
       ))}
-    </ul>
+    </div>
   );
 }

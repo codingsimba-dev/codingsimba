@@ -1,10 +1,8 @@
-import {
-  ExploreButton,
-  HeroText,
-  HeroBackground,
-  HeroCard,
-} from "./components/hero";
 import { Navbar } from "~/components/navbar";
+import { HeroBackground } from "./components/hero/hero-background";
+import { HeroText } from "./components/hero/hero-text";
+import { HeroCard } from "./components/hero/hero-card";
+import { ExploreButton } from "./components/hero/explore-button";
 
 export function HeroSection() {
   return (

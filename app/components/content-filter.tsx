@@ -70,7 +70,7 @@ export function ContentFilter() {
   return (
     <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
       <div className="flex items-center gap-2">
-        <Filter size={20} className="text-gray-500" />
+        <Filter size={20} className="text-muted-foreground" />
         <span className="font-medium">Filters:</span>
       </div>
       <div className="flex flex-wrap gap-3">

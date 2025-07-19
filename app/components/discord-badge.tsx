@@ -44,9 +44,7 @@ export function DiscordBadge({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    Members
-                  </span>
+                  <span className="text-muted-foreground text-sm">Members</span>
                 </div>
                 <Badge variant="secondary">
                   {stats?.memberCount || "1.2k+"}
@@ -56,9 +54,7 @@ export function DiscordBadge({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
-                    Online
-                  </span>
+                  <span className="text-muted-foreground text-sm">Online</span>
                 </div>
                 <Badge variant="secondary">
                   {stats?.onlineCount || "150+"}
@@ -68,7 +64,7 @@ export function DiscordBadge({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                  <span className="text-muted-foreground text-sm">
                     Channels
                   </span>
                 </div>

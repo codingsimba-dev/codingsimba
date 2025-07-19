@@ -26,15 +26,15 @@ type StatusHandler = (info: {
 export function GeneralErrorBoundary({
   defaultStatusHandler = ({ error }) => (
     <>
-      <div className="mx-auto w-full text-3xl font-bold text-red-600">
+      <div className="text-destructive mx-auto w-full text-3xl font-bold">
         {error.status}
       </div>
-      <p className="text-gray-700 dark:text-gray-300">{error.data}</p>
+      <p className="text-muted-foreground">{error.data}</p>
     </>
   ),
   statusHandlers,
   unexpectedErrorHandler = (error) => (
-    <p className="text-gray-700 dark:text-gray-300">{getErrorMessage(error)}</p>
+    <p className="text-muted-foreground">{getErrorMessage(error)}</p>
   ),
 }: {
   defaultStatusHandler?: StatusHandler;

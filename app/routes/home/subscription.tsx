@@ -193,7 +193,7 @@ export function ResolveSubscription({
   }
 
   return (
-    <section className="relative overflow-hidden py-24">
+    <section className="bg-background relative overflow-hidden py-24">
       <div className="absolute left-0 top-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
 
@@ -208,7 +208,7 @@ export function ResolveSubscription({
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">
             Choose Your Learning Path
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground text-lg">
             Flexible pricing that scales with your needs - whether you&apos;re
             learning solo or building a team.
           </p>
@@ -264,10 +264,10 @@ export function ResolveSubscription({
           viewport={{ once: true }}
           className="mt-12 text-center"
         >
-          <p className="mb-4 text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground mb-4">
             All plans include a 14-day free trial
           </p>
-          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-muted-foreground/80 flex flex-wrap justify-center gap-8 text-sm">
             <span>✓ No setup fees</span>
             <span>✓ Cancel anytime</span>
             <span>✓ Secure payments</span>
@@ -494,8 +494,7 @@ function PricingCard({
       <Button
         onClick={handleSubmit}
         className={cn("w-full py-6 text-lg", {
-          "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600":
-            isPopular,
+          "bg-primary text-primary-foreground hover:bg-primary/90": isPopular,
         })}
         variant={plan.metadata.buttonVariant as "default" | "outline"}
         disabled={subscriptionAction.isDisabled}
@@ -524,17 +523,16 @@ function PricingCard({
       transition={{ duration: 0.3, delay: index * 0.1 }}
       viewport={{ once: true }}
       className={cn(
-        "relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900",
-        "border-gray-200 dark:border-gray-800",
+        "bg-card relative flex flex-col rounded-2xl border p-8 shadow-lg",
+        "border-border",
         {
-          "border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400 dark:ring-blue-400/20":
-            isPopular,
+          "border-primary ring-primary/20 ring-2": isPopular,
         },
         {
           "scale-105": isTeam && isPopular,
         },
         {
-          "border-green-500 ring-2 ring-green-500/20 dark:border-green-400 dark:ring-green-400/20":
+          "border-success ring-success/20 ring-2":
             user &&
             subscription?.status === "active" &&
             subscription.product.name.toLowerCase() === plan.name.toLowerCase(),
@@ -543,7 +541,7 @@ function PricingCard({
     >
       {isPopular ? (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
-          <div className="flex items-center gap-1 rounded-full bg-blue-600 px-4 py-1 text-sm font-medium text-white dark:bg-blue-500">
+          <div className="bg-primary text-primary-foreground flex items-center gap-1 rounded-full px-4 py-1 text-sm font-medium">
             <Star className="size-4 fill-current" />
             Most Popular
           </div>
@@ -555,7 +553,7 @@ function PricingCard({
       subscription?.status === "active" &&
       subscription.product.name.toLowerCase() === plan.name.toLowerCase() ? (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 transform">
-          <div className="flex items-center gap-1 rounded-full bg-green-600 px-4 py-1 text-sm font-medium text-white dark:bg-green-500">
+          <div className="bg-success text-success-foreground flex items-center gap-1 rounded-full px-4 py-1 text-sm font-medium">
             <Check className="size-4 fill-current" />
             Current Plan
           </div>
@@ -566,10 +564,7 @@ function PricingCard({
         {/* Show current subscription indicator for authenticated users */}
         {user && subscription?.status === "active" && (
           <div className="mb-4">
-            <Badge
-              variant="secondary"
-              className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-            >
+            <Badge variant="secondary" className="bg-success/10 text-success">
               Current Plan: {subscription.product.name}
             </Badge>
           </div>
@@ -588,12 +583,12 @@ function PricingCard({
                 : `$${getPriceAmount(price!)}`}
           </span>
           {plan.metadata.originalPrice ? (
-            <span className="ml-2 text-lg text-gray-500 line-through dark:text-gray-400">
+            <span className="text-muted-foreground ml-2 text-lg line-through">
               ${plan.metadata.originalPrice}
             </span>
           ) : null}
           {!isFree && !isCustom ? (
-            <span className="ml-2 text-gray-500 dark:text-gray-400">
+            <span className="text-muted-foreground ml-2">
               {isTeam
                 ? `/per seat /${price.recurringInterval}`
                 : ` / ${price.recurringInterval}`}
@@ -614,17 +609,15 @@ function PricingCard({
             </Badge>
           </div>
         ) : null}
-        <p className="text-gray-600 dark:text-gray-300">{plan.description}</p>
+        <p className="text-muted-foreground">{plan.description}</p>
       </div>
 
       <ul className="mb-8 flex-grow space-y-4">
         {features[plan.name.toLowerCase() as keyof typeof features].map(
           (feature, featureIndex) => (
             <li key={featureIndex} className="flex items-start gap-3">
-              <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
-              <span className="text-gray-700 dark:text-gray-300">
-                {feature}
-              </span>
+              <Check className="text-success mt-0.5 h-5 w-5 flex-shrink-0" />
+              <span className="text-card-foreground">{feature}</span>
             </li>
           ),
         )}
@@ -634,7 +627,7 @@ function PricingCard({
 
       {plan.metadata.perSeat && price.amountType !== "custom" && (
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-muted-foreground text-xs">
             Example: 10 members = ${getPriceAmount(price!) * 10}
             /month
           </p>
@@ -655,37 +648,25 @@ function PricingCard({
 function TeamPricingExplanation() {
   return (
     <div className="mb-12 text-center">
-      <div className="mx-auto max-w-4xl rounded-xl border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-950/30">
-        <h3 className="mb-3 text-xl font-semibold text-blue-900 dark:text-blue-100">
+      <div className="border-primary/20 bg-primary/5 mx-auto max-w-4xl rounded-xl border p-6">
+        <h3 className="text-primary mb-3 text-xl font-semibold">
           Simple Per-Seat Pricing
         </h3>
-        <p className="mb-4 text-blue-700 dark:text-blue-200">
+        <p className="text-primary/80 mb-4">
           Our team plans scale with your organization. Pay only for active team
           members with no hidden fees.
         </p>
         <div className="flex flex-wrap justify-center gap-4 text-sm">
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-          >
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
             ✓ No setup fees
           </Badge>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-          >
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
             ✓ Add/remove members anytime
           </Badge>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-          >
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
             ✓ Prorated billing
           </Badge>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-          >
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
             ✓ Volume discounts available
           </Badge>
         </div>
@@ -705,12 +686,12 @@ function TeamPricingExplanation() {
 function VolumeDiscounts() {
   return (
     <div className="mt-12">
-      <div className="rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 p-8 dark:border-purple-800 dark:from-purple-950/30 dark:to-blue-950/30">
+      <div className="border-primary/20 from-primary/5 to-secondary/5 rounded-xl border bg-gradient-to-r p-8">
         <div className="mb-6 text-center">
           <h3 className="mb-2 text-2xl font-bold">
             Volume Discounts Available
           </h3>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground">
             Save more as your team grows with our automatic volume discounts
           </p>
         </div>
@@ -749,11 +730,9 @@ function MembersCount({
   memberCount: string;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-4 text-center dark:bg-gray-900">
-      <div className="mb-1 text-2xl font-bold text-green-600">{discount}</div>
-      <div className="text-sm text-gray-600 dark:text-gray-300">
-        {memberCount}
-      </div>
+    <div className="bg-card rounded-lg border p-4 text-center">
+      <div className="text-success mb-1 text-2xl font-bold">{discount}</div>
+      <div className="text-muted-foreground text-sm">{memberCount}</div>
     </div>
   );
 }
@@ -777,7 +756,7 @@ function PricingCardSkeleton({ index }: { index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="relative flex flex-col rounded-2xl border bg-white p-8 shadow-lg dark:bg-gray-900"
+      className="bg-card relative flex flex-col rounded-2xl border p-8 shadow-lg"
     >
       <div className="mb-8 text-center">
         <div className="mb-4 flex items-center justify-center gap-2">
@@ -814,7 +793,7 @@ function PricingCardSkeleton({ index }: { index: number }) {
  */
 function SubscriptionSkeleton() {
   return (
-    <section className="relative overflow-hidden py-24">
+    <section className="bg-background relative overflow-hidden py-24">
       <div className="absolute left-0 top-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-1/3 w-1/3 rounded-full bg-blue-500/5 blur-3xl" />
 

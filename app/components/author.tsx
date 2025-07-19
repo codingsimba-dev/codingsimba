@@ -11,7 +11,7 @@ export function Author({ author }: { author: Author }) {
     return <div>No Author</div>;
   }
   return (
-    <div className="mb-8 rounded-xl bg-gray-50 p-6 dark:bg-gray-900">
+    <div className="bg-muted/50 mb-8 rounded-xl p-6">
       <div className="flex items-start gap-4">
         <div className="hidden flex-col sm:flex">
           <div className="flex h-24 w-24 items-center justify-center">
@@ -86,14 +86,14 @@ export function Author({ author }: { author: Author }) {
             <span className="text-gray-500"> Written by</span>{" "}
             <Link
               to={`/authors/${encodeURIComponent(author.slug)}`}
-              className="transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+              className="hover:text-primary transition-colors"
             >
               {author.name}
             </Link>
           </h3>
-          <p className="text-gray-600 dark:text-gray-300">{author.bio}</p>
+          <p className="text-muted-foreground">{author.bio}</p>
           <div className="my-4">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h3 className="text-muted-foreground mb-2 text-sm font-semibold uppercase tracking-wide">
               Skills & Expertise
             </h3>
             <div className="flex flex-wrap gap-2">

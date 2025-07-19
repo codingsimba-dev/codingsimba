@@ -12,12 +12,12 @@ export function ContentEmailSubscriptionForm() {
   //   onValidate: ({ formData }) => {},
   // });
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+    <div className="border-border bg-card mb-6 rounded-xl border p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-bold">Subscribe</h3>
-        <Bookmark className="h-5 w-5 text-gray-400" />
+        <Bookmark className="text-muted-foreground h-5 w-5" />
       </div>
-      <p className="mb-4 text-gray-600 dark:text-gray-300">
+      <p className="text-muted-foreground mb-4">
         Get the latest articles, tutorials, and new content sent straight to
         your inbox.
       </p>
@@ -25,7 +25,7 @@ export function ContentEmailSubscriptionForm() {
         <Input
           type="email"
           placeholder="Enter your email"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          className="border-border bg-background text-foreground w-full rounded-lg border px-4 py-2"
         />
         <Button type="submit" className="w-full">
           Subscribe

@@ -69,7 +69,7 @@ export function DiscordSupport({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="border-2 border-[#5865F2]/20 bg-gradient-to-br from-[#5865F2]/5 to-transparent">
+        <Card className="border-primary/20 from-primary/5 border-2 bg-gradient-to-br to-transparent">
           <CardHeader className="flex w-full items-center bg-[#5865F2] py-2 text-white">
             <div className="flex w-full items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -196,7 +196,7 @@ export function DiscordSupport({
                               </p>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-300">
+                          <p className="text-muted-foreground text-xs">
                             {channel.description}
                           </p>
                         </CardContent>
@@ -207,21 +207,21 @@ export function DiscordSupport({
 
                 <div className="border-t pt-6">
                   <h4 className="mb-4 font-semibold">Getting Started</h4>
-                  <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="text-muted-foreground space-y-3 text-sm">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold">
                         1
                       </div>
                       <p>Join our Discord server using the link below</p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold">
                         2
                       </div>
                       <p>Introduce yourself in the #introductions channel</p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold">
                         3
                       </div>
                       <p>
@@ -229,7 +229,7 @@ export function DiscordSupport({
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold">
                         4
                       </div>
                       <p>

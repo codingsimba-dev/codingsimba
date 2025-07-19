@@ -47,7 +47,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
   });
 
   return (
-    <div className="mt-13 relative isolate overflow-hidden border-b border-gray-200 py-4 dark:border-gray-800">
+    <div className="relative isolate overflow-hidden border-b border-gray-200 py-4 dark:border-gray-800">
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-50 dark:from-blue-950 dark:to-indigo-950" />
         {shapes.map((shape) => (
@@ -89,7 +89,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <Breadcrumb>
               <BreadcrumbList>
@@ -126,7 +126,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
             className="mb-3 mt-2 text-2xl font-bold md:text-3xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
           >
             {item.title}
           </motion.h1>
@@ -135,7 +135,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
             className="flex flex-wrap items-center gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
             <motion.span
               className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"

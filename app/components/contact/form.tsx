@@ -20,7 +20,7 @@ export function ContactForm() {
         ref={formRef}
         action={`https://formsubmit.co/4e6d736d95b932b2d66e894716711b8e`}
         method="POST"
-        className="rounded-xl border border-slate-300 bg-white p-6 shadow-sm dark:border-slate-600 dark:bg-gray-900"
+        className="border-border bg-card rounded-xl border p-6 shadow-sm"
       >
         {/* <input
           type="hidden"

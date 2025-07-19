@@ -12,7 +12,7 @@ export function CardBadge({
   return (
     <Badge
       className={cn(
-        "absolute left-3 top-3 border border-blue-200 bg-blue-600 text-white dark:border-blue-200 dark:bg-blue-600 dark:text-white",
+        "border-primary/20 bg-primary text-primary-foreground absolute left-3 top-3 border",
         className,
       )}
     >

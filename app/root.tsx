@@ -18,8 +18,8 @@ import {
 } from "remix-themes";
 
 import type { Route } from "./+types/root";
+import appStyles from "~/styles/app.css?url";
 import fontStyles from "~/styles/fonts.css?url";
-import tailwindStyles from "~/styles/tailwind.css?url";
 import { Navbar } from "./components/navbar";
 import { Footer } from "./components/footer";
 import { themeSessionResolver } from "~/utils/theme.server";
@@ -42,8 +42,9 @@ import { useNonce } from "./utils/nonce-provider";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.png" },
+  { rel: "stylesheet", href: appStyles },
   { rel: "stylesheet", href: fontStyles },
-  { rel: "stylesheet", href: tailwindStyles },
+  // { rel: "stylesheet", href: tailwindStyles },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -129,7 +130,7 @@ function Document({
         )}
         <Links />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className="bg-background text-foreground min-h-screen antialiased">
         {children}
         <script
           nonce={nonce}

@@ -20,9 +20,10 @@ export const learning = [
 
 export const content = [
   { name: "support", path: "support" },
-  { name: "roadmap", path: "roadmap" },
+  { name: "chat", path: "chat" },
   { name: "job board", path: "job-board" },
   { name: "store", path: "store" },
+  { name: "roadmap", path: "roadmap" },
 ];
 
 export const platform = [
@@ -37,7 +38,7 @@ export const legal = [
 ];
 
 export const social = [
-  { name: "X (formerly twitter)", path: "https://twitter.com/tekbreed" },
+  { name: "X (formerly twitter)", path: "https://x.com/tekbreed" },
   {
     name: "LinkedIn",
     path: "https://www.linkedin.com/in/christopher-sesugh-265332176/",

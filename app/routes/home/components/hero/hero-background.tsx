@@ -23,13 +23,13 @@ export function HeroBackground() {
       <div
         className={cn(
           "absolute left-[10%] right-[10%] top-[20%] h-[500px]",
-          "bg-radial-gradient from-blue-500/10 via-transparent to-transparent",
+          "bg-radial-gradient from-blue-500/10 via-blue-300/5 to-transparent",
         )}
       />
 
       {/* Floating elements */}
       <div className="animate-float-slow absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
-      <div className="animate-float absolute bottom-1/3 right-1/3 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
+      <div className="animate-float absolute bottom-1/3 right-1/3 h-96 w-96 rounded-full bg-blue-400/5 blur-3xl" />
     </div>
   );
 }

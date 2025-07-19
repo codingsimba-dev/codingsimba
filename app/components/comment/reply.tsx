@@ -100,13 +100,13 @@ export function Reply({ reply }: { reply: ReplyData }) {
   const anonymous = "Anonymous";
 
   const basicButtonClasses =
-    "space-x-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300";
+    "space-x-1 text-sm text-muted-foreground hover:text-foreground";
   return (
     <li>
       <div className="overflow-hidden">
         <div className="mb-1 flex items-center justify-between">
           <div className="flex items-center gap-x-4">
-            <Avatar className="size-6 border border-gray-300 dark:border-gray-600">
+            <Avatar className="border-border size-6 border">
               <AvatarImage
                 src={getImgSrc({
                   path: "users",
@@ -121,7 +121,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
             </Avatar>
             <h5 className="text-sm font-medium">{author?.name ?? anonymous}</h5>
           </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-muted-foreground text-xs">
             {formatDistanceToNowStrict(new Date(reply.createdAt), {
               addSuffix: true,
             })}
@@ -165,7 +165,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
               {isUpdatingReply ? (
                 <Loader className="size-4 animate-spin" />
               ) : (
-                <FilePenLine className="size-4 text-blue-600 dark:text-blue-500" />
+                <FilePenLine className="text-primary size-4" />
               )}
             </button>
           ) : null}
@@ -175,7 +175,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
                 {isDeletingReply ? (
                   <Loader className="size-4 animate-spin" />
                 ) : (
-                  <Trash2 className="size-4 text-red-600 dark:text-red-500" />
+                  <Trash2 className="text-destructive size-4" />
                 )}
               </AlertDialogTrigger>
               <AlertDialogContent>

@@ -12,7 +12,7 @@ export function ExploreButton() {
     >
       <Link
         to="/courses"
-        className="flex flex-col items-center text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        className="text-muted-foreground hover:text-foreground flex flex-col items-center transition-colors"
       >
         <span className="mb-2 text-sm">Explore</span>
         <ArrowDown className="h-5 w-5 animate-bounce" />

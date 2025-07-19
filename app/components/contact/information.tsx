@@ -19,17 +19,17 @@ export function ContactInformation() {
           label="Email"
           href="mailto:me@codingsimba.com"
         >
-          support@codingsimba.com
+          support@tekbreed.com
         </ContactElement>
         <ContactElement
           icon={<Github className="h-5 w-5" />}
           label="GitHub"
-          href="https://github.com/christophersesugh"
+          href="https://github.com/tekbreed"
         >
-          github.com/codingsimba-dev
+          github.com/tekbreed
         </ContactElement>
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+          <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
             <User className="h-5 w-5" />
           </div>
           <div>
@@ -63,7 +63,7 @@ type ContactElementProps = ContactLinkProps & {
 function ContactElement({ icon, href, label, children }: ContactElementProps) {
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+      <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
         {icon}
       </div>
       <div>
@@ -80,7 +80,7 @@ function ContactLink({ href, children }: ContactLinkProps) {
       to={href}
       target="_blank"
       prefetch="intent"
-      className="text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+      className="text-muted-foreground hover:text-foreground transition-colors"
     >
       {children}
     </Link>

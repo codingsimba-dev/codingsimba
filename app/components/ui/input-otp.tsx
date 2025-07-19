@@ -49,7 +49,7 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "shadow-xs aria-invalid:border-red-500 data-[active=true]:aria-invalid:border-red-500 data-[active=true]:aria-invalid:ring-red-500/20 dark:aria-invalid:border-red-900 dark:data-[active=true]:aria-invalid:border-red-900 dark:dark:data-[active=true]:aria-invalid:ring-red-900/40 dark:data-[active=true]:aria-invalid:ring-red-500/40 dark:data-[active=true]:aria-invalid:ring-red-900/20 relative flex h-9 w-9 items-center justify-center border-y border-r border-gray-200 text-sm outline-none transition-all first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:border-gray-950 data-[active=true]:ring-[3px] data-[active=true]:ring-gray-950/50 dark:border-gray-800 dark:bg-gray-200/30 dark:dark:bg-gray-800/30 dark:data-[active=true]:border-gray-300 dark:data-[active=true]:ring-gray-300/50",
+        "data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input shadow-xs relative flex h-9 w-9 items-center justify-center border-y border-r text-sm outline-none transition-all first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]",
         className,
       )}
       {...props}
@@ -57,7 +57,7 @@ function InputOTPSlot({
       {char}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="animate-caret-blink h-4 w-px bg-gray-950 duration-1000 dark:bg-gray-50" />
+          <div className="animate-caret-blink bg-foreground h-4 w-px duration-1000" />
         </div>
       )}
     </div>
