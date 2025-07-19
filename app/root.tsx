@@ -44,7 +44,6 @@ export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.png" },
   { rel: "stylesheet", href: appStyles },
   { rel: "stylesheet", href: fontStyles },
-  // { rel: "stylesheet", href: tailwindStyles },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {

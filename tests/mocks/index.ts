@@ -7,7 +7,7 @@ import { handlers as bunnyHandlers } from "./bunny";
 import { handlers as githubHandlers } from "./github";
 import { handlers as openaiHandlers } from "./openai";
 import { handlers as polarHandlers } from "./polar";
-import { handlers as chatbotHandlers } from "./chatbot";
+import { handlers as chatbotHandlers } from "./chat";
 
 // React Router Dev Tools
 const miscHandlers: HttpHandler[] =
