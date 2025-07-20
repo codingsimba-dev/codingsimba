@@ -10,7 +10,6 @@ export const schema = z.object({
   TURSO_DATABASE_URL: z.string(),
   TURSO_AUTH_TOKEN: z.string(),
   DATABASE_URL: z.string().default("file:./dev.db"),
-  OPENAI_API_KEY: z.string(),
   DEEPSEEK_API_KEY: z.string(),
   BUNNY_STORAGE_ZONE: z.string(),
   BUNNY_ACCESS_KEY: z.string(),
@@ -57,7 +56,6 @@ export function getEnv() {
 type ENV = ReturnType<typeof getEnv>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var env: ENV;
   interface Window {
     env: ENV;

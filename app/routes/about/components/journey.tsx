@@ -40,18 +40,17 @@ export function Journey({
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-4 top-0 h-full w-0.5 bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 md:left-1/2 md:-translate-x-px" />
-
               <div className="space-y-8">
                 {resolvedJourneyData
-                  ? resolvedJourneyData.map(
-                      (item: JourneyProps, index: number) => (
+                  ? resolvedJourneyData
+                      .filter((item) => item?.frontmatter?.published !== false)
+                      .map((item: JourneyProps, index: number) => (
                         <TimelineItem
                           key={item?.slug}
                           index={index}
                           journeyItem={item}
                         />
-                      ),
-                    )
+                      ))
                   : null}
               </div>
             </div>

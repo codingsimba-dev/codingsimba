@@ -18,7 +18,7 @@ export function Team() {
               <img
                 src={member.image}
                 alt={member.name}
-                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                className="w-full object-cover transition-transform duration-300 hover:scale-105"
               />
             </div>
             <CardContent className="p-6">
@@ -109,76 +109,16 @@ export function Team() {
 
 const teamMembers = [
   {
-    name: "Christopher Sesugh",
+    name: "Christopher S. Aondona",
     role: "Platform Founder & Lead Developer",
-    bio: "Full-stack developer with 8+ years of experience in React, Node.js, and modern web technologies. Passionate about building scalable applications and making complex programming concepts accessible to everyone.",
+    bio: "Full-stack developer with 6+ years of experience in React, Node.js, and modern web technologies. Passionate about building scalable applications and making complex programming concepts accessible to everyone.",
     image:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
     specialties: ["React", "Node.js", "TypeScript", "Full-Stack"],
     social: {
-      github: "https://github.com/codingsimba-dev",
+      github: "https://github.com/christophersesugh",
       linkedin: "https://www.linkedin.com/in/christopher-sesugh-265332176/",
-      website: "https://codingsimba.com",
-    },
-  },
-  {
-    name: "Sarah Chen",
-    role: "Senior Frontend Engineer",
-    bio: "Frontend specialist with expertise in React, Vue.js, and modern CSS. Former senior developer at tech companies, focused on creating intuitive user experiences and scalable frontend architectures.",
-    image:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    specialties: ["React", "Vue.js", "CSS", "UI/UX"],
-    social: {
-      github: "https://github.com/sarahchen",
-      linkedin: "https://linkedin.com/in/sarahchen",
-    },
-  },
-  {
-    name: "Marcus Rodriguez",
-    role: "DevOps & Backend Engineer",
-    bio: "DevOps engineer and backend specialist with experience in cloud infrastructure, microservices, and scalable system design. Expert in building robust, high-performance backend systems.",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    specialties: ["Node.js", "Docker", "AWS", "Microservices"],
-    social: {
-      github: "https://github.com/marcusrodriguez",
-      linkedin: "https://linkedin.com/in/marcusrodriguez",
-    },
-  },
-  {
-    name: "Aisha Patel",
-    role: "Data Scientist & ML Engineer",
-    bio: "Data scientist and machine learning engineer with a PhD in Computer Science. Specializes in Python, TensorFlow, and practical AI applications for real-world problems and business solutions.",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    specialties: ["Python", "Machine Learning", "TensorFlow", "Data Science"],
-    social: {
-      github: "https://github.com/aishapatel",
-      linkedin: "https://linkedin.com/in/aishapatel",
-    },
-  },
-  {
-    name: "David Kim",
-    role: "Mobile App Developer",
-    bio: "Mobile app developer with expertise in React Native, Flutter, and native iOS/Android development. Has published multiple successful apps and specializes in cross-platform mobile solutions.",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    specialties: ["React Native", "Flutter", "iOS", "Android"],
-    social: {
-      github: "https://github.com/davidkim",
-      linkedin: "https://linkedin.com/in/davidkim",
-    },
-  },
-  {
-    name: "Emily Watson",
-    role: "Senior UX/UI Designer",
-    bio: "Senior UX designer with 10+ years of experience in user research, interface design, and design systems. Specializes in creating user-centered designs that drive engagement and usability.",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
-    specialties: ["UX Design", "UI Design", "Figma", "Design Systems"],
-    social: {
-      linkedin: "https://linkedin.com/in/emilywatson",
-      website: "https://emilywatson.design",
+      website: "https://tekbreed.com",
     },
   },
 ];
