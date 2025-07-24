@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { getErrorMessage, invariant } from "~/utils/misc";
 import { getCheckoutSession } from "~/utils/subcription.server";
-import { features } from "../home/subscription";
+import { features } from "./components/features";
 import { redirectWithToast } from "~/utils/toast.server";
 
 /**

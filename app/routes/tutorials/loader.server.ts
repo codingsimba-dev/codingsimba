@@ -98,6 +98,11 @@ export async function getTutorialComments({
         select: {
           id: true,
           body: true,
+          flags: {
+            select: {
+              userId: true,
+            },
+          },
           likes: {
             select: { count: true, userId: true },
           },

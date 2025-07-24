@@ -1,18 +1,37 @@
-import { ArrowDownAZ } from "lucide-react";
-import { EmptyState } from "~/components/empty-state";
+import type { Route } from "./+types/index";
+import { SubscriptionSection } from "~/routes/subscription/components/subscription-section";
+import { getSubscription, listProducts } from "~/utils/subcription.server";
+import { getUserId } from "~/utils/auth.server";
+import { prisma } from "~/utils/db.server";
+import { generateMetadata } from "~/utils/meta";
 import { Header } from "~/components/page-header";
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const products = listProducts();
+  const userId = await getUserId(request);
+  const activeSubscription = await prisma.subscription.findFirst({
+    where: {
+      userId,
+      status: "active",
+    },
+  });
+  let subscription: Awaited<ReturnType<typeof getSubscription>> | null = null;
+  if (activeSubscription) {
+    subscription = await getSubscription(activeSubscription.subscriptionId);
+  }
+  return { products, subscription, activeSubscription };
+}
 
 export default function SubscriptionRoute() {
   return (
-    <div>
-      <Header title="Subscription" description="TekBreed Subscription." />
-      <div className="container mx-auto my-20 w-full max-w-3xl">
-        <EmptyState
-          icon={<ArrowDownAZ className="size-8" />}
-          title="Subscription Coming Soon!"
-          description="We're currently developing the subscription. While you wait, feel free to explore our articles and tutorials."
-        />
-      </div>
-    </div>
+    <>
+      {generateMetadata({})}
+      <Header
+        title="Choose Your Learning Path"
+        description="Flexible pricing that scales with your needs - whether you're
+            learning solo or building a team."
+      />
+      <SubscriptionSection />
+    </>
   );
 }

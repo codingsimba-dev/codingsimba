@@ -1,17 +1,10 @@
 import React from "react";
 import type { Route } from "../../routes/articles/+types/article";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  FilePenLine,
-  Heart,
-  MessageSquareQuote,
-  Trash2,
-  ChevronDown,
-  Loader,
-} from "lucide-react";
+import { MessageSquareQuote, ChevronDown, Loader } from "lucide-react";
 import { Reply } from "./reply";
 import { CommentForm } from "./comment-form";
 import { Markdown } from "../mdx";
@@ -19,21 +12,13 @@ import { useOptionalUser } from "~/hooks/user";
 import { useUpvote, useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { cn, getSeed } from "~/utils/misc";
+import { getSeed } from "~/utils/misc";
 import { FlagDialog } from "~/components/flag-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
-import { getImgSrc, getInitials, requireAuth } from "~/utils/misc";
+import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import { CommentIntent, ReplyIntent } from ".";
+import { UpvoteButton } from "../upvote-button";
+import { CommentActions } from "./comment-actions";
 
 export type CommentData = NonNullable<
   Awaited<Route.ComponentProps["loaderData"]["comments"]>
@@ -47,7 +32,6 @@ export function Comment({ comment }: { comment: CommentData }) {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useOptionalUser();
-  const navigate = useNavigate();
 
   const replyTake = Number(searchParams.get("replyTake") ?? 3);
 
@@ -92,7 +76,7 @@ export function Comment({ comment }: { comment: CommentData }) {
     { showSuccessToast: true },
   );
 
-  const { submit: upvoteComment, isPending: isUpvoting } = useUpvote({
+  const { submit: upvoteComment } = useUpvote({
     intent: CommentIntent.UPVOTE_COMMENT,
     data: {
       itemId: comment.id,
@@ -134,7 +118,7 @@ export function Comment({ comment }: { comment: CommentData }) {
 
   const anonymous = "Anonymous";
 
-  const basicButtonClasses =
+  const buttonClasses =
     "flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground";
   return (
     <li className="border-border border-b pb-6 last:border-0">
@@ -184,83 +168,47 @@ export function Comment({ comment }: { comment: CommentData }) {
             </div>
           )}
           <div className="mt-2 flex items-center space-x-4">
-            <button
-              className={basicButtonClasses}
-              onClick={requireAuth({ fn: upvoteComment, user, navigate })}
-            >
-              <Heart
-                className={cn("size-4", {
-                  "fill-red-500 text-red-500": isLiked,
-                  "animate-bounce": isUpvoting,
-                })}
-              />
-              <span>{totalLikes}</span>
-            </button>
-            <button
-              onClick={requireAuth({
-                fn: () => setShowReplyForm(!showReplyForm),
-                user,
-                navigate,
-              })}
-              className={basicButtonClasses}
-              aria-label={isCreating ? "replying comment" : "reply comment"}
-            >
-              {isCreating ? (
-                <Loader className="mr-1 size-4 animate-spin" />
-              ) : (
-                <MessageSquareQuote className="mr-1 size-4" />
-              )}
-              Reply
-            </button>
-            {canUpdate ? (
+            <UpvoteButton
+              size="sm"
+              onUpvote={upvoteComment}
+              totalLikes={totalLikes}
+              isFilled={isLiked}
+              isDisabled={isLiked}
+              showMaxLabel={false}
+            />
+            {user ? (
               <button
-                onClick={() => setEditComment(true)}
-                className={basicButtonClasses}
-                aria-label={isUpdating ? "updating comment" : "update comment"}
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className={buttonClasses}
+                aria-label={isCreating ? "replying comment" : "reply comment"}
               >
-                {isUpdating ? (
+                {isCreating ? (
                   <Loader className="mr-1 size-4 animate-spin" />
                 ) : (
-                  <FilePenLine className="text-primary mr-1 size-4" />
+                  <MessageSquareQuote className="mr-1 size-4" />
                 )}
-                Edit
+                Reply
               </button>
             ) : null}
-            {canDelete ? (
-              <AlertDialog>
-                <AlertDialogTrigger
-                  disabled={isDeleting}
-                  className={basicButtonClasses}
-                >
-                  {isDeleting ? (
-                    <Loader className="mr-1 size-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="text-destructive mr-1 size-4" />
-                  )}{" "}
-                  Delete
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Are you sure you want to delete this comment?
-                    </AlertDialogTitle>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>No</AlertDialogCancel>
-                    <AlertDialogAction onClick={deleteComment}>
-                      Yes
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : null}
-            <FlagDialog
-              itemId={comment.id}
-              isFlagged={isFlagged}
+            <CommentActions
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              isUpdating={isUpdating}
+              isDeleting={isDeleting}
               contentType="comment"
-              size="sm"
-              showText={true}
+              onEdit={() => setEditComment(true)}
+              onDelete={deleteComment}
+              className={buttonClasses}
             />
+            {!isOwner && user ? (
+              <FlagDialog
+                size="sm"
+                itemId={comment.id}
+                isFlagged={isFlagged}
+                contentType="comment"
+                showText={true}
+              />
+            ) : null}
           </div>
           {comment.replies?.length ? <Separator className="mb-6 mt-4" /> : null}
           {showReplyForm ? (

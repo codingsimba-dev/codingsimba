@@ -159,6 +159,7 @@ function ArticleMetricsContent({
           showMaxLabel={true}
         />
         <BookmarkButton
+          size="sm"
           isBookmarked={isBookmarked}
           onBookmark={handleBookmark}
         />
@@ -167,7 +168,6 @@ function ArticleMetricsContent({
           isFlagged={isFlagged}
           contentType="article"
           size="sm"
-          showText={false}
         />
         <Views views={metrics?.views ?? LEAST_COUNT} />
       </div>
@@ -177,8 +177,8 @@ function ArticleMetricsContent({
 
 function Views({ views, className }: { views: number; className?: string }) {
   return (
-    <div className={cn("flex items-center space-x-1", className)}>
-      <Eye className="size-5" />
+    <div className={cn("flex items-center space-x-1 text-sm", className)}>
+      <Eye className="size-4" />
       <span>{views.toLocaleString()} views</span>
     </div>
   );

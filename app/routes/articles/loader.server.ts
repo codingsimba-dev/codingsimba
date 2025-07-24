@@ -111,6 +111,11 @@ export async function getArticleComments({
         select: {
           id: true,
           body: true,
+          flags: {
+            select: {
+              userId: true,
+            },
+          },
           likes: {
             select: { count: true, userId: true },
           },

@@ -1,4 +1,5 @@
 import React from "react";
+import { useFetcher } from "react-router";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +20,15 @@ import {
 } from "~/components/ui/select";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
-import { useFlag } from "~/hooks/use-flag";
 import { cn } from "~/utils/misc";
-import { Flag } from "lucide-react";
+import { Flag, Loader2 } from "lucide-react";
+import { useOptionalUser } from "~/hooks/user";
 
 /**
  * Available flag reasons for content moderation
+ *
+ * These reasons are used to categorize flagged content for review by moderators.
+ * Each reason corresponds to a specific violation of community guidelines.
  */
 export const flagReasons = [
   "spam",
@@ -40,14 +44,21 @@ export const flagReasons = [
 ] as const;
 
 /**
- * Size variants for the flag button
+ * Size variants for the flag button icon
+ *
+ * Maps size prop to corresponding CSS classes for consistent sizing.
  */
 const sizeClasses = {
-  sm: "h-4 w-4",
-  md: "h-5 w-5",
-  lg: "h-6 w-6",
+  sm: "size-4",
+  md: "size-5",
+  lg: "size-6",
 } as const;
 
+/**
+ * Text size variants for the flag button label
+ *
+ * Maps size prop to corresponding text size classes.
+ */
 const textSizes = {
   sm: "text-sm",
   md: "text-sm",
@@ -56,42 +67,70 @@ const textSizes = {
 
 /**
  * Props for the FlagDialog component
+ *
+ * @interface FlagDialogProps
  */
 interface FlagDialogProps {
-  /** ID of the item being flagged */
+  /** Unique identifier of the content item being flagged */
   itemId: string;
-  /** Whether the content is already flagged */
+  /** Whether the content has already been flagged by the current user */
   isFlagged: boolean;
-  /** Type of content being flagged */
+  /** Type of content being flagged - determines the action intent and display text */
   contentType: "article" | "tutorial" | "comment" | "reply";
-  /** Size of the flag button */
+  /** Size variant for the flag button and icon */
   size?: "sm" | "md" | "lg";
-  /** Whether to show text label */
+  /** Whether to display the text label alongside the flag icon */
   showText?: boolean;
-  /** Additional CSS classes */
+  /** Additional CSS classes to apply to the flag button */
   className?: string;
 }
 
 /**
- * A reusable dialog component for flagging content.
+ * A reusable dialog component for flagging content for moderation review.
  *
- * Features:
+ * This component provides a complete flagging interface with:
  * - Self-contained dialog with internal state management
- * - Reason selection dropdown
- * - Optional details textarea
- * - Loading states during submission
- * - Form validation
+ * - Reason selection dropdown with predefined violation categories
+ * - Optional details textarea for additional context
+ * - Loading states during form submission
+ * - Form validation (reason is required)
+ * - Automatic dialog closure on successful submission
+ * - Visual feedback for flagged vs unflaggged states
+ *
+ * The component handles the entire flagging workflow, including:
+ * - Opening/closing the dialog
+ * - Managing form state
+ * - Submitting flag data via fetcher
+ * - Resetting form on successful submission
+ *
+ * @param {FlagDialogProps} props - Component configuration
+ * @param {string} props.itemId - Unique identifier of the content to flag
+ * @param {boolean} props.isFlagged - Whether content is already flagged
+ * @param {"article" | "tutorial" | "comment" | "reply"} props.contentType - Type of content being flagged
+ * @param {"sm" | "md" | "lg"} [props.size="md"] - Size variant for the button
+ * @param {boolean} [props.showText=true] - Whether to show text label
+ * @param {string} [props.className] - Additional CSS classes
  *
  * @example
  * ```tsx
+ * // Basic usage
  * <FlagDialog
  *   itemId="article-123"
  *   isFlagged={false}
  *   contentType="article"
- *   size="md"
- *   showText={true}
+ * />
+ *
+ * // Compact version without text
+ * <FlagDialog
+ *   itemId="comment-456"
+ *   isFlagged={true}
+ *   contentType="comment"
+ *   size="sm"
+ *   showText={false}
  * />
  * ```
+ *
+ * @returns {JSX.Element} A flag button that opens a flagging dialog
  */
 export function FlagDialog({
   itemId,
@@ -107,31 +146,50 @@ export function FlagDialog({
     details: "",
   });
 
-  const { isPending, handleFlag } = useFlag(itemId, contentType);
+  const fetcher = useFetcher();
+  const user = useOptionalUser();
+  const isPending = fetcher.state !== "idle";
+  const shouldCloseDialog = fetcher.state === "idle";
 
   /**
-   * Handles the flag submission and resets form data
+   * Submits the flag data to the server
+   *
+   * Creates a form submission with the flag reason, details, and metadata
+   * for processing by the moderation system.
    */
-  const handleSubmit = () => {
-    handleFlag(flagData.reason, flagData.details);
-    setFlagData({ reason: "", details: "" });
-    setIsOpen(false);
-  };
+  function handleSubmit() {
+    fetcher.submit(
+      {
+        intent: `flag-${contentType}`,
+        data: JSON.stringify({
+          itemId,
+          userId: user?.id,
+          reason: flagData.reason,
+          details: flagData.details,
+        }),
+      },
+      { method: "POST" },
+    );
+  }
 
   /**
-   * Resets form data when dialog opens
+   * Resets form data and closes dialog when submission completes
+   *
+   * Monitors the fetcher state and automatically closes the dialog
+   * and resets form data when the submission is successful.
    */
   React.useEffect(() => {
-    if (isOpen) {
+    if (shouldCloseDialog) {
+      setIsOpen(false);
       setFlagData({ reason: "", details: "" });
     }
-  }, [isOpen]);
+  }, [shouldCloseDialog]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button
-          disabled={isPending}
+          disabled={isPending || isFlagged}
           aria-label={isFlagged ? "Remove flag" : "Flag content"}
           className={cn(
             "hover:text-foreground text-muted-foreground flex items-center space-x-1 transition-colors",
@@ -144,11 +202,11 @@ export function FlagDialog({
               "hover:fill-red-500 hover:text-red-500": !isFlagged,
             })}
           />
-          {showText && (
+          {showText ? (
             <span className={textSizes[size]}>
               {isFlagged ? "Flagged" : "Flag"}
             </span>
-          )}
+          ) : null}
         </button>
       </DialogTrigger>
       <DialogContent>
@@ -196,9 +254,10 @@ export function FlagDialog({
             onClick={handleSubmit}
             disabled={isPending || !flagData.reason}
           >
-            {isPending
-              ? "Flagging..."
-              : `Flag ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}
+            {`Flag ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}
+            {isPending ? (
+              <Loader2 className="ml-2 size-4 animate-spin" />
+            ) : null}
           </Button>
         </DialogFooter>
       </DialogContent>

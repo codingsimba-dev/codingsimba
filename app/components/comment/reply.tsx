@@ -1,36 +1,25 @@
 import React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { FilePenLine, Heart, Loader, Trash2 } from "lucide-react";
-import { cn, getSeed } from "~/utils/misc";
+import { getSeed } from "~/utils/misc";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
 import { useUpvote, useDelete, useUpdate } from "~/hooks/content";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../ui/alert-dialog";
 import { CommentForm } from "./comment-form";
-import { useNavigate } from "react-router";
-import { getImgSrc, getInitials, requireAuth } from "~/utils/misc";
+import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
 import { ReplyIntent } from ".";
 import { FlagDialog } from "~/components/flag-dialog";
+import { CommentActions } from "./comment-actions";
+import { UpvoteButton } from "../upvote-button";
 
 type ReplyData = NonNullable<CommentData["replies"]>[0];
 
 export function Reply({ reply }: { reply: ReplyData }) {
   const [replyBody, setReplyBody] = React.useState(reply.html);
   const [editReply, setEditReply] = React.useState(false);
-  const navigate = useNavigate();
   const user = useOptionalUser();
 
   const author = reply?.author;
@@ -38,6 +27,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
   const isOwner = userId === reply.authorId;
 
   const isLiked = reply.likes?.some((like) => like.userId === userId);
+  const isFlagged = reply.flags?.some((flag) => flag.userId === userId);
   const totalLikes = reply?.likes?.reduce(
     (total, like) => total + like.count,
     0,
@@ -52,11 +42,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
     isOwner ? "UPDATE:REPLY:OWN" : "UPDATE:REPLY:ANY",
   );
 
-  const {
-    submit: deleteReply,
-    isPending: isDeleting,
-    submittedData: deletedData,
-  } = useDelete({
+  const { submit: deleteReply, isPending: isDeleting } = useDelete({
     intent: ReplyIntent.DELETE_REPLY,
     data: {
       itemId: reply.id,
@@ -64,26 +50,15 @@ export function Reply({ reply }: { reply: ReplyData }) {
     },
   });
 
-  const isDeletingReply = isDeleting && deletedData?.get("itemId") === reply.id;
-
-  const {
-    submit: upvoteReply,
-    isPending: isUpvoting,
-    submittedData: upvotedData,
-  } = useUpvote({
+  const { submit: upvoteReply } = useUpvote({
     intent: ReplyIntent.UPVOTE_REPLY,
     data: {
       itemId: reply.id,
       userId: userId!,
     },
   });
-  const isUpvotingReply = isUpvoting && upvotedData?.get("itemId") === reply.id;
 
-  const {
-    submit: updateReply,
-    isPending: isUpdating,
-    submittedData: updatedData,
-  } = useUpdate({
+  const { submit: updateReply, isPending: isUpdating } = useUpdate({
     intent: ReplyIntent.UPDATE_REPLY,
     data: {
       itemId: reply.id,
@@ -91,7 +66,6 @@ export function Reply({ reply }: { reply: ReplyData }) {
       body: replyBody,
     },
   });
-  const isUpdatingReply = isUpdating && updatedData?.get("itemId") === reply.id;
 
   function handleUpdateReply() {
     if (!replyBody) return;
@@ -101,7 +75,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
 
   const anonymous = "Anonymous";
 
-  const basicButtonClasses =
+  const buttonClasses =
     "space-x-1 text-sm text-muted-foreground hover:text-foreground";
   return (
     <li>
@@ -143,65 +117,33 @@ export function Reply({ reply }: { reply: ReplyData }) {
           </div>
         )}
         <div className="mt-2 flex items-center gap-4">
-          <button
-            onClick={requireAuth({ fn: upvoteReply, user, navigate })}
-            className={cn(basicButtonClasses, "flex items-center")}
-            aria-label={isUpvotingReply ? "Upvoting" : "Upvote"}
-          >
-            <Heart
-              className={cn("size-4", {
-                "fill-red-500 text-red-500": isLiked,
-                "animate-bounce": isUpvotingReply,
-              })}
-            />
-            <span>{totalLikes}</span>
-          </button>
-
-          {canUpdate ? (
-            <button
-              onClick={() => setEditReply(!editReply)}
-              disabled={isUpdatingReply}
-              className={basicButtonClasses}
-              aria-label={isUpdatingReply ? "Updating" : "Update"}
-            >
-              {isUpdatingReply ? (
-                <Loader className="size-4 animate-spin" />
-              ) : (
-                <FilePenLine className="text-primary size-4" />
-              )}
-            </button>
-          ) : null}
-          {canDelete ? (
-            <AlertDialog>
-              <AlertDialogTrigger disabled={isDeletingReply}>
-                {isDeletingReply ? (
-                  <Loader className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="text-destructive size-4" />
-                )}
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Are you sure you want to delete this reply?
-                  </AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>No</AlertDialogCancel>
-                  <AlertDialogAction onClick={deleteReply}>
-                    Yes
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
-          <FlagDialog
-            itemId={reply.id}
-            isFlagged={false}
-            contentType="reply"
+          <UpvoteButton
             size="sm"
-            showText={false}
+            onUpvote={upvoteReply}
+            totalLikes={totalLikes}
+            isFilled={isLiked}
+            isDisabled={isLiked}
+            showMaxLabel={false}
           />
+          <CommentActions
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            isUpdating={isUpdating}
+            isDeleting={isDeleting}
+            contentType="reply"
+            onEdit={() => setEditReply(!editReply)}
+            onDelete={deleteReply}
+            className={buttonClasses}
+          />
+          {!isOwner && user ? (
+            <FlagDialog
+              size="sm"
+              itemId={reply.id}
+              isFlagged={isFlagged}
+              contentType="reply"
+              showText={false}
+            />
+          ) : null}
         </div>
       </div>
     </li>

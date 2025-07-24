@@ -8,7 +8,7 @@ import { getSubscription, listProducts } from "~/utils/subcription.server";
 import { getFAQs } from "~/utils/content.server/system/utils";
 import { getUserId } from "~/utils/auth.server";
 import { prisma } from "~/utils/db.server";
-import { Subscription } from "./subscription";
+import { SubscriptionSection } from "~/routes/subscription/components/subscription-section";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const articlesCount = countArticles();
@@ -35,7 +35,7 @@ export default function HomeRoute() {
       <HeroSection />
       {/* <CoursesSection /> */}
       <FAQSection />
-      <Subscription />
+      <SubscriptionSection />
     </>
   );
 }
