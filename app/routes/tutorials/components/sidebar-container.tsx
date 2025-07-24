@@ -21,11 +21,11 @@ export function SideBarContainer({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800",
+        "border-border overflow-hidden rounded-lg border",
         className,
       )}
     >
-      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
+      <div className="border-border bg-muted flex items-center justify-between border-b p-3">
         <h3 className="font-medium">{title}</h3>
         {isNav && lesson ? (
           <ChatBot documentId={lesson.id} documentTitle={lesson.title} />

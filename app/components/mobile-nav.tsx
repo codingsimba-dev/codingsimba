@@ -7,12 +7,7 @@ import {
 } from "./ui/sheet";
 import { Logo } from "./logo";
 import { useMobileNav } from "~/contexts/mobile-nav";
-import {
-  navLinks,
-  learning,
-  slogan,
-  learningIcons,
-} from "~/constants/navlinks";
+import { navLinks, learning, slogan, learningIcons } from "~/utils/constants";
 import { NavLink } from "./nav-link";
 import { Separator } from "./ui/separator";
 import { Link } from "react-router";
@@ -42,7 +37,7 @@ export function MobileNav() {
           <nav className="flex flex-col items-start gap-3 px-4">
             {/* Learning Links */}
             <div className="w-full">
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+              <h3 className="text-muted-foreground mb-2 text-sm font-semibold uppercase tracking-wide">
                 Learning
               </h3>
               <div className="flex flex-col gap-2">
@@ -54,7 +49,7 @@ export function MobileNav() {
                       key={link.name}
                       to={link.path}
                       onClick={closeMobileNav}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium capitalize text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium capitalize transition-colors"
                     >
                       {IconComponent && <IconComponent className="size-4" />}
                       {link.name}
@@ -84,14 +79,20 @@ export function MobileNav() {
           <div className="flex justify-center gap-4 px-4 pb-4">
             <ThemeToggle />
             {!user ? (
-              <Button onClick={closeMobileNav} className="flex" asChild>
-                <Link to={"/signin"}>Sign In</Link>
-              </Button>
+              <Link to={"/signin"}>
+                <Button
+                  onClick={closeMobileNav}
+                  className="flex"
+                  variant={"outline"}
+                >
+                  Sign In
+                </Button>
+              </Link>
             ) : null}
 
             {user ? (
               <Link to={"/profile"} onClick={closeMobileNav}>
-                <Avatar className="size-9 border border-gray-300 dark:border-gray-600">
+                <Avatar className="border-border size-9 border">
                   <AvatarImage
                     src={getImgSrc({
                       path: "users",
@@ -100,7 +101,7 @@ export function MobileNav() {
                     })}
                     alt={user.name}
                   />
-                  <AvatarFallback className="border border-slate-300 dark:border-gray-800">
+                  <AvatarFallback className="border-border border">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>

@@ -45,6 +45,8 @@ export interface OptimisticConfig {
   errorMessage?: string;
   /** Stable fetcher key - prevents memory leaks */
   fetcherKey?: string;
+  /** Current item ID for pending state comparison */
+  currentItemId?: string;
 }
 
 /**
@@ -135,6 +137,7 @@ export function useOptimisticSubmit<
     successMessage,
     errorMessage,
     fetcherKey: customFetcherKey,
+    currentItemId,
   } = config;
 
   // Stable fetcher key prevents memory leaks
@@ -229,13 +232,24 @@ export function useOptimisticSubmit<
   return React.useMemo(
     () => ({
       submit,
-      isPending: fetcher.state !== "idle",
+      isPending:
+        fetcher.state === "submitting" &&
+        fetcher.formData?.get("intent") === params.intent &&
+        (!currentItemId || fetcher.formData?.get("itemId") === currentItemId),
       submittedData: fetcher.formData,
       error: fetcher.data?.error || null,
       data: fetcher.data,
       reset,
     }),
-    [submit, fetcher.state, fetcher.formData, fetcher.data, reset],
+    [
+      submit,
+      fetcher.state,
+      fetcher.formData,
+      fetcher.data,
+      params.intent,
+      currentItemId,
+      reset,
+    ],
   );
 }
 
@@ -313,6 +327,33 @@ export function useUpvote<TData extends DataPayload = DataPayload>(
   );
 
   return useOptimisticSubmit(params, optimizedConfig);
+}
+
+/**
+ * Hook for operations that need to track specific item state.
+ * Useful for lists where you need to show loading state for specific items.
+ */
+export function useItemOptimistic<TData extends DataPayload = DataPayload>(
+  params: {
+    intent: string;
+    data: TData;
+    itemId: string;
+  },
+  config: Omit<OptimisticConfig, "currentItemId"> = {},
+): OptimisticReturn {
+  const optimizedConfig = React.useMemo(
+    () => ({
+      currentItemId: params.itemId,
+      fetcherKey: `item-${params.intent}-${params.itemId}`,
+      ...config,
+    }),
+    [params.intent, params.itemId, config],
+  );
+
+  return useOptimisticSubmit(
+    { intent: params.intent, data: params.data },
+    optimizedConfig,
+  );
 }
 
 /**

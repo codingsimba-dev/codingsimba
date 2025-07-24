@@ -109,14 +109,12 @@ export function Toggle({
   ...props
 }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+    <div className="border-border flex items-center justify-between border-b pb-4">
       {(label || description) && (
         <div>
           {label && <div className="font-medium">{label}</div>}
           {description && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {description}
-            </div>
+            <div className="text-muted-foreground text-sm">{description}</div>
           )}
         </div>
       )}
@@ -126,7 +124,7 @@ export function Toggle({
           className={cn("peer sr-only", className)}
           {...props}
         />
-        <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rtl:peer-checked:after:-translate-x-full dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800" />
+        <div className="bg-muted after:border-border after:bg-background peer-checked:bg-primary peer-checked:after:border-background peer-focus:ring-primary peer h-6 w-11 rounded-full after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-4 rtl:peer-checked:after:-translate-x-full" />
       </label>
     </div>
   );

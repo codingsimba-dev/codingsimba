@@ -1,4 +1,7 @@
 import type { Route } from "./+types/index";
+import { ArrowDownAZ } from "lucide-react";
+import { EmptyState } from "~/components/empty-state";
+import { Header } from "~/components/page-header";
 import json2md from "json2md";
 import { redirect } from "react-router";
 import { askQuestion } from "~/utils/openai.server";
@@ -115,4 +118,19 @@ export async function action({ request }: Route.ActionArgs) {
 
     return { answer: null, error: "Internal server error" } as Response;
   }
+}
+
+export default function ChatRoute() {
+  return (
+    <div>
+      <Header title="Chat" description="TekBreed Chat." />
+      <div className="container mx-auto my-20 w-full max-w-3xl">
+        <EmptyState
+          icon={<ArrowDownAZ className="size-8" />}
+          title="Chat Coming Soon!"
+          description="We're currently developing chat. While you wait, feel free to explore our articles and tutorials."
+        />
+      </div>
+    </div>
+  );
 }

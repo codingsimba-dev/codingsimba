@@ -24,7 +24,6 @@ const scheduledJobs: ScheduledJob[] = [
       try {
         console.log("Running scheduled log cleanup...");
         await runScript("npm", ["run", "cleanup-logs"], "log-cleanup");
-
         await logSystemEvent({
           action: SystemAction.SYSTEM_UPDATE,
           description: "Daily log cleanup completed successfully",

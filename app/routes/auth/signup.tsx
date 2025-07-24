@@ -126,18 +126,18 @@ export default function Signup({ actionData }: Route.ComponentProps) {
       {metadata}
       <GradientContainer>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="relative z-10 w-full max-w-md"
         >
-          <Card className="border-0 bg-white/80 shadow-xl backdrop-blur-sm dark:bg-gray-900/80">
+          <Card className="bg-card/80 border-0 shadow-xl backdrop-blur-sm">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Let&apos;s Begin!</CardTitle>
               <CardDescription>Enter your email to continue</CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="my-8 space-y-6">
               <Form {...getFormProps(form)} method="post" className="space-y-4">
                 <HoneypotInputs />
                 <input
@@ -168,10 +168,10 @@ export default function Signup({ actionData }: Route.ComponentProps) {
               </Form>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                  <div className="border-border w-full border-t"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+                  <span className="bg-background text-muted-foreground rounded-md px-2">
                     Or continue with
                   </span>
                 </div>
@@ -185,7 +185,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-muted-foreground text-sm">
                   Already have an account?{" "}
                   <Link
                     to="/signin"

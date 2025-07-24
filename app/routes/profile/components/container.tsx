@@ -15,11 +15,11 @@ export function Container({
   return (
     <div
       className={cn(
-        "rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900",
+        "border-border bg-card rounded-xl border shadow-sm",
         className,
       )}
     >
-      <div className="border-b border-gray-200 p-6 dark:border-gray-800">
+      <div className="border-border border-b p-6">
         <h2 className="mb-2 text-xl font-bold">{title}</h2>
         {description ? <div>{description}</div> : null}
       </div>

@@ -194,7 +194,7 @@ export default function ChangePhoto({
           transition={{ duration: 0.3 }}
           className="mx-auto w-full max-w-md"
         >
-          <Card className="w-full bg-white/80 shadow-xl backdrop-blur-sm dark:bg-gray-900/80">
+          <Card className="bg-card/80 w-full shadow-xl backdrop-blur-sm">
             <Form
               method="POST"
               encType="multipart/form-data"
@@ -211,7 +211,7 @@ export default function ChangePhoto({
                 </CardDescription>
               </CardHeader>
               <CardContent className="my-8">
-                <Avatar className="mx-auto mt-4 size-48 border border-gray-300 dark:border-gray-600">
+                <Avatar className="border-border mx-auto mt-4 size-48 border">
                   <AvatarImage
                     src={
                       newImageSrc ??

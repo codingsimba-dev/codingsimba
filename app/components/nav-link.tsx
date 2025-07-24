@@ -21,7 +21,7 @@ export function NavLink({
       onClick={onClick}
       className={({ isActive }: { isActive: boolean }) =>
         cn(
-          "m-0 p-0 capitalize text-gray-700 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-white",
+          "text-foreground hover:text-foreground m-0 p-0 capitalize transition-colors",
           { "text-lg": type === "navbar" },
           isActive ? "underline dark:text-white" : "",
         )

@@ -1,58 +1,68 @@
 import { useState } from "react";
+import { createId as cuid } from "@paralleldrive/cuid2";
 import { MessageCircle, Send, X, Minimize2, Maximize2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Textarea } from "./ui/textarea";
+import { useOptionalUser, useUser } from "~/hooks/user";
 
 interface Message {
-  id: number;
+  id: string;
   text: string;
   sender: "user" | "agent";
-  time: string;
+  timestamp: Date;
 }
 
 export function LiveChat() {
+  const user = useOptionalUser();
+  if (user) {
+    return <Chat user={user} />;
+  }
+  return null;
+}
+
+function Chat({ user }: { user: ReturnType<typeof useUser> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
-      text: "Hi! How can I help you today?",
+      id: cuid(),
+      text: `Hi ${user.name}! How can I help you today?`,
       sender: "agent",
-      time: "Just now",
+      timestamp: new Date(),
     },
   ]);
   const [newMessage, setNewMessage] = useState("");
 
-  const sendMessage = () => {
+  function sendMessage() {
     if (newMessage.trim()) {
       const message: Message = {
-        id: messages.length + 1,
+        id: cuid(),
         text: newMessage,
         sender: "user",
-        time: "Just now",
+        timestamp: new Date(),
       };
       setMessages([...messages, message]);
       setNewMessage("");
 
-      // Simulate agent response
       setTimeout(() => {
         const agentResponse: Message = {
-          id: messages.length + 2,
+          id: cuid(),
           text: "Thanks for your message! Our team will get back to you shortly.",
           sender: "agent",
-          time: "Just now",
+          timestamp: new Date(),
         };
         setMessages((prev) => [...prev, agentResponse]);
-      }, 1000);
+      }, 3000);
     }
-  };
+  }
 
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="size-10 rounded-full bg-blue-600 p-0 shadow-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+        className="bg-primary hover:bg-primary/90 size-10 rounded-full p-0 shadow-lg"
       >
         <MessageCircle className="size-6" />
       </Button>
@@ -62,7 +72,7 @@ export function LiveChat() {
   return (
     <div className="w-80">
       <Card className="shadow-2xl">
-        <CardHeader className="flex items-center justify-between bg-blue-600 text-white dark:bg-blue-500">
+        <CardHeader className="bg-primary text-primary-foreground flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle className="size-5" />
             <CardTitle className="text-lg">Live Chat</CardTitle>
@@ -72,7 +82,7 @@ export function LiveChat() {
               variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="size-8 p-0 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
+              className="text-primary-foreground hover:bg-primary/80 size-8 p-0"
             >
               {isMinimized ? (
                 <Maximize2 className="size-4" />
@@ -84,7 +94,7 @@ export function LiveChat() {
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="size-8 p-0 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
+              className="text-primary-foreground hover:bg-primary/80 size-8 p-0"
             >
               <X className="size-4" />
             </Button>
@@ -103,12 +113,16 @@ export function LiveChat() {
                     <div
                       className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                         message.sender === "user"
-                          ? "bg-blue-600 text-white dark:bg-blue-500"
-                          : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <p>{message.text}</p>
-                      <p className="mt-1 text-xs opacity-70">{message.time}</p>
+                      <p className="mt-1 text-xs opacity-70">
+                        {formatDistanceToNow(message.timestamp, {
+                          addSuffix: true,
+                        })}
+                      </p>
                     </div>
                   </div>
                 ))}

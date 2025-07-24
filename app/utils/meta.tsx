@@ -1,4 +1,4 @@
-import { slogan } from "~/constants/navlinks";
+import { slogan } from "~/utils/constants";
 import { getImgSrc } from "./misc";
 
 interface MetadataProps {
@@ -12,7 +12,7 @@ interface MetadataProps {
 }
 
 export function generateMetadata({
-  title = "Coding Simba",
+  title = "TekBreed",
   description = slogan,
   url = "https://tekbreed.com",
   image = getImgSrc({ path: "assets", fileKey: "icon.png" }),

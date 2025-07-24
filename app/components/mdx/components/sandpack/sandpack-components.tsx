@@ -54,7 +54,7 @@ export function SandpackTabs({
         onValueChange={(value) => setActiveView(value as ViewProps)}
         className="h-7"
       >
-        <TabsList className="h-7 p-1 dark:bg-gray-700">
+        <TabsList className="bg-muted h-7 p-1">
           <TabsTrigger
             value="editor"
             className="h-7 rounded-md px-3 text-xs font-medium data-[state=active]:bg-violet-600 data-[state=active]:text-white dark:data-[state=active]:bg-violet-600 dark:data-[state=active]:text-white"
@@ -174,7 +174,7 @@ export function CopyCode() {
         </>
       ) : (
         <>
-          <Copy className="text-gray-500" />
+          <Copy className="text-muted-foreground" />
           Copy Code
         </>
       )}
@@ -236,7 +236,7 @@ export function StatusIndicator() {
     };
 
     setStatus(
-      statusMap[sandpack.status] || { color: "bg-gray-500", text: "Unknown" },
+      statusMap[sandpack.status] || { color: "bg-muted", text: "Unknown" },
     );
   }, [sandpack.status]);
 

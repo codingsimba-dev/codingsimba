@@ -1,19 +1,15 @@
 import React from "react";
+
 import type { Route } from "../+types/article";
-import {
-  Await,
-  useFetcher,
-  useLoaderData,
-  useParams,
-  useRevalidator,
-} from "react-router";
-import { ChartBar, Eye, Heart, MessageSquare } from "lucide-react";
+import { Await, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { ChartBar, Eye } from "lucide-react";
 import { cn } from "~/utils/misc";
-import { Link } from "react-router";
 import { useOptionalUser } from "~/hooks/user";
-import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "~/components/ui/skeleton";
 import { EmptyState } from "~/components/empty-state";
+import { FlagDialog } from "~/components/flag-dialog";
+import { UpvoteButton } from "~/components/upvote-button";
+import { BookmarkButton } from "~/components/bookmark-button";
 
 type Like = {
   count: number;
@@ -30,13 +26,14 @@ export function Metrics({ className }: { className?: string }) {
         resolve={metrics}
         errorElement={
           <EmptyState
-            icon={<ChartBar className="size-10 text-gray-400" />}
+            icon={<ChartBar className="text-muted-foreground size-10" />}
             title="Failed to load metrics"
             description="Failed to load metrics, click the reload button to reload the page."
             action={{
               label: "Reload",
               onClick: () => revalidator.revalidate(),
             }}
+            className="mb-6"
           />
         }
       >
@@ -45,10 +42,10 @@ export function Metrics({ className }: { className?: string }) {
             <ArticleMetricsContent metrics={metrics} className={className} />
           ) : (
             <EmptyState
-              icon={<ChartBar className="size-10 text-gray-400" />}
+              icon={<ChartBar className="text-muted-foreground size-10" />}
               title="No metrics"
               description="This article has no metrics."
-              className="pt-4"
+              className="mb-2 pt-4"
             />
           )
         }
@@ -61,7 +58,7 @@ function MetricsSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "mb-8 flex flex-col items-start justify-between border-b border-gray-200 py-4 dark:border-gray-800",
+        "border-border mb-8 flex flex-col items-start justify-between border-b py-4",
         className,
       )}
     >
@@ -81,24 +78,29 @@ function ArticleMetricsContent({
   metrics: Awaited<Route.ComponentProps["loaderData"]["metrics"]>;
   className?: string;
 }) {
-  const [showFloating, setShowFloating] = React.useState(false);
-  const [animationKey, setAnimationKey] = React.useState(0);
-  const { articleSlug } = useParams();
   const fetcher = useFetcher();
   const user = useOptionalUser();
   const userId = user?.id;
   const MAX_LIKES = 5;
   const LEAST_COUNT = 0;
 
-  const totalLikes =
-    metrics?.likes?.reduce(
-      (total: number, like: Like) => total + like.count,
-      0,
-    ) ?? LEAST_COUNT;
-
-  const userLikes =
-    metrics?.likes.find((like: Like) => like.userId === userId)?.count ??
-    LEAST_COUNT;
+  const { totalLikes, userLikes, isBookmarked, isFlagged } =
+    React.useMemo(() => {
+      const totalLikes =
+        metrics?.likes?.reduce(
+          (total: number, like: Like) => total + like.count,
+          0,
+        ) ?? LEAST_COUNT;
+      const userLikes =
+        metrics?.likes.find((like: Like) => like.userId === userId)?.count ??
+        LEAST_COUNT;
+      const isBookmarked =
+        metrics?.bookmarks.some((bookmark) => bookmark.userId === userId) ??
+        false;
+      const isFlagged =
+        metrics?.flags.some((flag) => flag.userId === userId) ?? false;
+      return { totalLikes, userLikes, isBookmarked, isFlagged };
+    }, [metrics, userId]);
 
   const [optimisticState, setOptimisticState] = React.useState({
     totalLikes,
@@ -121,13 +123,6 @@ function ArticleMetricsContent({
       userLikes: prev.userLikes + 1,
     }));
 
-    setShowFloating(true);
-    setAnimationKey((prev) => prev + 1);
-
-    setTimeout(() => {
-      setShowFloating(false);
-    }, 1000);
-
     fetcher.submit(
       {
         intent: "upvote-article",
@@ -137,82 +132,54 @@ function ArticleMetricsContent({
     );
   }
 
-  if (!metrics) return <MetricsSkeleton className={className} />;
+  function handleBookmark() {
+    fetcher.submit(
+      {
+        intent: "bookmark-article",
+        data: JSON.stringify({ itemId: metrics?.id ?? "", userId: userId! }),
+      },
+      { method: "post" },
+    );
+  }
 
+  if (!metrics) return <MetricsSkeleton className={className} />;
   return (
     <div
       className={cn(
-        "mb-8 flex flex-col items-start justify-between border-b border-gray-200 py-4 dark:border-gray-800",
+        "border-border mb-8 flex flex-col items-start justify-between border-b py-4",
         className,
       )}
     >
-      <div className="flex items-center space-x-6">
-        <div className="relative mr-4 flex items-center">
-          <button
-            onClick={handleUpvote}
-            disabled={optimisticState.userLikes >= MAX_LIKES}
-            className="flex items-center gap-1"
-            aria-label="Upvote"
-          >
-            <Heart
-              className={cn("size-5 transition-colors", {
-                "fill-red-500 text-red-500":
-                  optimisticState.userLikes > LEAST_COUNT,
-                "hover:fill-red-500 hover:text-red-500":
-                  optimisticState.userLikes < MAX_LIKES,
-                "opacity-80": optimisticState.userLikes >= MAX_LIKES,
-              })}
-            />
-            <span>{optimisticState.totalLikes.toLocaleString()}</span>
-            {optimisticState.userLikes >= MAX_LIKES ? (
-              <sub className="text-gray-500 dark:text-gray-400">max</sub>
-            ) : null}
-          </button>
-          <AnimatePresence>
-            {showFloating && (
-              <motion.div
-                key={animationKey}
-                initial={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                animate={{
-                  opacity: 0,
-                  y: -40,
-                  scale: 1.2,
-                }}
-                exit={{
-                  opacity: 0,
-                }}
-                transition={{
-                  duration: 1,
-                  ease: "easeOut",
-                }}
-                className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-2"
-              >
-                <span className="text-lg font-bold text-red-500">+1</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-        <Link
-          to={{
-            pathname: `/articles/${articleSlug}`,
-            hash: "#comments",
-          }}
-          className="flex items-center space-x-1"
-        >
-          <MessageSquare className="size-5" />
-          <span>
-            {metrics?._count.comments.toLocaleString() ?? LEAST_COUNT}
-          </span>
-        </Link>
-        <div className="flex items-center space-x-1">
-          <Eye className="size-5" />
-          <span>{metrics?.views.toLocaleString() ?? LEAST_COUNT} views</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <UpvoteButton
+          onUpvote={handleUpvote}
+          totalLikes={optimisticState.totalLikes}
+          isFilled={optimisticState.userLikes > LEAST_COUNT}
+          isDisabled={optimisticState.userLikes >= MAX_LIKES}
+          showMaxLabel={true}
+        />
+        <BookmarkButton
+          isBookmarked={isBookmarked}
+          onBookmark={handleBookmark}
+        />
+        <FlagDialog
+          itemId={metrics?.id}
+          isFlagged={isFlagged}
+          contentType="article"
+          size="sm"
+          showText={false}
+        />
+        <Views views={metrics?.views ?? LEAST_COUNT} />
       </div>
+    </div>
+  );
+}
+
+function Views({ views, className }: { views: number; className?: string }) {
+  return (
+    <div className={cn("flex items-center space-x-1", className)}>
+      <Eye className="size-5" />
+      <span>{views.toLocaleString()} views</span>
     </div>
   );
 }

@@ -7,7 +7,7 @@ export function ExploreButton() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 1, duration: 0.8 }}
+      transition={{ delay: 0.4, duration: 0.3 }}
       className="absolute bottom-8 left-0 right-0 flex justify-center"
     >
       <Link

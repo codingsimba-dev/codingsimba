@@ -28,8 +28,8 @@ export function H2({
   return (
     <h2
       className={cn(
-        "scroll-m-20 text-3xl font-semibold tracking-tight text-gray-800 dark:text-gray-200",
-        "mb-4 mt-8 dark:border-gray-800",
+        "text-foreground scroll-m-20 text-3xl font-semibold tracking-tight",
+        "border-border mb-4 mt-8",
         className,
       )}
       {...props}
@@ -43,8 +43,8 @@ export const H3 = ({
 }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h3
     className={cn(
-      "scroll-m-20 text-2xl font-semibold tracking-tight text-gray-800 dark:text-gray-200",
-      "mb-4 mt-8 dark:border-gray-800",
+      "text-foreground scroll-m-20 text-2xl font-semibold tracking-tight",
+      "border-border mb-4 mt-8",
       className,
     )}
     {...props}
@@ -57,8 +57,8 @@ export const H4 = ({
 }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h4
     className={cn(
-      "scroll-m-20 text-xl font-semibold tracking-tight text-gray-800 dark:text-gray-200",
-      "mb-4 mt-8 dark:border-gray-800",
+      "text-foreground scroll-m-20 text-xl font-semibold tracking-tight",
+      "border-border mb-4 mt-8",
       className,
     )}
     {...props}
@@ -71,8 +71,8 @@ export const H5 = ({
 }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h5
     className={cn(
-      "scroll-m-20 text-lg font-semibold tracking-tight text-gray-800 dark:text-gray-200",
-      "mb-4 mt-8 dark:border-gray-800",
+      "text-foreground scroll-m-20 text-lg font-semibold tracking-tight",
+      "border-border mb-4 mt-8",
       className,
     )}
     {...props}
@@ -85,8 +85,8 @@ export const H6 = ({
 }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h6
     className={cn(
-      "scroll-m-20 text-lg font-semibold tracking-tight text-gray-800 dark:text-gray-200",
-      "mb-4 mt-8 dark:border-gray-800",
+      "text-foreground scroll-m-20 text-lg font-semibold tracking-tight",
+      "border-border mb-4 mt-8",
       className,
     )}
     {...props}
@@ -105,7 +105,7 @@ export function P({
   return (
     <p
       className={cn(
-        "leading-7.5 text-[1.05em] tracking-wide text-gray-700 dark:text-gray-300 [&:not(:first-child)]:mt-6",
+        "leading-7.5 text-foreground text-[1.05em] tracking-wide [&:not(:first-child)]:mt-6",
         className,
       )}
       {...props}
@@ -198,7 +198,7 @@ export function Subtle({
 }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
-      className={cn("text-sm text-gray-500 dark:text-gray-400", className)}
+      className={cn("text-muted-foreground text-sm", className)}
       {...props}
     />
   );
@@ -210,11 +210,11 @@ export function Blockquote({
 }: React.HTMLAttributes<HTMLQuoteElement>) {
   return (
     <div className="relative">
-      <Quote className="absolute -top-2 left-2 size-4 text-gray-300 dark:text-gray-600" />
+      <Quote className="text-muted-foreground absolute -top-2 left-2 size-4" />
       <blockquote
         className={cn(
-          "pl-8 italic text-gray-600 dark:text-gray-400",
-          "border-l-4 border-gray-200 dark:border-gray-700",
+          "text-muted-foreground pl-8 italic",
+          "border-border border-l-4",
           "relative overflow-visible",
           className,
         )}

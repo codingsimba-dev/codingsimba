@@ -4,6 +4,7 @@ import type { SubmitPayload } from "~/hooks/content";
 import { invariant, invariantResponse } from "~/utils/misc";
 import { MarkdownConverter } from "~/utils/misc.server";
 import { requireUserWithPermission } from "~/utils/permissions.server";
+import type { FlagReason } from "~/generated/prisma/client";
 
 /**
  * Adds a new comment to an article
@@ -285,4 +286,90 @@ export async function trackPageView(data: SubmitPayload["data"]) {
     select: { id: true },
   });
   return content;
+}
+
+/**
+ * Creates a new bookmark for an article
+ * @param itemId - The ID of the article to bookmark
+ * @param userId - The ID of the user bookmarking the article
+ * @returns The created bookmark with its ID
+ * @throws {Error} If item ID or user ID is missing
+ */
+export async function bookmarkArticle(data: SubmitPayload["data"]) {
+  const { itemId, userId } = data;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
+  const upsertBookmark = await prisma.bookmark.upsert({
+    where: { contentId_userId: { contentId: itemId, userId } },
+    update: {},
+    create: { contentId: itemId, userId },
+    select: { id: true },
+  });
+  return upsertBookmark;
+}
+
+/**
+ * Creates a new flag for an article
+ * @param itemId - The ID of the article to flag
+ * @param userId - The ID of the user flagging the article
+ * @param reason - The reason for flagging the article
+ * @param details - The details of the flag
+ * @returns The created flag with its ID
+ * @throws {Error} If item ID or user ID is missing
+ */
+export async function flagArticle(data: SubmitPayload["data"]) {
+  const { itemId, userId, reason, details } = data;
+  const flagReason = reason.toUpperCase() as FlagReason;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
+  invariant(reason, "Reason is required");
+  const flag = await prisma.contentFlag.create({
+    data: { contentId: itemId, userId, reason: flagReason, details },
+    select: { id: true },
+  });
+  return flag;
+}
+
+/**
+ * Creates a new flag for a comment
+ * @param itemId - The ID of the comment to flag
+ * @param userId - The ID of the user flagging the comment
+ * @param reason - The reason for flagging the comment
+ * @param details - The details of the flag
+ * @returns The created flag with its ID
+ * @throws {Error} If item ID or user ID is missing
+ */
+export async function flagComment(data: SubmitPayload["data"]) {
+  const { itemId, userId, reason, details } = data;
+  const flagReason = reason.toUpperCase() as FlagReason;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
+  invariant(reason, "Reason is required");
+  const flag = await prisma.contentFlag.create({
+    data: { commentId: itemId, userId, reason: flagReason, details },
+    select: { id: true },
+  });
+  return flag;
+}
+
+/**
+ * Creates a new flag for a reply
+ * @param itemId - The ID of the reply to flag
+ * @param userId - The ID of the user flagging the reply
+ * @param reason - The reason for flagging the reply
+ * @param details - The details of the flag
+ * @returns The created flag with its ID
+ * @throws {Error} If item ID or user ID is missing
+ */
+export async function flagReply(data: SubmitPayload["data"]) {
+  const { itemId, userId, reason, details } = data;
+  const flagReason = reason.toUpperCase() as FlagReason;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
+  invariant(reason, "Reason is required");
+  const flag = await prisma.contentFlag.create({
+    data: { commentId: itemId, userId, reason: flagReason, details },
+    select: { id: true },
+  });
+  return flag;
 }

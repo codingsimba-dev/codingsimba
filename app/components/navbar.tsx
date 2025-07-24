@@ -9,7 +9,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { content, learning } from "~/constants/navlinks";
+import { content, learning } from "~/utils/constants";
 import * as Icons from "lucide-react";
 import { NavLink } from "./nav-link";
 import { ThemeToggle } from "~/components/theme-toggle";
@@ -52,7 +52,7 @@ export function Navbar() {
     <nav
       className={cn("pt-6", {
         "bg-transparent": isHomePage,
-        "fixed left-0 right-0 top-0 z-50 w-full border-b border-gray-200 bg-white/80 pt-0 backdrop-blur-md dark:border-gray-800 dark:bg-gray-950/80":
+        "border-border bg-background/80 fixed left-0 right-0 top-0 z-50 w-full border-b pt-0 backdrop-blur-md":
           !isHomePage,
       })}
     >
@@ -65,22 +65,24 @@ export function Navbar() {
               <ChevronDown className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
-              {learning.map((link) => {
-                const IconComponent =
-                  learningIcons[link.name as keyof typeof learningIcons];
-                return (
-                  <DropdownMenuItem asChild key={link.name}>
-                    <Link
-                      to={link.path}
-                      prefetch="intent"
-                      className="flex items-center gap-2 font-bold capitalize"
-                    >
-                      {IconComponent && <IconComponent className="size-4" />}
-                      {link.name}
-                    </Link>
-                  </DropdownMenuItem>
-                );
-              })}
+              {learning
+                .filter((link) => link.path !== "color-scheme")
+                .map((link) => {
+                  const IconComponent =
+                    learningIcons[link.name as keyof typeof learningIcons];
+                  return (
+                    <DropdownMenuItem asChild key={link.name}>
+                      <Link
+                        to={link.path}
+                        prefetch="intent"
+                        className="flex items-center gap-2 font-bold capitalize"
+                      >
+                        {IconComponent && <IconComponent className="size-4" />}
+                        {link.name}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
             </DropdownMenuContent>
           </DropdownMenu>
           {content.map((link) => (
@@ -109,7 +111,7 @@ export function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="hidden lg:block" asChild>
-                <Avatar className="size-8 cursor-pointer border border-gray-300 dark:border-gray-600">
+                <Avatar className="border-border size-8 cursor-pointer border">
                   <AvatarImage
                     src={getImgSrc({
                       path: "users",
@@ -118,7 +120,7 @@ export function Navbar() {
                     })}
                     alt={user.name}
                   />
-                  <AvatarFallback className="border border-slate-300 dark:border-gray-800">
+                  <AvatarFallback className="border-border border">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>

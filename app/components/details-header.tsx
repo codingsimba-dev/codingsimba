@@ -47,7 +47,7 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
   });
 
   return (
-    <div className="relative isolate overflow-hidden border-b border-gray-200 py-4 dark:border-gray-800">
+    <div className="mt-13 border-border relative isolate overflow-hidden border-b py-4">
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-50 dark:from-blue-950 dark:to-indigo-950" />
         {shapes.map((shape) => (
@@ -137,18 +137,20 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <motion.span
-              className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              {item.category.title}
-            </motion.span>
+            {item.category ? (
+              <motion.span
+                className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                {item.category.title}
+              </motion.span>
+            ) : null}
             {item.createdAt ? (
               <>
-                <span className="text-gray-500 dark:text-gray-400">•</span>
+                <span className="text-muted-foreground">•</span>
                 <motion.div
-                  className="flex items-center text-gray-600 dark:text-gray-300"
+                  className="text-muted-foreground flex items-center"
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
@@ -160,9 +162,9 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
 
             {isArticle ? (
               <>
-                <span className="text-gray-500 dark:text-gray-400">•</span>
+                <span className="text-muted-foreground">•</span>
                 <motion.div
-                  className="flex items-center text-gray-600 dark:text-gray-300"
+                  className="text-muted-foreground flex items-center"
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
@@ -171,22 +173,28 @@ export function DetailsHeader({ item }: DetailsHeaderProps) {
                 </motion.div>
               </>
             ) : null}
-            <span className="text-gray-500 dark:text-gray-400">•</span>
-            <div className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarImage
-                  src={
-                    env.MODE === "development"
-                      ? getImgSrc({
-                          seed: getSeed(item.author.name),
-                        })
-                      : item.author.image
-                  }
-                />
-                <AvatarFallback>{getInitials(item.author.name)}</AvatarFallback>
-              </Avatar>
-              <p className="text-sm font-medium">{item.author.name}</p>
-            </div>
+            {item.author ? (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <div className="flex items-center gap-2">
+                  <Avatar className="size-6">
+                    <AvatarImage
+                      src={
+                        env.MODE === "development"
+                          ? getImgSrc({
+                              seed: getSeed(item.author.name),
+                            })
+                          : item.author.image
+                      }
+                    />
+                    <AvatarFallback>
+                      {getInitials(item.author.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium">{item.author.name}</p>
+                </div>
+              </>
+            ) : null}
           </motion.div>
         </div>
       </div>

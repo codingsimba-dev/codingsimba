@@ -13,21 +13,9 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { Markdown } from "~/components/mdx";
+import type { Journey } from "~/utils/content.server/system/types";
 
-type JourneyProps = {
-  slug: string;
-  content: string;
-  frontmatter: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any;
-  };
-} | null;
-
-export function Journey({
-  journeyData,
-}: {
-  journeyData: Promise<JourneyProps[]>;
-}) {
+export function Journey({ journeyData }: { journeyData: Promise<Journey[]> }) {
   return (
     <section className="mb-24">
       <SectionHeader
@@ -36,17 +24,17 @@ export function Journey({
       />
       <Suspense fallback={<JourneySkeleton />}>
         <Await resolve={journeyData}>
-          {(resolvedJourneyData: JourneyProps[]) => (
+          {(resolvedJourneyData: Journey[]) => (
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-4 top-0 h-full w-0.5 bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 md:left-1/2 md:-translate-x-px" />
               <div className="space-y-8">
                 {resolvedJourneyData
                   ? resolvedJourneyData
-                      .filter((item) => item?.frontmatter?.published !== false)
-                      .map((item: JourneyProps, index: number) => (
+                      .filter((item) => item?.published !== false)
+                      .map((item: Journey, index: number) => (
                         <TimelineItem
-                          key={item?.slug}
+                          key={item?.title}
                           index={index}
                           journeyItem={item}
                         />
@@ -88,10 +76,9 @@ function TimelineItem({
   journeyItem,
 }: {
   index: number;
-  journeyItem: JourneyProps;
+  journeyItem: Journey;
 }) {
   const isEven = index % 2 === 0;
-  const frontmatter = journeyItem ? journeyItem.frontmatter : {};
 
   return (
     <div
@@ -117,11 +104,11 @@ function TimelineItem({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-blue-500" />
-                {frontmatter.title}
+                {journeyItem.title}
               </DialogTitle>
             </DialogHeader>
             <div className="-my-6">
-              <Markdown source={journeyItem!.content} />
+              <Markdown source={journeyItem.content} />
             </div>
           </DialogContent>
           <DialogTrigger asChild>
@@ -133,34 +120,32 @@ function TimelineItem({
                     variant="outline"
                     className="border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
                   >
-                    {frontmatter.category}
+                    {journeyItem.category}
                   </Badge>
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                     <Calendar className="mr-1 h-3 w-3" />
-                    {frontmatter.year}
+                    {journeyItem.year}
                   </div>
                 </div>
 
                 {/* Title */}
                 <h3 className="mb-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
-                  {frontmatter.title}
+                  {journeyItem.title}
                 </h3>
 
                 {/* Description */}
                 <p className="mb-4 line-clamp-3 text-sm text-gray-600 dark:text-gray-300">
-                  {frontmatter.description}
+                  {journeyItem.description}
                 </p>
 
                 {/* Image preview */}
-                {frontmatter?.hasImage && (
-                  <div className="mb-4 overflow-hidden rounded-md">
-                    <img
-                      src={frontmatter.image}
-                      alt={frontmatter.title}
-                      className="h-32 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                )}
+                <div className="mb-4 overflow-hidden rounded-md">
+                  <img
+                    src={journeyItem.image}
+                    alt={journeyItem.title}
+                    className="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
 
                 {/* Read more indicator */}
                 <div className="flex items-center text-sm font-medium text-blue-600 transition-colors group-hover:text-blue-700 dark:text-blue-400 dark:group-hover:text-blue-300">

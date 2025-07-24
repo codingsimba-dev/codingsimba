@@ -8,11 +8,11 @@
   }
 
   .code-block select {
-    @apply absolute right-2 top-2 z-10 rounded border border-gray-200 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100;
+    @apply border-border bg-background text-foreground absolute right-2 top-2 z-10 rounded border px-2 py-1 text-sm;
   }
 
   .code-block pre {
-    @apply my-6 rounded-lg !bg-gray-100 px-4 py-3 font-mono !text-gray-900 dark:!bg-gray-800 dark:!text-gray-100;
+    @apply !bg-muted !text-foreground my-6 rounded-lg px-4 py-3 font-mono;
   }
 
   .code-block pre code {
@@ -22,7 +22,7 @@
   /* Syntax highlighting styles */
   .code-block .hljs-comment,
   .code-block .hljs-quote {
-    @apply !text-gray-500 dark:!text-gray-400;
+    @apply !text-muted-foreground;
   }
 
   .code-block .hljs-variable,
@@ -34,7 +34,7 @@
   .code-block .hljs-link,
   .code-block .hljs-selector-id,
   .code-block .hljs-selector-class {
-    @apply !text-red-600 dark:!text-red-400;
+    @apply !text-destructive;
   }
 
   .code-block .hljs-number,
@@ -72,6 +72,6 @@
   }
 
   .prose p.is-editor-empty:first-child::before {
-    @apply pointer-events-none float-left h-0 text-gray-400 content-[attr(data-placeholder)];
+    @apply text-muted-foreground pointer-events-none float-left h-0 content-[attr(data-placeholder)];
   }
 }

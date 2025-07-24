@@ -1,3 +1,4 @@
+import React from "react";
 import { SideBarContainer } from "./sidebar-container";
 import { Button } from "~/components/ui/button";
 import { Share2, Bookmark, ThumbsUp, MessageSquare } from "lucide-react";
@@ -11,6 +12,7 @@ import { Share } from "~/components/share-content";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Dialog } from "~/components/ui/dialog";
 import { Link, useParams } from "react-router";
+import { FlagDialog } from "~/components/flag-dialog";
 
 export function Engagement({ tutorial }: { tutorial: Tutorial }) {
   const { tutorialId, lessonId } = useParams();
@@ -55,6 +57,13 @@ export function Engagement({ tutorial }: { tutorial: Tutorial }) {
               <MessageSquare className="h-4 w-4" />
             </Button>
           </Link>
+          <FlagDialog
+            itemId={tutorial.id}
+            isFlagged={false}
+            contentType="tutorial"
+            size="sm"
+            showText={false}
+          />
         </div>
       </Dialog>
     </SideBarContainer>

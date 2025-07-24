@@ -9,6 +9,7 @@ import { parseWithZod } from "@conform-to/zod";
 import { FormError } from "~/components/form-errors";
 import { Container } from "./container";
 import { EmailSchema, NameSchema } from "~/utils/user-validation";
+import { useIsPending } from "~/utils/misc";
 
 export const ACCOUNT_INFORMATION_INTENT = "update-profile";
 
@@ -24,7 +25,7 @@ export function AccountInformation() {
   const loaderData = useLoaderData() as Route.ComponentProps["loaderData"];
 
   const user = loaderData.user;
-  const isSaving = fetcher.formData?.get("userId") === user.id;
+  const isSaving = useIsPending();
 
   const [form, fields] = useForm({
     id: "account-information",
@@ -33,6 +34,9 @@ export function AccountInformation() {
       return parseWithZod(formData, { schema: AcccountInformationSchema });
     },
     shouldValidate: "onBlur",
+    defaultValue: {
+      email: user.email,
+    },
   });
   return (
     <Container title="Account Information" className="mb-8">
@@ -44,7 +48,7 @@ export function AccountInformation() {
             <Input
               {...getInputProps(fields.name, { type: "text" })}
               defaultValue={user.name}
-              className="h-12 border-gray-300 bg-white !text-lg dark:border-gray-700 dark:bg-gray-900"
+              className="border-border bg-background h-12 !text-lg"
             />
             <FormError errors={fields.name.errors} />
           </div>
@@ -53,8 +57,8 @@ export function AccountInformation() {
             <Input
               {...getInputProps(fields.email, { type: "email" })}
               defaultValue={user.email}
-              className="h-12 border-gray-300 bg-white !text-lg dark:border-gray-700 dark:bg-gray-900"
-              disabled
+              className="border-border bg-background h-12 !text-lg"
+              readOnly
             />
             <FormError errors={fields.email.errors} />
           </div>

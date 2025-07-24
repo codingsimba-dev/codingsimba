@@ -123,7 +123,7 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
           transition={{ duration: 0.3 }}
           className="mx-auto w-full max-w-md"
         >
-          <Card className="w-full bg-white/80 shadow-xl backdrop-blur-sm dark:bg-gray-900/80">
+          <Card className="bg-card/80 w-full shadow-xl backdrop-blur-sm">
             <Form
               {...getFormProps(form)}
               method="post"
@@ -143,7 +143,7 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
                   <Input
                     {...getInputProps(fields.email, { type: "email" })}
                     placeholder="johndoe@example.com"
-                    className="h-12 border-gray-300 bg-white !text-lg dark:border-gray-700 dark:bg-gray-900"
+                    className="border-border bg-background h-12 !text-lg"
                   />
                   <FormError errors={fields.email.errors} />
                 </div>

@@ -290,69 +290,6 @@ export async function cancelSubscription(subscriptionId: string) {
 }
 
 /**
- * Logs webhook events to the database using the generic logging system
- */
-export async function logWebhookEvent({
-  event,
-  data,
-  success,
-  error,
-  ipAddress,
-  userAgent,
-}: {
-  event: string;
-  data: unknown;
-  success: boolean;
-  error?: unknown;
-  ipAddress?: string;
-  userAgent?: string;
-}) {
-  const webhookId = (data as { id?: string })?.id || "unknown";
-  const metadata = {
-    productName: (data as { product?: { name?: string } })?.product?.name,
-    webhookId,
-    success,
-    error: error ? String(error) : undefined,
-  };
-
-  await logSystemEvent({
-    action: SystemAction.SUBSCRIPTION,
-    description: `${event} webhook ${success ? "processed successfully" : "failed"}`,
-    severity: success ? "INFO" : "ERROR",
-    metadata,
-    ipAddress,
-    userAgent,
-  });
-}
-
-/**
- * Logs portal access events to the database
- */
-export async function logPortalAccess({
-  success,
-  error,
-  ipAddress,
-  userAgent,
-}: {
-  success: boolean;
-  error?: unknown;
-  ipAddress?: string;
-  userAgent?: string;
-}) {
-  await logSystemEvent({
-    action: SystemAction.SIGNIN,
-    description: `Customer portal ${success ? "accessed successfully" : "access failed"}`,
-    severity: success ? "INFO" : "ERROR",
-    metadata: {
-      success,
-      error: error ? String(error) : undefined,
-    },
-    ipAddress,
-    userAgent,
-  });
-}
-
-/**
  * Logs subscription events to the database
  */
 export async function logSubscriptionEvent({

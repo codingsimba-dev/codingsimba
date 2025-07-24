@@ -7,7 +7,7 @@ import {
   RectangleEllipsis,
   Users,
 } from "lucide-react";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData, useSubmit } from "react-router";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,7 @@ export const SessionSchema = z.object({ userId: z.string() });
 export const DeleteUserSchema = z.object({ userId: z.string() });
 
 export function DataAndSecurity() {
+  const submit = useSubmit();
   const fetcher = useFetcher();
   const loaderData = useLoaderData() as Route.ComponentProps["loaderData"];
 
@@ -136,7 +137,7 @@ export function DataAndSecurity() {
         <h3 className="mb-1 text-lg font-medium text-red-500 dark:text-red-400">
           Danger Zone
         </h3>
-        <p className="mb-4 text-gray-500 dark:text-gray-400">
+        <p className="text-muted-foreground mb-4">
           Once you delete your account, there is no going back. This action
           cannot be undone.
         </p>
@@ -167,7 +168,7 @@ export function DataAndSecurity() {
               <AlertDialogCancel>No</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() =>
-                  fetcher.submit(
+                  submit(
                     { intent: DELETE_USER_INTENT, userId: user.id },
                     { method: "post" },
                   )
@@ -197,13 +198,13 @@ function Item({
   return (
     <div
       className={cn(
-        "flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800",
+        "border-border flex items-center justify-between border-b pb-4",
         className,
       )}
     >
       <div>
         <h3 className="mb-1 text-lg font-medium">{title}</h3>
-        <p className="text-gray-500 dark:text-gray-400">{description}</p>
+        <p className="text-muted-foreground">{description}</p>
       </div>
       {children}
     </div>

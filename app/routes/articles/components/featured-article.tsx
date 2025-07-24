@@ -31,7 +31,7 @@ function Article({ article }: { article: Article }) {
       prefetch="intent"
     >
       <PrefetchPageLinks page={`/articles/${article.slug}`} />
-      <article className="grid gap-8 overflow-hidden rounded-2xl bg-gray-100 md:h-[300px] md:max-h-[300px] md:grid-cols-2 dark:bg-gray-900">
+      <article className="bg-muted grid gap-8 overflow-hidden rounded-2xl md:h-[300px] md:max-h-[300px] md:grid-cols-2">
         <div className="relative aspect-video md:aspect-auto md:h-[300px] md:max-h-[300px]">
           <img
             src={article.image}
@@ -49,19 +49,17 @@ function Article({ article }: { article: Article }) {
             <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               {article.category.title}
             </span>
-            <span className="text-gray-500 dark:text-gray-400">•</span>
-            <span className="text-gray-500 dark:text-gray-400">
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">
               {format(article.createdAt, "MMMM dd, yyyy")}
             </span>
-            <span className="text-gray-500 dark:text-gray-400">•</span>
-            <span className="text-gray-500 dark:text-gray-400">
-              ~ {stats.text}
-            </span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">~ {stats.text}</span>
           </div>
           <h2 className="mb-4 text-2xl font-bold transition-colors group-hover:text-blue-600 md:text-3xl dark:group-hover:text-blue-400">
             {article.title}
           </h2>
-          <p className="mb-6 text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground mb-6">
             {article.excerpt.length > MAX_EXCERPT_LENGTH
               ? `${article.excerpt.slice(0, MAX_EXCERPT_LENGTH)}...`
               : article.excerpt}

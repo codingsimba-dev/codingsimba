@@ -6,10 +6,11 @@ import {
   tutorialsQuery,
   countQuery,
   lessonsQuery,
+  modulesQuery,
   lessonDetailsQuery,
   chatbotLessonQuery,
 } from "./queries";
-import type { Tutorial, Lesson, ChatBotLesson } from "./types";
+import type { Tutorial, Lesson, ChatBotLesson, ModulesList } from "./types";
 import { bundleMDX } from "mdx-bundler";
 import { bundleComponents } from "~/utils/misc.server";
 
@@ -88,15 +89,31 @@ export async function getTutorialDetails(tutorialId: string) {
   const tutorial = await client.fetch<Tutorial>(tutorialDetailsQuery, {
     tutorialId,
   });
-  const { code } = await bundleMDX({ source: tutorial.overview });
-  return {
-    ...tutorial,
-    overview: code,
-  };
+  if (tutorial.overview) {
+    const { code } = await bundleMDX({ source: tutorial.overview });
+    return {
+      ...tutorial,
+      overview: code,
+    };
+  }
+  return tutorial;
 }
 
 /**
- * Retrieves the lessons for a specific tutorial
+ * Retrieves the modules for a specific tutorial
+ * @param {string} tutorialId - The ID of the tutorial to retrieve modules for
+ * @returns {Promise<ModulesList>} Array of tutorial modules with their lessons
+ * @example
+ * // Get the modules for a tutorial about React hooks
+ * const modules = await getTutorialModules("1234567890");
+ * console.log(modules.length); // 3
+ */
+export async function getTutorialModules(tutorialId: string) {
+  return client.fetch<ModulesList>(modulesQuery, { tutorialId });
+}
+
+/**
+ * Retrieves the lessons for a specific tutorial (legacy - now lessons are fetched through modules)
  * @param {string} tutorialId - The ID of the tutorial to retrieve lessons for
  * @returns {Promise<TutorialLesson[]>} Array of tutorial lessons
  * @example

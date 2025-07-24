@@ -1,6 +1,7 @@
 import { FileText, Play, GraduationCap, Target, Trophy } from "lucide-react";
 
 export const slogan = "Breeding the next generation of software developers";
+export const domain = "tekbreed.com";
 
 export const learningIcons = {
   articles: FileText,
@@ -19,11 +20,12 @@ export const learning = [
 ];
 
 export const content = [
-  { name: "support", path: "support" },
   { name: "chat", path: "chat" },
   { name: "job board", path: "job-board" },
   { name: "store", path: "store" },
+  { name: "support", path: "support" },
   { name: "roadmap", path: "roadmap" },
+  { name: "color scheme", path: "color-scheme" },
 ];
 
 export const platform = [
@@ -33,8 +35,8 @@ export const platform = [
 ];
 
 export const legal = [
-  { name: "terms", path: "terms" },
-  { name: "privacy", path: "privacy" },
+  { name: "terms", path: "legal/terms-of-use" },
+  { name: "privacy", path: "legal/privacy-policy" },
 ];
 
 export const social = [

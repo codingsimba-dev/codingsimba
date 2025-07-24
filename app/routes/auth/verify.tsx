@@ -77,7 +77,7 @@ export default function VerifyPage({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const metadata = generateMetadata({ title: "Verify | Coding Simba" });
+  const metadata = generateMetadata({ title: "Verify" });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isVerifying = useIsPending();
@@ -92,7 +92,7 @@ export default function VerifyPage({
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: VerifySchema });
     },
-    shouldValidate: "onBlur",
+    shouldValidate: "onSubmit",
     defaultValue: {
       code: searchParams.get(codeQueryParam),
       type: searchParams.get(typeQueryParam),
@@ -100,6 +100,18 @@ export default function VerifyPage({
       redirectTo: searchParams.get(redirectToQueryParam),
     },
   });
+
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const OTP_LENGTH = 6;
+
+  React.useEffect(() => {
+    const code = fields[codeQueryParam].value;
+    if (code && code.length === OTP_LENGTH && !isVerifying) {
+      if (formRef.current) {
+        formRef.current.requestSubmit();
+      }
+    }
+  }, [fields, isVerifying]);
 
   const onboarding = (
     <>
@@ -109,12 +121,10 @@ export default function VerifyPage({
         </div>
       </div>
       <h1 className="mb-2 text-2xl font-bold">Verify your email</h1>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         We&apos;ve sent a verification code to
       </p>
-      <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">
-        {fields.target.value}
-      </p>
+      <p className="text-foreground mt-1 font-medium">{fields.target.value}</p>
     </>
   );
 
@@ -126,7 +136,7 @@ export default function VerifyPage({
         </div>
       </div>
       <h1 className="mb-2 text-2xl font-bold">Check your email</h1>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         We&apos;ve sent you a code to reset your password
       </p>
     </>
@@ -139,7 +149,7 @@ export default function VerifyPage({
         </div>
       </div>
       <h1 className="mb-2 text-2xl font-bold">Check your email</h1>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-muted-foreground">
         We&apos;ve sent you a code to verify your email address
       </p>
     </>
@@ -150,22 +160,20 @@ export default function VerifyPage({
     change_email: changeEmail,
   };
 
-  const OTP_LENGTH = 6;
-
   return (
     <>
       {metadata}
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
+      <div className="bg-muted flex min-h-screen items-center justify-center p-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg dark:bg-gray-900"
+          transition={{ duration: 0.3 }}
+          className="bg-card w-full max-w-md rounded-xl p-8 shadow-lg"
         >
           {/* Back button */}
           <button
             onClick={() => navigate(-1)}
-            className="mb-6 flex items-center text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            className="text-muted-foreground hover:text-foreground mb-6 flex items-center transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
@@ -175,7 +183,12 @@ export default function VerifyPage({
             {type ? headings[type] : "Invalid type"}
           </div>
 
-          <Form {...getFormProps(form)} method="post" className="w-full">
+          <Form
+            {...getFormProps(form)}
+            method="post"
+            className="w-full"
+            ref={formRef}
+          >
             <HoneypotInputs />
             <input
               {...getInputProps(fields[typeQueryParam], { type: "hidden" })}
@@ -218,8 +231,8 @@ export default function VerifyPage({
             </Button>
             <FormError errors={form.errors} />
           </Form>
-          <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-800">
-            <p className="text-center text-xs text-gray-500 dark:text-gray-500">
+          <div className="border-border mt-6 border-t pt-6">
+            <p className="text-muted-foreground text-center text-xs">
               Check your spam folder if you don&apos;t see the email. The code
               expires in 10 minutes.
             </p>

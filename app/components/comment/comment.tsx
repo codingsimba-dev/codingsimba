@@ -20,6 +20,7 @@ import { useUpvote, useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { cn, getSeed } from "~/utils/misc";
+import { FlagDialog } from "~/components/flag-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +55,8 @@ export function Comment({ comment }: { comment: CommentData }) {
   const author = comment?.author;
   const isOwner = userId === comment.authorId;
 
-  const isLiked = comment.likes?.some((like) => like.userId === user?.id);
+  const isFlagged = comment.flags.some((flag) => flag.userId === userId);
+  const isLiked = comment.likes?.some((like) => like.userId === userId);
   const totalLikes = comment?.likes?.reduce(
     (total, like) => total + like.count,
     0,
@@ -69,11 +71,7 @@ export function Comment({ comment }: { comment: CommentData }) {
     isOwner ? "UPDATE:COMMENT:OWN" : "UPDATE:COMMENT:ANY",
   );
 
-  const {
-    submit: submitReply,
-    isPending: isCreating,
-    submittedData: createdData,
-  } = useCreate({
+  const { submit: submitReply, isPending: isCreating } = useCreate({
     intent: ReplyIntent.ADD_REPLY,
     data: {
       userId: userId!,
@@ -82,14 +80,8 @@ export function Comment({ comment }: { comment: CommentData }) {
       body: reply,
     },
   });
-  const isCreatingReply =
-    isCreating && createdData?.get("parentId") === comment.id;
 
-  const {
-    submit: deleteComment,
-    isPending: isDeleting,
-    submittedData: deletedData,
-  } = useDelete(
+  const { submit: deleteComment, isPending: isDeleting } = useDelete(
     {
       intent: CommentIntent.DELETE_COMMENT,
       data: {
@@ -99,28 +91,16 @@ export function Comment({ comment }: { comment: CommentData }) {
     },
     { showSuccessToast: true },
   );
-  const isDeletingComment =
-    isDeleting && deletedData?.get("itemId") === comment.id;
 
-  const {
-    submit: upvoteComment,
-    isPending: isUpvoting,
-    submittedData: upvotedData,
-  } = useUpvote({
+  const { submit: upvoteComment, isPending: isUpvoting } = useUpvote({
     intent: CommentIntent.UPVOTE_COMMENT,
     data: {
       itemId: comment.id,
       userId: userId!,
     },
   });
-  const isUpvotingComment =
-    isUpvoting && upvotedData?.get("itemId") === comment.id;
 
-  const {
-    submit: updateComment,
-    isPending: isUpdating,
-    submittedData: updatedData,
-  } = useUpdate({
+  const { submit: updateComment, isPending: isUpdating } = useUpdate({
     intent: CommentIntent.UPDATE_COMMENT,
     data: {
       itemId: comment.id,
@@ -128,8 +108,6 @@ export function Comment({ comment }: { comment: CommentData }) {
       body: commentBody,
     },
   });
-  const isUpdatingComment =
-    isUpdating && updatedData?.get("itemId") === comment.id;
 
   const handleReplySubmit = () => {
     if (!reply.trim()) return;
@@ -213,7 +191,7 @@ export function Comment({ comment }: { comment: CommentData }) {
               <Heart
                 className={cn("size-4", {
                   "fill-red-500 text-red-500": isLiked,
-                  "animate-bounce": isUpvotingComment,
+                  "animate-bounce": isUpvoting,
                 })}
               />
               <span>{totalLikes}</span>
@@ -225,11 +203,9 @@ export function Comment({ comment }: { comment: CommentData }) {
                 navigate,
               })}
               className={basicButtonClasses}
-              aria-label={
-                isCreatingReply ? "replying comment" : "reply comment"
-              }
+              aria-label={isCreating ? "replying comment" : "reply comment"}
             >
-              {isCreatingReply ? (
+              {isCreating ? (
                 <Loader className="mr-1 size-4 animate-spin" />
               ) : (
                 <MessageSquareQuote className="mr-1 size-4" />
@@ -240,11 +216,9 @@ export function Comment({ comment }: { comment: CommentData }) {
               <button
                 onClick={() => setEditComment(true)}
                 className={basicButtonClasses}
-                aria-label={
-                  isUpdatingComment ? "updating comment" : "update comment"
-                }
+                aria-label={isUpdating ? "updating comment" : "update comment"}
               >
-                {isUpdatingComment ? (
+                {isUpdating ? (
                   <Loader className="mr-1 size-4 animate-spin" />
                 ) : (
                   <FilePenLine className="text-primary mr-1 size-4" />
@@ -255,10 +229,10 @@ export function Comment({ comment }: { comment: CommentData }) {
             {canDelete ? (
               <AlertDialog>
                 <AlertDialogTrigger
-                  disabled={isDeletingComment}
+                  disabled={isDeleting}
                   className={basicButtonClasses}
                 >
-                  {isDeletingComment ? (
+                  {isDeleting ? (
                     <Loader className="mr-1 size-4 animate-spin" />
                   ) : (
                     <Trash2 className="text-destructive mr-1 size-4" />
@@ -280,6 +254,13 @@ export function Comment({ comment }: { comment: CommentData }) {
                 </AlertDialogContent>
               </AlertDialog>
             ) : null}
+            <FlagDialog
+              itemId={comment.id}
+              isFlagged={isFlagged}
+              contentType="comment"
+              size="sm"
+              showText={true}
+            />
           </div>
           {comment.replies?.length ? <Separator className="mb-6 mt-4" /> : null}
           {showReplyForm ? (

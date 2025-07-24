@@ -83,7 +83,7 @@ export function Author({ author }: { author: Author }) {
         </div>
         <div>
           <h3 className="mb-2 text-lg font-black">
-            <span className="text-gray-500"> Written by</span>{" "}
+            <span className="text-muted-foreground"> Written by</span>{" "}
             <Link
               to={`/authors/${encodeURIComponent(author.slug)}`}
               className="hover:text-primary transition-colors"

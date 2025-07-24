@@ -20,29 +20,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import { Markdown } from "~/components/mdx";
-
-type RoadmapItem = {
-  slug: string;
-  content: string;
-  frontmatter: {
-    title?: string;
-    description?: string;
-    category?:
-      | "articles"
-      | "tutorials"
-      | "challenges"
-      | "courses"
-      | "programs"
-      | "job-board"
-      | "store"
-      | "chat";
-    startDate?: string;
-    endDate?: string;
-    status?: "completed" | "in-progress" | "planned";
-    progress?: number;
-    [key: string]: unknown;
-  };
-};
+import type { Roadmap } from "~/utils/content.server/system/types";
 
 const categoryIcons = {
   articles: BookOpen,
@@ -64,7 +42,7 @@ const statusColors = {
     "border-gray-500 bg-gray-50 text-gray-700 dark:border-gray-400 dark:bg-gray-900/20 dark:text-gray-300",
 };
 
-export function Roadmap({ roadmapData }: { roadmapData: RoadmapItem[] }) {
+export function Roadmap({ roadmapData }: { roadmapData: Roadmap[] }) {
   return (
     <section className="mb-24">
       <div className="relative">
@@ -72,8 +50,8 @@ export function Roadmap({ roadmapData }: { roadmapData: RoadmapItem[] }) {
         <div className="absolute left-4 top-0 h-full w-0.5 bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 md:left-1/2 md:-translate-x-px" />
 
         <div className="space-y-8">
-          {roadmapData.map((item: RoadmapItem, index: number) => (
-            <TimelineItem key={item.slug} index={index} roadmapItem={item} />
+          {roadmapData?.map((item, index) => (
+            <TimelineItem key={item.title} index={index} roadmapItem={item} />
           ))}
         </div>
       </div>
@@ -86,12 +64,12 @@ function TimelineItem({
   roadmapItem,
 }: {
   index: number;
-  roadmapItem: RoadmapItem;
+  roadmapItem: Roadmap;
 }) {
   const isEven = index % 2 === 0;
-  const frontmatter = roadmapItem.frontmatter;
-  const category = frontmatter.category || "articles";
-  const IconComponent = categoryIcons[category];
+  const IconComponent =
+    categoryIcons[roadmapItem.category as keyof typeof categoryIcons] ||
+    BookOpen;
 
   return (
     <div
@@ -117,7 +95,7 @@ function TimelineItem({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <IconComponent className="h-4 w-4 text-blue-500" />
-                {frontmatter.title}
+                {roadmapItem.title}
               </DialogTitle>
             </DialogHeader>
             <div className="-my-6">
@@ -135,40 +113,40 @@ function TimelineItem({
                       variant="outline"
                       className={cn(
                         "px-2 py-1 text-xs font-medium",
-                        statusColors[frontmatter.status || "planned"],
+                        statusColors[roadmapItem.status],
                       )}
                     >
-                      {(frontmatter.status || "planned").replace("-", " ")}
+                      {roadmapItem.status.replace("-", " ")}
                     </Badge>
                   </div>
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                     <Calendar className="mr-1 h-3 w-3" />
-                    {frontmatter.startDate || "TBD"}
+                    {roadmapItem.startDate}
                   </div>
                 </div>
 
                 {/* Title */}
                 <h3 className="mb-2 text-lg font-semibold text-gray-900 transition-colors group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
-                  {frontmatter.title || "Untitled"}
+                  {roadmapItem.title}
                 </h3>
 
                 {/* Description */}
                 <p className="mb-4 line-clamp-3 text-sm text-gray-600 dark:text-gray-300">
-                  {frontmatter.description || "No description available"}
+                  {roadmapItem.description}
                 </p>
 
                 {/* Progress bar for in-progress items */}
-                {frontmatter.status === "in-progress" &&
-                  frontmatter.progress && (
+                {roadmapItem.status === "in-progress" &&
+                  roadmapItem.progress && (
                     <div className="mb-4">
                       <div className="mb-1 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                         <span>Progress</span>
-                        <span>{frontmatter.progress}%</span>
+                        <span>{roadmapItem.progress}%</span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
                         <div
                           className="h-2 rounded-full bg-blue-500 transition-all duration-300"
-                          style={{ width: `${frontmatter.progress}%` }}
+                          style={{ width: `${roadmapItem.progress}%` }}
                         />
                       </div>
                     </div>

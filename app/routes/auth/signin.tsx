@@ -111,18 +111,18 @@ export default function Signin({ actionData }: Route.ComponentProps) {
       {metadata}
       <GradientContainer>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="relative z-10 w-full max-w-md"
         >
-          <Card className="border-0 bg-white/80 shadow-xl backdrop-blur-sm dark:bg-gray-900/80">
+          <Card className="bg-card/80 border-0 shadow-xl backdrop-blur-sm">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Welcome back</CardTitle>
               <CardDescription>Please enter your credentials</CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="my-8 space-y-6">
               <Form {...getFormProps(form)} method="post" className="space-y-4">
                 <HoneypotInputs />
                 <div className="space-y-2">
@@ -144,13 +144,13 @@ export default function Signin({ actionData }: Route.ComponentProps) {
                 <div className="flex justify-between">
                   <Label
                     htmlFor={fields.rememberMe.id}
-                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                    className="text-muted-foreground flex items-center gap-2 text-sm"
                   >
                     <input
                       {...getInputProps(fields.rememberMe, {
                         type: "checkbox",
                       })}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                      className="border-border text-primary focus:ring-primary h-4 w-4 rounded"
                     />
                     Remember Me
                   </Label>
@@ -180,10 +180,10 @@ export default function Signin({ actionData }: Route.ComponentProps) {
               </Form>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                  <div className="border-border w-full border-t"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+                  <span className="bg-background text-muted-foreground rounded-md px-2">
                     Or continue with
                   </span>
                 </div>
@@ -196,7 +196,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
                 />
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-muted-foreground text-sm">
                   Don&apos;t have an account?{" "}
                   <Link
                     to="/signup"

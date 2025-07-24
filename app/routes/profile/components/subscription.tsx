@@ -17,8 +17,8 @@ export function Subscription() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="mb-8 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="border-b border-gray-200 p-6 dark:border-gray-800">
+      <div className="border-border bg-card mb-8 rounded-xl border shadow-sm">
+        <div className="border-border border-b p-6">
           <h2 className="text-xl font-bold">Subscription Details</h2>
         </div>
         <div className="p-6">
@@ -36,7 +36,7 @@ export function Subscription() {
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {subscription.product.name} Plan
                     </div>
-                    <div className="text-gray-600 dark:text-gray-300">
+                    <div className="text-muted-foreground">
                       ${subscription.amount / 100} /{" "}
                       {subscription.recurringInterval}
                     </div>
@@ -51,7 +51,7 @@ export function Subscription() {
                           subscription.status === "canceled",
                         "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400":
                           subscription.status === "incomplete",
-                        "bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400":
+                        "bg-muted text-muted-foreground":
                           subscription.status === "incomplete_expired",
                       },
                     )}
@@ -61,7 +61,7 @@ export function Subscription() {
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                <div className="border-border flex items-center justify-between border-b pb-4">
                   <div className="font-medium"> Started on</div>
                   <div>
                     {format(subscription.currentPeriodStart, "MMM d, yyyy")}
@@ -69,7 +69,7 @@ export function Subscription() {
                 </div>
                 {subscription.currentPeriodEnd &&
                 !subscription.cancelAtPeriodEnd ? (
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                  <div className="border-border flex items-center justify-between border-b pb-4">
                     <div className="font-medium">Next billing date</div>
                     <div>
                       {format(subscription.currentPeriodEnd, "MMM d, yyyy")}
@@ -77,7 +77,7 @@ export function Subscription() {
                   </div>
                 ) : null}
                 {statusesToCheck.includes(subscription.status) ? (
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                  <div className="border-border flex items-center justify-between border-b pb-4">
                     <div className="font-medium">Ended on</div>
                     <div>
                       {subscription.endedAt
@@ -88,7 +88,7 @@ export function Subscription() {
                 ) : null}
                 {subscription.cancelAtPeriodEnd &&
                 subscription.currentPeriodEnd ? (
-                  <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                  <div className="border-border flex items-center justify-between border-b pb-4">
                     <div className="font-medium">
                       Subscription will be canceled on
                     </div>
@@ -97,7 +97,7 @@ export function Subscription() {
                     </div>
                   </div>
                 ) : null}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+                <div className="border-border flex items-center justify-between border-b pb-4">
                   <div className="font-medium">Billing history</div>
                   <Link to={`/subscription/portal`} target="_blank">
                     <Button variant="link" className="h-auto p-0">

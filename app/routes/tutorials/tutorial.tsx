@@ -31,7 +31,7 @@ import {
 } from "./action.server";
 import { checkHoneypot } from "~/utils/honeypot.server";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
-import { generateMetadata } from "~/utils/meta";
+// import { generateMetadata } from "~/utils/meta";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -122,18 +122,18 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function TutorialPage({ loaderData }: Route.ComponentProps) {
   const { tutorial, lessons, lessonId } = loaderData;
-  const metadata = generateMetadata({
-    title: tutorial.title,
-    image: tutorial.image,
-    imageAlt: tutorial.title,
-    url: `tutorials/${tutorial.id}`,
-    description: tutorial.overview,
-    keywords: tutorial.tags
-      .map((t) => t.slug)
-      .join(",")
-      .replace(/-/g, "_"),
-    type: "article",
-  });
+  // const metadata = generateMetadata({
+  //   title: tutorial.title,
+  //   image: tutorial.image,
+  //   imageAlt: tutorial.title,
+  //   url: `tutorials/${tutorial.id}`,
+  //   description: tutorial.overview,
+  //   keywords: tutorial.tags
+  //     .map((t) => t.slug)
+  //     .join(",")
+  //     .replace(/-/g, "_"),
+  //   type: "article",
+  // });
 
   const { submit: submitPageView } = useCreate({
     intent: "track-page-view",
@@ -149,7 +149,7 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      {metadata}
+      {/* {metadata} */}
       <DetailsHeader item={tutorial} />
       <div className="container mx-auto w-full px-4 py-12">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">

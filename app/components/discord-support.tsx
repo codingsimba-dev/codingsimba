@@ -134,7 +134,7 @@ export function DiscordSupport({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-gray-500" />
+                        <Users className="text-muted-foreground h-4 w-4" />
                         <span className="text-sm">Members</span>
                       </div>
                       <Badge variant="secondary">
@@ -143,7 +143,7 @@ export function DiscordSupport({
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-gray-500" />
+                        <MessageCircle className="text-muted-foreground h-4 w-4" />
                         <span className="text-sm">Online Now</span>
                       </div>
                       <Badge variant="secondary">
@@ -152,7 +152,7 @@ export function DiscordSupport({
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-500" />
+                        <Clock className="text-muted-foreground h-4 w-4" />
                         <span className="text-sm">Avg Response</span>
                       </div>
                       <Badge variant="secondary">
@@ -191,7 +191,7 @@ export function DiscordSupport({
                               <h5 className="text-sm font-medium">
                                 #{channel.name}
                               </h5>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-muted-foreground text-xs">
                                 {channel.title}
                               </p>
                             </div>

@@ -62,7 +62,7 @@ export function Header({
   }, [searchParams, setSearch]);
 
   return (
-    <header className="mt-13 relative isolate overflow-hidden border-b border-gray-200 py-6 dark:border-gray-800">
+    <header className="mt-13 border-border relative isolate overflow-hidden border-b py-6">
       {/* Background container with higher stacking context */}
       <div className="absolute inset-0 -z-10">
         {/* Base gradient background */}
@@ -114,7 +114,7 @@ export function Header({
             {title}
           </motion.h1>
           <motion.p
-            className="mb-2 text-lg text-gray-600 dark:text-gray-300"
+            className="text-muted-foreground mb-2 text-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
@@ -129,7 +129,7 @@ export function Header({
               transition={{ duration: 0.3, delay: 0.3 }}
             >
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
+                className="text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 transform"
                 size={20}
               />
               <Input
@@ -141,7 +141,7 @@ export function Header({
                   setSearch(value);
                   handleSearchChange(value);
                 }}
-                className="rounded-full border-gray-300 bg-white py-6 pl-10 text-base shadow-sm transition-shadow duration-300 hover:shadow-md focus:shadow-md dark:border-gray-700 dark:bg-gray-900"
+                className="border-border bg-background rounded-full py-6 pl-10 text-base shadow-sm transition-shadow duration-300 hover:shadow-md focus:shadow-md"
               />
             </motion.div>
           ) : null}

@@ -17,7 +17,7 @@ export function Tags({
               pathname: "/articles",
               search: `?tag=${tag.slug}`,
             }}
-            className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="bg-muted text-foreground hover:bg-muted/80 rounded-full px-3 py-1 text-sm transition-colors"
           >
             #{tag.title}
           </Link>

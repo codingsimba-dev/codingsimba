@@ -1,5 +1,5 @@
 import React from "react";
-import { slogan } from "~/constants/navlinks";
+import { slogan } from "~/utils/constants";
 import * as E from "@react-email/components";
 
 export function Header({ description = slogan }: { description?: string }) {

@@ -23,6 +23,7 @@ import { getImgSrc, getInitials, requireAuth } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
 import { ReplyIntent } from ".";
+import { FlagDialog } from "~/components/flag-dialog";
 
 type ReplyData = NonNullable<CommentData["replies"]>[0];
 
@@ -97,6 +98,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
     updateReply();
     setEditReply(false);
   }
+
   const anonymous = "Anonymous";
 
   const basicButtonClasses =
@@ -193,6 +195,13 @@ export function Reply({ reply }: { reply: ReplyData }) {
               </AlertDialogContent>
             </AlertDialog>
           ) : null}
+          <FlagDialog
+            itemId={reply.id}
+            isFlagged={false}
+            contentType="reply"
+            size="sm"
+            showText={false}
+          />
         </div>
       </div>
     </li>

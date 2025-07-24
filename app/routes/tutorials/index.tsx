@@ -6,7 +6,7 @@ import { Header } from "~/components/page-header";
 import { ContentFilter } from "~/components/content-filter";
 import { ContentPagination } from "~/components/content-pagination";
 import { EmptyState } from "~/components/empty-state";
-import { TutorialCard } from "./components/tutorial-card";
+// import { TutorialCard } from "./components/tutorial-card";
 import { generateMetadata } from "~/utils/meta";
 import { UrlSchema } from "~/utils/content.server/shared-types";
 import { StatusCodes } from "http-status-codes";
@@ -87,7 +87,8 @@ export default function TutorialsRoute({ loaderData }: Route.ComponentProps) {
                   key={tutorial.id}
                   to={`/tutorials/${tutorial.id}`}
                 >
-                  <TutorialCard tutorial={tutorial} />
+                  some
+                  {/* <TutorialCard tutorial={tutorial} /> */}
                 </Link>
               ))
             : null}

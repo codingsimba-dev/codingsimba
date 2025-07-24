@@ -109,7 +109,7 @@ export function GeneralErrorBoundary({
         animate="visible"
         className="w-full max-w-2xl"
       >
-        <div className="overflow-hidden rounded-2xl border border-red-200/50 bg-white/80 shadow-2xl backdrop-blur-sm dark:border-red-800/50 dark:bg-gray-900/80">
+        <div className="border-destructive/50 bg-card/80 overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-sm">
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white">
             <motion.div
@@ -119,7 +119,7 @@ export function GeneralErrorBoundary({
               <motion.div
                 variants={iconVariants}
                 whileHover="hover"
-                className="rounded-full bg-white/20 p-4"
+                className="bg-background/20 rounded-full p-4"
               >
                 <AlertTriangle className="size-12" />
               </motion.div>
@@ -179,7 +179,7 @@ export function GeneralErrorBoundary({
                 <Link to="/">
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-800"
+                    className="border-border hover:border-border hover:bg-muted flex items-center gap-2 border-2"
                     size="lg"
                   >
                     <Home className="size-4" />
@@ -192,9 +192,9 @@ export function GeneralErrorBoundary({
             {/* Support section */}
             <motion.div
               variants={itemVariants}
-              className="mb-6 border-t border-gray-200 pt-6 text-center dark:border-gray-700"
+              className="border-border mb-6 border-t pt-6 text-center"
             >
-              <p className="mb-3 text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground mb-3">
                 Need help? We are ready to assist you.
               </p>
               <motion.div
@@ -216,7 +216,7 @@ export function GeneralErrorBoundary({
             <motion.div variants={itemVariants}>
               <motion.button
                 onClick={() => setShowDetails(!showDetails)}
-                className="flex w-full items-center justify-center gap-2 py-2 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-muted-foreground hover:text-foreground flex w-full items-center justify-center gap-2 py-2 transition-colors"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -240,13 +240,13 @@ export function GeneralErrorBoundary({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div className="border-border bg-muted mt-4 rounded-lg border p-4">
                   {isRouteErrorResponse(error) ? (
                     <div className="font-mono text-sm">
                       <div className="mb-2 font-semibold text-red-600 dark:text-red-400">
                         HTTP {error.status} Error
                       </div>
-                      <div className="text-gray-700 dark:text-gray-300">
+                      <div className="text-foreground">
                         {(
                           statusHandlers?.[error.status] ?? defaultStatusHandler
                         )({
@@ -257,10 +257,10 @@ export function GeneralErrorBoundary({
                     </div>
                   ) : (
                     <div>
-                      <h3 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <h3 className="text-foreground mb-2 text-sm font-semibold">
                         Technical Details:
                       </h3>
-                      <div className="rounded border bg-white p-3 font-mono text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+                      <div className="bg-muted text-muted-foreground rounded border p-3 font-mono text-sm">
                         {unexpectedErrorHandler(error)}
                       </div>
                     </div>

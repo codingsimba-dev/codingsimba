@@ -1,5 +1,5 @@
 import type { Tutorial, Lesson } from "~/utils/content.server/turorials/types";
-import { SupportAuthor } from "./support-author";
+// import { SupportAuthor } from "./support-author";
 import { LessonsNavigation } from "./lessons-navigation";
 import { Tags } from "./tags";
 import { Stats } from "./stats";
@@ -48,7 +48,7 @@ export function TutorialSidebar({
       {/* Email Subscription Form */}
       {!user?.isSubscribed ? <ContentEmailSubscriptionForm /> : null}
       {/* support author */}
-      {!tutorial.premium ? <SupportAuthor /> : null}
+      {/* {!tutorial.premium ? <SupportAuthor /> : null} */}
     </div>
   );
 }

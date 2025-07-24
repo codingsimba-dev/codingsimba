@@ -8,18 +8,19 @@ import { Skills } from "./components/skills";
 import { Team } from "./components/team";
 import { CTA } from "./components/cta";
 import { countArticles } from "~/utils/content.server/articles/utils";
-import { readMdxDirectory } from "~/utils/misc.server";
 import { generateMetadata } from "~/utils/meta";
+import { getJourneys } from "~/utils/content.server/system/utils";
 
 export async function loader() {
   const articlesCount = countArticles();
-  const journeyData = readMdxDirectory("about/journey");
+  const journeyData = getJourneys();
 
   return { articlesCount, journeyData };
 }
 
 export default function AboutRoute({ loaderData }: Route.ComponentProps) {
-  const title = "About Coding Simba";
+  const { articlesCount, journeyData } = loaderData;
+  const title = "About TekBreed";
   const metadata = generateMetadata({ title });
   return (
     <>
@@ -30,8 +31,8 @@ export default function AboutRoute({ loaderData }: Route.ComponentProps) {
       />
       <div className="container mx-auto max-w-6xl px-4 py-12">
         <Mission />
-        <Impact articlesCount={loaderData.articlesCount} />
-        <Journey journeyData={loaderData.journeyData} />
+        <Impact articlesCount={articlesCount} />
+        <Journey journeyData={journeyData} />
         <Skills />
         <Team />
         <Values />

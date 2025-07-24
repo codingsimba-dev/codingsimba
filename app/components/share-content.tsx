@@ -20,10 +20,11 @@ export function Share({
   const shareText = item.title;
 
   const shareUrl = `https://tekbreed.com/${itemType === "article" ? "articles" : "tutorials"}/${itemType === "article" ? item.slug : item.id}`;
-  const shareHashtags = item.tags
-    .map((tag) => tag.slug)
-    .join(",")
-    .replace(/-/g, "_");
+  const shareHashtags =
+    item.tags
+      ?.map((tag) => tag.slug)
+      .join(",")
+      .replace(/-/g, "_") || "";
 
   const shareViaTwitter = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     shareText,
@@ -50,10 +51,7 @@ export function Share({
 
   return (
     <section
-      className={cn(
-        "mb-8 border-b border-t border-gray-200 py-6 dark:border-gray-800",
-        className,
-      )}
+      className={cn("border-border mb-8 border-b border-t py-6", className)}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="font-medium">

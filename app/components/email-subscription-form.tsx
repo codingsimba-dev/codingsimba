@@ -10,8 +10,8 @@ export function SubscriptionForm() {
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      viewport={{ once: true }}
+      transition={{ duration: 0.3 }}
+      viewport={{ once: true, amount: 0.1 }}
       className="border-border bg-card rounded-2xl border p-8 shadow-lg md:p-12"
     >
       <h2 className="mb-4 text-3xl font-bold">Stay Updated</h2>
@@ -32,7 +32,7 @@ export function SubscriptionForm() {
       </Form>
 
       <p className="text-muted-foreground/80 mt-4 text-sm">
-        I respect your privacy. Unsubscribe at any time.
+        We respect your privacy. Unsubscribe at any time.
       </p>
     </motion.div>
   );

@@ -13,45 +13,45 @@ export function TutorialOverview({ tutorial, lessons }: TutorialOverviewProps) {
   return (
     <div className="space-y-8">
       {/* Tutorial introduction */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="border-border bg-card rounded-lg border p-6">
         <h2 className="text-2xl font-bold">Overview</h2>
-        <Markdown source={tutorial.overview} className="pt-0" />
+        <Markdown source={tutorial.overview || ""} className="pt-0" />
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center">
-            <Clock className="mr-2 size-4 text-gray-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-300">
+            <Clock className="text-muted-foreground mr-2 size-4" />
+            <span className="text-muted-foreground text-sm">
               {tutorial.lessonsCount} lessons
             </span>
           </div>
           <div className="flex items-center">
-            <BookOpen className="mr-2 size-4 text-gray-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-300">
-              {tutorial.category.title}
+            <BookOpen className="text-muted-foreground mr-2 size-4" />
+            <span className="text-muted-foreground text-sm">
+              {tutorial.category?.title || "Uncategorized"}
             </span>
           </div>
         </div>
       </div>
 
       {/* Lessons list */}
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-800">
+      <div className="border-border bg-card rounded-lg border">
+        <div className="border-border flex items-center justify-between border-b p-6">
           <h3 className="text-xl font-bold">Tutorial Lessons</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground text-sm">
             {lessons.length} lessons
           </p>
         </div>
 
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
+        <div className="divide-border divide-y">
           {lessons.map((lesson, index) => (
             <div key={lesson.id} className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="mr-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                  <div className="bg-muted text-muted-foreground mr-4 flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                     {index + 1}
                   </div>
                   <div>
                     <h4 className="font-medium">{lesson.title}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-muted-foreground text-sm">
                       Lesson {index + 1}
                     </p>
                   </div>
@@ -69,16 +69,16 @@ export function TutorialOverview({ tutorial, lessons }: TutorialOverviewProps) {
       </div>
 
       {/* Related tutorials */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+      <div className="border-border bg-card rounded-lg border p-6">
         <h3 className="mb-4 text-xl font-bold">You might also like</h3>
-        <p className="text-gray-600 dark:text-gray-300">
-          Explore more tutorials in the {tutorial.category.title} category.
+        <p className="text-muted-foreground">
+          Explore more tutorials in the {tutorial.category?.title} category.
         </p>
         <div className="mt-4">
           <Link
             to={{
               pathname: "/tutorials",
-              search: `?category=${tutorial.category.id}`,
+              search: `?category=${tutorial.category?.id}`,
             }}
           >
             <Button variant="outline">Browse All Related Tutorials</Button>

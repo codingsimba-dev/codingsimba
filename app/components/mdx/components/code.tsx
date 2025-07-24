@@ -71,14 +71,14 @@ const CopyButton = React.memo(function CopyButton({ code }: CopyButtonProps) {
   return (
     <button
       onClick={copyToClipboard}
-      className="absolute right-2 top-2 z-10 rounded-md bg-gray-200/80 p-2 text-red-500 transition-colors hover:bg-gray-300 dark:bg-[#112630] dark:hover:bg-[#1d3b47]"
+      className="bg-muted/80 text-destructive hover:bg-muted absolute right-2 top-2 z-10 rounded-md p-2 transition-colors"
       aria-label="Copy code"
       disabled={copied}
     >
       {copied ? (
         <Check size={16} className="text-blue-600" />
       ) : (
-        <Copy size={16} className="text-gray-600 dark:text-gray-400" />
+        <Copy size={16} className="text-muted-foreground" />
       )}
     </button>
   );
@@ -188,8 +188,8 @@ export function Code({
   ) : (
     <span
       className={cn(
-        "inline rounded bg-gray-100 px-1 py-0.5 font-mono text-sm",
-        "text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+        "bg-muted inline rounded px-1 py-0.5 font-mono text-sm",
+        "text-foreground",
         className,
       )}
       {...props}

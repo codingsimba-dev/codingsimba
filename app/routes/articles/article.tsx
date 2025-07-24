@@ -4,7 +4,7 @@ import { Tags } from "./components/tags";
 import { Share } from "../../components/share-content";
 import { Author } from "../../components/author";
 import { RelatedArticles } from "./components/related-articles";
-import { TableOfContent } from "../../components/table-of-content";
+import { TableOfContent } from "./components/table-of-content";
 import { ContentEmailSubscriptionForm } from "~/components/content-email-subscription-form";
 import { PopularTags } from "./components/popular-tags";
 import { Markdown } from "~/components/mdx";
@@ -26,6 +26,11 @@ import {
   deleteReply,
   upvoteReply,
   trackPageView,
+  upvoteArticle,
+  bookmarkArticle,
+  flagArticle,
+  flagReply,
+  flagComment,
 } from "./action.server";
 import { getArticleMetrics, getArticleComments } from "./loader.server";
 import { SubmitSchema, useCreate } from "~/hooks/content";
@@ -91,9 +96,18 @@ export async function action({ request }: Route.ActionArgs) {
     status: StatusCodes.BAD_REQUEST,
   });
 
+  enum MiscTypes {
+    UPVOTE_ARTICLE = "upvote-article",
+    BOOKMARK_ARTICLE = "bookmark-article",
+    FLAG_ARTICLE = "flag-article",
+    TRACK_PAGE_VIEW = "track-page-view",
+    FLAG_COMMENT = "flag-comment",
+    FLAG_REPLY = "flag-reply",
+  }
+
   const { data, intent } = result.data;
 
-  switch (intent as CommentIntent | ReplyIntent | "track-page-view") {
+  switch (intent as CommentIntent | ReplyIntent | MiscTypes) {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
     case ReplyIntent.ADD_REPLY:
@@ -110,8 +124,18 @@ export async function action({ request }: Route.ActionArgs) {
       return await deleteReply(request, data);
     case ReplyIntent.UPVOTE_REPLY:
       return await upvoteReply(data);
-    case "track-page-view":
+    case MiscTypes.TRACK_PAGE_VIEW:
       return await trackPageView({ itemId: data.itemId as string });
+    case MiscTypes.UPVOTE_ARTICLE:
+      return await upvoteArticle(data);
+    case MiscTypes.BOOKMARK_ARTICLE:
+      return await bookmarkArticle(data);
+    case MiscTypes.FLAG_ARTICLE:
+      return await flagArticle(data);
+    case MiscTypes.FLAG_COMMENT:
+      return await flagComment(data);
+    case MiscTypes.FLAG_REPLY:
+      return await flagReply(data);
     default:
       return new Response("Invalid intent", {
         status: StatusCodes.BAD_REQUEST,
@@ -172,8 +196,8 @@ export default function ArticleDetailsRoute({
               </div>
 
               {/* Article excerpt */}
-              <div className="rounded-lg bg-gray-100 p-6 dark:bg-gray-800">
-                <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+              <div className="bg-muted rounded-lg p-6">
+                <p className="text-muted-foreground text-lg leading-relaxed">
                   {article.excerpt}
                 </p>
               </div>

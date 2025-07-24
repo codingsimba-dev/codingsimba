@@ -7,7 +7,7 @@ export function Ul({
   return (
     <ul
       className={cn(
-        "my-6 ml-6 list-disc text-gray-700 dark:text-gray-300 [&>li]:mt-2",
+        "text-foreground my-6 ml-6 list-disc [&>li]:mt-2",
         className,
       )}
       {...props}
@@ -22,7 +22,7 @@ export function Ol({
   return (
     <ol
       className={cn(
-        "my-6 ml-6 list-decimal text-gray-700 dark:text-gray-300 [&>li]:mt-2",
+        "text-foreground my-6 ml-6 list-decimal [&>li]:mt-2",
         className,
       )}
       {...props}

@@ -24,6 +24,16 @@ export async function getArticleMetrics({
     select: {
       id: true,
       views: true,
+      bookmarks: {
+        select: {
+          userId: true,
+        },
+      },
+      flags: {
+        select: {
+          userId: true,
+        },
+      },
       likes: {
         select: {
           count: true,
@@ -78,6 +88,11 @@ export async function getArticleComments({
     select: {
       id: true,
       body: true,
+      flags: {
+        select: {
+          userId: true,
+        },
+      },
       likes: {
         select: { count: true, userId: true },
       },

@@ -142,7 +142,7 @@ export function Sandpack({ sandpackTemplate }: SandpackProps) {
   );
 
   const containerClassName = cn(
-    "overflow-hidden bg-gray-100 transition-all duration-300 dark:bg-gray-700",
+    "overflow-hidden bg-muted transition-all duration-300",
     isFullscreen ? "fixed inset-0 z-50 rounded-none border-none" : "",
   );
 

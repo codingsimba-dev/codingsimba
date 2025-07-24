@@ -52,7 +52,7 @@ export function ArticleCard({ article, index }: ArticleCardProps) {
         </CardHeader>
 
         <CardContent className="-mb-2">
-          <div className="mb-3 flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-muted-foreground mb-3 flex items-center justify-between gap-2 text-sm">
             <span>{format(article.createdAt, "MMMM dd, yyyy")}</span>
             <span>{stats.text}</span>
           </div>

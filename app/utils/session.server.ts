@@ -4,6 +4,7 @@ import { combineResponseInits } from "./misc";
 import { sessionKey } from "~/utils/auth.server";
 import { logSystemEvent, SystemAction } from "./system.server";
 import { prisma } from "./db.server";
+import { domain } from "./constants";
 
 export const authSessionStorage = createCookieSessionStorage({
   cookie: {
@@ -11,11 +12,10 @@ export const authSessionStorage = createCookieSessionStorage({
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    // expires: new Date(Date.now() + 60 * 60 * 24 * 7 * 1000), // 7 days
     secrets: process.env.SESSION_SECRET.split(","),
     ...(process.env.NODE_ENV === "production"
       ? {
-          domain: "codingsimba.com",
+          domain: domain,
           secure: true,
         }
       : {}),

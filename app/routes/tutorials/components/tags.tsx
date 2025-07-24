@@ -6,7 +6,7 @@ import { EmptyState } from "~/components/empty-state";
 import { Tag } from "lucide-react";
 
 export function Tags({ tutorial }: { tutorial: Tutorial }) {
-  if (!tutorial.tags.length)
+  if (!tutorial.tags?.length)
     return (
       <EmptyState
         icon={<Tag className="size-8 text-gray-400" />}

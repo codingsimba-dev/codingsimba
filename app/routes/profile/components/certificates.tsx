@@ -74,7 +74,7 @@ export function Certificates() {
             {user.certificates.map((certificate) => (
               <div
                 key={certificate.id}
-                className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800"
+                className="overflow-hidden rounded-lg border border-border"
               >
                 <div className="relative aspect-video">
                   <img
@@ -85,7 +85,7 @@ export function Certificates() {
                 </div>
                 <div className="p-4">
                   <h3 className="mb-1 font-bold">{certificate.title}</h3>
-                  <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mb-4 text-sm text-muted-foreground">
                     Issued on {certificate.issueDate}
                   </div>
                   <div className="flex gap-2">

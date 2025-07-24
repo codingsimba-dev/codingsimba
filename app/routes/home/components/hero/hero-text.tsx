@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
-import { slogan } from "~/constants/navlinks";
+import { slogan } from "~/utils/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
 export function HeroText() {
@@ -81,7 +81,7 @@ export function HeroText() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.3 }}
+        transition={{ delay: 0.4, duration: 0.3 }}
         className="mt-12 flex items-center gap-2"
       >
         <div className="flex -space-x-2">

@@ -1,5 +1,6 @@
 import { createThemeSessionResolver } from "remix-themes";
 import { createCookieSessionStorage } from "react-router";
+import { domain } from "./constants";
 
 const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -10,7 +11,7 @@ const sessionStorage = createCookieSessionStorage({
     secrets: ["s3cr3t"],
     ...(process.env.NODE_ENV === "production"
       ? {
-          domain: "codingsimba.com",
+          domain: domain,
           secure: true,
         }
       : {}),

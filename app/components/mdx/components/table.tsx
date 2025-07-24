@@ -8,7 +8,7 @@ export function Table({
     <table
       className={cn(
         "w-full caption-bottom text-sm",
-        "border border-gray-200 dark:border-gray-800",
+        "border-border border",
         "border-separate border-spacing-0",
         "overflow-hidden rounded-lg",
         className,
@@ -25,10 +25,7 @@ export function Thead({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn(
-        "border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800/50",
-        className,
-      )}
+      className={cn("border-border bg-muted border-b", className)}
       {...props}
     />
   );
@@ -52,7 +49,7 @@ export function Tr({
   return (
     <tr
       className={cn(
-        "border-b border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50",
+        "border-border hover:bg-muted border-b transition-colors",
         className,
       )}
       {...props}
@@ -68,7 +65,7 @@ export function Th({
   return (
     <th
       className={cn(
-        "h-12 px-4 text-left align-middle font-medium text-gray-700 dark:text-gray-300",
+        "text-foreground h-12 px-4 text-left align-middle font-medium",
         className,
       )}
       {...props}
@@ -83,10 +80,7 @@ export function Td({
 }: React.HTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
-      className={cn(
-        "p-4 align-middle text-gray-700 dark:text-gray-300",
-        className,
-      )}
+      className={cn("text-foreground p-4 align-middle", className)}
       {...props}
     />
   );
@@ -99,7 +93,7 @@ export function Caption({
 }: React.HTMLAttributes<HTMLTableCaptionElement>) {
   return (
     <caption
-      className={cn("mt-4 text-sm text-gray-500 dark:text-gray-400", className)}
+      className={cn("text-muted-foreground mt-4 text-sm", className)}
       {...props}
     />
   );
@@ -110,10 +104,5 @@ export function Tfoot({
   className,
   ...props
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return (
-    <tfoot
-      className={cn("bg-gray-50 font-medium dark:bg-gray-800/50", className)}
-      {...props}
-    />
-  );
+  return <tfoot className={cn("bg-muted font-medium", className)} {...props} />;
 }

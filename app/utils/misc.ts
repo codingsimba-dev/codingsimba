@@ -9,7 +9,7 @@ import { useSpinDelay } from "spin-delay";
 import { twMerge } from "tailwind-merge";
 import type { useUser } from "~/hooks/user";
 import { intervalToDuration } from "date-fns";
-import { slogan } from "~/constants/navlinks";
+import { slogan } from "~/utils/constants";
 
 export type FilePath = "users" | "content" | "assets";
 

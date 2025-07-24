@@ -25,27 +25,27 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "mx-auto flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 p-8 text-center dark:border-gray-700",
+        "border-border mx-auto flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center",
         className,
       )}
     >
       {imageUrl ? (
         <div className="relative h-40 w-40">
           <img
-            src={imageUrl || "https://placehold.co/400"}
+            src={imageUrl}
             alt="empty state image"
             className="object-contain"
           />
         </div>
       ) : icon ? (
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+        <div className="bg-muted text-muted-foreground flex h-16 w-16 items-center justify-center rounded-full">
           {icon}
         </div>
       ) : null}
 
       <h3 className="mt-4 text-xl font-bold">{title}</h3>
       <p
-        className={cn("mb-6 max-w-md text-gray-500 dark:text-gray-400", {
+        className={cn("text-muted-foreground mb-6 max-w-md", {
           "mb-0": !action,
         })}
       >

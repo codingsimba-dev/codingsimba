@@ -9,7 +9,7 @@ export function HeroCard() {
       className="relative hidden md:block"
     >
       <div className="perspective-1000 relative aspect-square w-full">
-        <div className="to-background absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-300/20 blur-3xl" />
+        {/* <div className="to-background absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-300/20 blur-3xl" /> */}
         <div className="relative h-full w-full rotate-3 transform transition-transform duration-500 hover:rotate-0">
           <div className="border-border bg-card absolute inset-0 overflow-hidden rounded-xl border shadow-xl">
             <div className="p-6">

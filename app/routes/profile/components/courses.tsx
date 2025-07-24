@@ -75,7 +75,7 @@ export function Courses() {
             {user.courses.map((course) => (
               <div
                 key={course.id}
-                className="flex flex-col items-start gap-4 rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50 md:flex-row md:items-center dark:border-gray-800 dark:hover:bg-gray-800"
+                className="flex flex-col items-start gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted md:flex-row md:items-center"
               >
                 <div className="w-full md:w-auto">
                   <img
@@ -88,17 +88,17 @@ export function Courses() {
                 </div>
                 <div className="flex-1">
                   <h3 className="mb-1 font-bold">{course.title}</h3>
-                  <div className="mb-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mb-2 flex items-center text-sm text-muted-foreground">
                     <Clock className="mr-1 h-4 w-4" />
                     <span>Last accessed {course.lastAccessed}</span>
                   </div>
-                  <div className="mb-1 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div className="mb-1 h-2.5 w-full rounded-full bg-muted">
                     <div
                       className="h-2.5 rounded-full bg-blue-600"
                       style={{ width: `${course.progress}%` }}
                     ></div>
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-muted-foreground">
                     {course.progress}% complete
                   </div>
                 </div>

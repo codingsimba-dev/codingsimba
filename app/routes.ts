@@ -8,9 +8,8 @@ import {
 
 export default [
   index("routes/home/index.tsx"),
-  route("terms", "routes/terms.tsx"),
+  route("legal/:pageSlug", "routes/legal.tsx"),
   route("about", "routes/about/index.tsx"),
-  route("privacy", "routes/privacy.tsx"),
   route("support", "routes/support.tsx"),
   route("verify", "routes/auth/verify.tsx"),
   route("signup", "routes/auth/signup.tsx"),
@@ -19,7 +18,7 @@ export default [
   route("forgot-password", "routes/auth/forgot-password.tsx"),
   route("authors/:authorSlug", "routes/article-author.tsx"),
   route("roadmap", "routes/roadmap/index.tsx"),
-  route("test", "routes/test.tsx"),
+  route("color-scheme", "routes/color-scheme.tsx"),
   route("*", "routes/not-found.tsx"),
 
   // SEO
@@ -32,14 +31,9 @@ export default [
   route("content/webhook", "routes/resources/sanity-webhook.ts"),
   route("download-user-data", "routes/resources/download-user-data.ts"),
 
-  // Chat
-  ...prefix("chat", [
-    index("routes/chat/index.tsx"),
-    // route("chatbot", "routes/chat/chatbot.ts"),
-  ]),
-
   //Subscription
   ...prefix("subscription", [
+    index("routes/subscription/index.tsx"),
     route("checkout", "routes/subscription/checkout.ts"),
     route("portal", "routes/subscription/portal.ts"),
     route("success", "routes/subscription/success.tsx"),
@@ -47,7 +41,6 @@ export default [
   ]),
 
   ...prefix("contact", [
-    index("routes/contact/index.tsx"),
     route("success", "routes/contact/success.tsx"),
     route("webhook", "routes/contact/webhook.tsx"),
   ]),
@@ -84,11 +77,6 @@ export default [
     route(":articleSlug", "routes/articles/article.tsx"),
   ]),
 
-  ...prefix("programs", [
-    index("routes/programs/index.tsx"),
-    route(":programId", "routes/programs/program.tsx"),
-  ]),
-
   ...prefix("challenges", [
     index("routes/challenges/index.tsx"),
     // route(":challengeId", "routes/challenges/challenge.tsx"),
@@ -113,4 +101,21 @@ export default [
       ]),
     ]),
   ]),
+
+  ...prefix("programs", [
+    index("routes/programs/index.tsx"),
+    route(":programId", "routes/programs/program.tsx"),
+  ]),
+
+  ...prefix("teams", [index("routes/teams/index.tsx")]),
+
+  // Chat
+  ...prefix("chat", [
+    index("routes/chat/index.tsx"),
+    // route("chatbot", "routes/chat/chatbot.ts"),
+  ]),
+
+  ...prefix("store", [index("routes/store/index.tsx")]),
+
+  ...prefix("job-board", [index("routes/job-board/index.tsx")]),
 ] satisfies RouteConfig;

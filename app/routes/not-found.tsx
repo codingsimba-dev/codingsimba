@@ -3,7 +3,7 @@ import { Home, ArrowLeft, Search } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { Link, useNavigate } from "react-router";
-import { navLinks } from "~/constants/navlinks";
+import { navLinks } from "~/utils/constants";
 import { generateMetadata } from "~/utils/meta";
 
 export default function NotFound() {
@@ -12,7 +12,7 @@ export default function NotFound() {
   return (
     <>
       {metadata}
-      <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 dark:bg-gray-950">
+      <div className="bg-background flex min-h-screen flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -22,7 +22,7 @@ export default function NotFound() {
             <div className="relative mx-auto mb-8 h-48 w-48">
               {/* 404 animated text */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-9xl font-bold text-gray-200 dark:text-gray-800">
+                <div className="text-muted-foreground text-9xl font-bold">
                   404
                 </div>
               </div>
@@ -49,7 +49,7 @@ export default function NotFound() {
             <h1 className="mb-4 text-3xl font-bold md:text-4xl">
               Page Not Found
             </h1>
-            <p className="mb-8 text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground mb-8">
               The page you&apos;re looking for doesn&apos;t exist or has been
               moved.
             </p>
@@ -79,9 +79,9 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
-            className="mt-12 border-t border-gray-200 pt-8 dark:border-gray-800"
+            className="border-border mt-12 border-t pt-8"
           >
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground text-sm">
               Looking for something specific? Try navigating using the links
               below:
             </p>

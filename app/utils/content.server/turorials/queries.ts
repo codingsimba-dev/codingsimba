@@ -50,7 +50,7 @@ export function tutorialsQuery({
         "slug": slug.current,
         "image": image.asset->url,
       },
-      "lessons": lessons[]->{
+      "modules": modules[]->{
         "id": _id
       },
       "lessonsCount": count(*[_type == "lesson" && references(^._id)])
@@ -102,7 +102,24 @@ export const tutorialDetailsQuery = groq`*[_type == "tutorial" && _id == $tutori
 }`;
 
 /**
- * GROQ query to fetch lessons for a specific tutorial
+ * GROQ query to fetch modules for a specific tutorial
+ * @returns {string} GROQ query string that returns modules for a specific tutorial
+ */
+export const modulesQuery = groq`*[_type == "tutorialModule" && tutorial._ref == $tutorialId && published == true] | order(order asc) {
+  "id": _id,
+  title,
+  "slug": slug.current,
+  description,
+  order,
+  "lessons": lessons[]->{
+    "id": _id,
+    title,
+    "slug": slug.current
+  }
+}`;
+
+/**
+ * GROQ query to fetch lessons for a specific tutorial (legacy - now lessons are fetched through modules)
  * @returns {string} GROQ query string that returns lessons for a specific tutorial
  */
 export const lessonsQuery = groq`*[_type == "lesson" && tutorial._ref == $tutorialId] {

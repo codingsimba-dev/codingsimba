@@ -20,10 +20,8 @@ export function PopularTags() {
 }
 
 function Tags({ tags }: { tags: Tag[] }) {
-  console.log(tags);
-
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+    <section className="border-border bg-card rounded-xl border p-6">
       <h3 className="mb-4 text-lg font-bold">Popular Tags</h3>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
@@ -34,7 +32,7 @@ function Tags({ tags }: { tags: Tag[] }) {
               pathname: "/articles",
               search: `?tag=${tag.slug}`,
             }}
-            className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="bg-muted text-foreground hover:bg-muted/80 rounded-full px-3 py-1 text-sm transition-colors"
           >
             #{tag.title}
           </Link>

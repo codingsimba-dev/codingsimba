@@ -1,40 +1,55 @@
 import { z } from "zod";
-import { CategorySchema } from "../shared-types";
 
+/**
+ * Zod schema for roadmap items.
+ * Defines the structure for roadmap entries with planning and progress tracking.
+ */
 export const RoadmapSchema = z.object({
   title: z.string(),
   description: z.string(),
+  category: z.string(),
   startDate: z.string(),
   status: z.enum(["planned", "in-progress", "completed"]),
   progress: z.number().min(0).max(100),
-  details: z.string(),
+  content: z.string(),
 });
 
+/**
+ * Zod schema for journey items.
+ * Defines the structure for journey entries representing company milestones.
+ */
 export const JourneySchema = z.object({
   title: z.string(),
   description: z.string(),
-  image: z.string(),
-  category: CategorySchema,
-  published: z.boolean(),
   year: z.string(),
-  details: z.string(),
+  image: z.string(),
+  category: z.string(),
+  published: z.boolean(),
+  content: z.string(),
 });
 
+/**
+ * Zod schema for FAQ items.
+ * Defines the structure for frequently asked questions with categorization.
+ */
 export const FAQSchema = z.object({
   question: z.string(),
   answer: z.string(),
-  category: CategorySchema,
+  category: z.string(),
+  order: z.number(),
   published: z.boolean(),
 });
 
+/**
+ * Zod schema for team member profiles.
+ * Defines the structure for team member information including social links.
+ */
 export const TeamMemberSchema = z.object({
   name: z.string(),
+  role: z.string(),
   bio: z.string(),
   image: z.string(),
-  role: z.string(),
-  category: CategorySchema,
-  published: z.boolean(),
-  specializations: z.array(z.string()),
+  specialties: z.array(z.string()),
   order: z.number(),
   social: z.object({
     github: z.string().optional(),
@@ -44,17 +59,21 @@ export const TeamMemberSchema = z.object({
   }),
 });
 
+/**
+ * Zod schema for page content.
+ * Defines the structure for static page content with metadata.
+ */
 export const PageSchema = z.object({
   title: z.string(),
-  description: z.string(),
   slug: z.string(),
-  pageType: z.string(),
-  published: z.boolean(),
-  details: z.string(),
-  category: CategorySchema,
+  description: z.string(),
   content: z.string(),
 });
 
+/**
+ * TypeScript types inferred from Zod schemas.
+ * These provide type safety when working with content data.
+ */
 export type TeamMember = z.infer<typeof TeamMemberSchema>;
 export type Roadmap = z.infer<typeof RoadmapSchema>;
 export type Journey = z.infer<typeof JourneySchema>;

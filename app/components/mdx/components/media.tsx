@@ -7,7 +7,7 @@ export function Img({
   return (
     <img
       className={cn(
-        "mx-auto my-6 aspect-video max-w-full rounded-md border object-cover shadow-sm",
+        "mx-auto my-6 max-w-full rounded-md border object-cover shadow-sm",
         className,
       )}
       loading="lazy"

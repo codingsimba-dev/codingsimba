@@ -196,7 +196,7 @@ export default function OnboardingProvider({
           transition={{ duration: 0.5 }}
           className="relative z-10 w-full max-w-md"
         >
-          <Card className="border-0 bg-white/80 shadow-xl backdrop-blur-sm dark:bg-gray-900/80">
+          <Card className="bg-card/80 border-0 shadow-xl backdrop-blur-sm">
             <CardHeader className="text-center">
               <CardTitle className="text-xl">Welcome aboard {email}</CardTitle>
               <CardDescription>Please enter your details</CardDescription>
@@ -220,13 +220,13 @@ export default function OnboardingProvider({
                 <div className="flex justify-between">
                   <Label
                     htmlFor={fields.rememberMe.id}
-                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                    className="text-muted-foreground flex items-center gap-2 text-sm"
                   >
                     <input
                       {...getInputProps(fields.rememberMe, {
                         type: "checkbox",
                       })}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
+                      className="border-border text-primary focus:ring-primary h-4 w-4 rounded"
                     />
                     Remember Me
                   </Label>
