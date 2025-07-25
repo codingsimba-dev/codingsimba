@@ -12,7 +12,7 @@ import { Share } from "~/components/share-content";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Dialog } from "~/components/ui/dialog";
 import { Link, useParams } from "react-router";
-import { ReportButton } from "~/components/report-button";
+import { ReportButton } from "~/components/report";
 
 export function Engagement({ tutorial }: { tutorial: Tutorial }) {
   const { tutorialId, lessonId } = useParams();

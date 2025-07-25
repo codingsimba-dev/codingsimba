@@ -7,9 +7,9 @@ import { cn } from "~/utils/misc";
 import { useOptionalUser } from "~/hooks/user";
 import { Skeleton } from "~/components/ui/skeleton";
 import { EmptyState } from "~/components/empty-state";
-import { ReportButton } from "~/components/report-button";
-import { UpvoteButton } from "~/components/upvote-button";
-import { BookmarkButton } from "~/components/bookmark-button";
+import { ReportButton } from "~/components/report";
+import { UpvoteButton } from "~/components/upvote";
+import { BookmarkButton } from "~/components/bookmark";
 
 /**
  * Props for the Metrics component

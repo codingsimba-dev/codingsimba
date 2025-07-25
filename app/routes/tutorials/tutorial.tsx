@@ -8,7 +8,7 @@ import {
 } from "~/utils/content.server/turorials/utils";
 import { invariantResponse } from "~/utils/misc";
 import { StatusCodes } from "http-status-codes";
-import { DetailsHeader } from "~/components/details-header";
+import { DetailsHeader } from "~/components/page-details-header";
 import { TutorialSidebar } from "./components/sidebar";
 import { usePageView } from "use-page-view";
 import { z } from "zod";

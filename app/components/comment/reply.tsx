@@ -11,9 +11,9 @@ import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
 import { ReplyIntent } from ".";
-import { ReportButton } from "~/components/report-button";
+import { ReportButton } from "~/components/report";
 import { CommentActions } from "./comment-actions";
-import { UpvoteButton } from "../upvote-button";
+import { UpvoteButton } from "../upvote";
 
 type ReplyData = NonNullable<CommentData["replies"]>[0];
 

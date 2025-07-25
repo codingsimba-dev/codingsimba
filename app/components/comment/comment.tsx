@@ -13,11 +13,11 @@ import { useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { getSeed } from "~/utils/misc";
-import { ReportButton } from "~/components/report-button";
+import { ReportButton } from "~/components/report";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import { CommentIntent, ReplyIntent } from ".";
-import { UpvoteButton } from "../upvote-button";
+import { UpvoteButton } from "../upvote";
 import { CommentActions } from "./comment-actions";
 
 export type CommentData = NonNullable<

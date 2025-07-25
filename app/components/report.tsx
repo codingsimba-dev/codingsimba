@@ -24,6 +24,14 @@ import { cn } from "~/utils/misc";
 import { Flag, Loader2 } from "lucide-react";
 import { useOptionalUser } from "~/hooks/user";
 
+export enum ReportIntent {
+  FLAG_ARTICLE = "FLAG_ARTICLE",
+  FLAG_TUTORIAL = "FLAG_TUTORIAL",
+  FLAG_COMMENT = "FLAG_COMMENT",
+  FLAG_REPLY = "FLAG_REPLY",
+  DELETE_REPORT = "DELETE_REPORT",
+}
+
 /**
  * Available flag reasons for content moderation
  *
@@ -160,7 +168,9 @@ export function ReportButton({
   function handleSubmit() {
     fetcher.submit(
       {
-        intent: isFlagged ? `unflag-${contentType}` : `flag-${contentType}`,
+        intent: isFlagged
+          ? ReportIntent.DELETE_REPORT
+          : ReportIntent.FLAG_ARTICLE,
         data: JSON.stringify({
           itemId,
           userId: user?.id,

@@ -314,20 +314,20 @@ export async function bookmarkArticle(data: SubmitPayload["data"]) {
  * @param userId - The ID of the user flagging the article
  * @param reason - The reason for flagging the article
  * @param details - The details of the flag
- * @returns The created flag with its ID
+ * @returns The created report with its ID
  * @throws {Error} If item ID or user ID is missing
  */
-export async function flagArticle(data: SubmitPayload["data"]) {
+export async function reportArticle(data: SubmitPayload["data"]) {
   const { itemId, userId, reason, details } = data;
-  const flagReason = reason.toUpperCase() as FlagReason;
+  const reportReason = reason.toUpperCase() as FlagReason;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
   invariant(reason, "Reason is required");
-  const flag = await prisma.contentFlag.create({
-    data: { contentId: itemId, userId, reason: flagReason, details },
+  const report = await prisma.contentFlag.create({
+    data: { contentId: itemId, userId, reason: reportReason, details },
     select: { id: true },
   });
-  return flag;
+  return report;
 }
 
 /**
@@ -336,20 +336,21 @@ export async function flagArticle(data: SubmitPayload["data"]) {
  * @param userId - The ID of the user flagging the comment
  * @param reason - The reason for flagging the comment
  * @param details - The details of the flag
- * @returns The created flag with its ID
+ * @returns The created report with its ID
  * @throws {Error} If item ID or user ID is missing
  */
-export async function flagComment(data: SubmitPayload["data"]) {
+export async function reportComment(data: SubmitPayload["data"]) {
+  console.log("reportComment", data);
   const { itemId, userId, reason, details } = data;
-  const flagReason = reason.toUpperCase() as FlagReason;
+  const reportReason = reason.toUpperCase() as FlagReason;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
   invariant(reason, "Reason is required");
-  const flag = await prisma.contentFlag.create({
-    data: { commentId: itemId, userId, reason: flagReason, details },
+  const report = await prisma.contentFlag.create({
+    data: { commentId: itemId, userId, reason: reportReason, details },
     select: { id: true },
   });
-  return flag;
+  return report;
 }
 
 /**
@@ -358,18 +359,35 @@ export async function flagComment(data: SubmitPayload["data"]) {
  * @param userId - The ID of the user flagging the reply
  * @param reason - The reason for flagging the reply
  * @param details - The details of the flag
- * @returns The created flag with its ID
+ * @returns The created report with its ID
  * @throws {Error} If item ID or user ID is missing
  */
-export async function flagReply(data: SubmitPayload["data"]) {
+export async function reportReply(data: SubmitPayload["data"]) {
   const { itemId, userId, reason, details } = data;
-  const flagReason = reason.toUpperCase() as FlagReason;
+  const reportReason = reason.toUpperCase() as FlagReason;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
   invariant(reason, "Reason is required");
-  const flag = await prisma.contentFlag.create({
-    data: { commentId: itemId, userId, reason: flagReason, details },
+  const report = await prisma.contentFlag.create({
+    data: { commentId: itemId, userId, reason: reportReason, details },
     select: { id: true },
   });
-  return flag;
+  return report;
+}
+
+/**
+ * Deletes a report
+ * @param itemId - The ID of the report to delete
+ * @param userId - The ID of the user deleting the report
+ * @returns Object indicating successful deletion
+ * @throws {Error} If item ID or user ID is missing
+ */
+export async function deleteReport(data: SubmitPayload["data"]) {
+  const { itemId, userId } = data;
+  invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
+  await prisma.contentFlag.deleteMany({
+    where: { id: itemId, userId },
+  });
+  return { success: true };
 }

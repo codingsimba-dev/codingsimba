@@ -1,5 +1,5 @@
 import type { Route } from "./+types/article";
-import { DetailsHeader } from "../../components/details-header";
+import { DetailsHeader } from "../../components/page-details-header";
 import { Tags } from "./components/tags";
 import { Share } from "../../components/share-content";
 import { Author } from "../../components/author";
@@ -28,9 +28,10 @@ import {
   trackPageView,
   upvoteArticle,
   bookmarkArticle,
-  flagArticle,
-  flagReply,
-  flagComment,
+  reportArticle,
+  reportReply,
+  reportComment,
+  deleteReport,
 } from "./action.server";
 import { getArticleMetrics, getArticleComments } from "./loader.server";
 import { SubmitSchema, useCreate } from "~/hooks/content";
@@ -41,7 +42,8 @@ import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { generateMetadata } from "~/utils/meta";
 import { Metrics } from "./components/metrics";
 import { checkHoneypot } from "~/utils/honeypot.server";
-import { UpvoteIntent } from "~/components/upvote-button";
+import { UpvoteIntent } from "~/components/upvote";
+import { ReportIntent } from "~/components/report";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -93,22 +95,26 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const result = await SubmitSchema.safeParseAsync(submittedData);
-  console.log(result);
   invariantResponse(result.success, "Invalid form data", {
     status: StatusCodes.BAD_REQUEST,
   });
 
   enum MiscTypes {
-    BOOKMARK_ARTICLE = "bookmark-article",
-    FLAG_ARTICLE = "flag-article",
-    TRACK_PAGE_VIEW = "track-page-view",
-    FLAG_COMMENT = "flag-comment",
-    FLAG_REPLY = "flag-reply",
+    BOOKMARK_ARTICLE = "BOOKMARK_ARTICLE",
+    TRACK_PAGE_VIEW = "TRACK_PAGE_VIEW",
   }
 
   const { data, intent } = result.data;
+  console.log(intent);
 
-  switch (intent as CommentIntent | ReplyIntent | MiscTypes | UpvoteIntent) {
+  switch (
+    intent as
+      | CommentIntent
+      | ReplyIntent
+      | MiscTypes
+      | UpvoteIntent
+      | ReportIntent
+  ) {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
     case ReplyIntent.ADD_REPLY:
@@ -131,12 +137,14 @@ export async function action({ request }: Route.ActionArgs) {
       return await upvoteArticle(data);
     case MiscTypes.BOOKMARK_ARTICLE:
       return await bookmarkArticle(data);
-    case MiscTypes.FLAG_ARTICLE:
-      return await flagArticle(data);
-    case MiscTypes.FLAG_COMMENT:
-      return await flagComment(data);
-    case MiscTypes.FLAG_REPLY:
-      return await flagReply(data);
+    case ReportIntent.FLAG_ARTICLE:
+      return await reportArticle(data);
+    case ReportIntent.FLAG_COMMENT:
+      return await reportComment(data);
+    case ReportIntent.FLAG_REPLY:
+      return await reportReply(data);
+    case ReportIntent.DELETE_REPORT:
+      return await deleteReport(data);
     default:
       return new Response("Invalid intent", {
         status: StatusCodes.BAD_REQUEST,
