@@ -17,7 +17,7 @@ import { cn } from "~/utils/misc";
 import { Logo } from "~/components/logo";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useMobileNav } from "~/contexts/mobile-nav";
+import { useMobileNav } from "~/utils/mobile-nav-provider";
 import { useOptionalUser } from "~/hooks/user";
 import {
   DropdownMenu,

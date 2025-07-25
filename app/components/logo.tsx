@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router";
-import { useMobileNav } from "~/contexts/mobile-nav";
+import { useMobileNav } from "~/utils/mobile-nav-provider";
 import { getImgSrc } from "~/utils/misc";
 
 export function Logo() {

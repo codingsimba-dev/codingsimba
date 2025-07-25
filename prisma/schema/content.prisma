@@ -257,10 +257,8 @@ model Like {
 /// Represents a bookmark action from a user on a piece of content (article or tutorial).
 model Bookmark {
   id        String   @id @default(ulid())
-  /// Optional notes or tags the user can add to their bookmark.
+  /// Optional notes the user can add to their bookmark.
   notes     String?
-  /// Custom tags for organizing bookmarks (stored as comma-separated string).
-  tags      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -270,10 +268,56 @@ model Bookmark {
   contentId String
   content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
+  /// Many-to-many relationship with tags
+  bookmarkTags BookmarkTag[]
+
   @@unique([contentId, userId])
   @@index([userId])
   @@index([contentId])
   @@index([createdAt])
+}
+
+/// Represents a tag that can be used to organize bookmarks.
+model Tag {
+  id          String   @id @default(ulid())
+  /// The name of the tag (e.g., "react", "tutorial", "frontend").
+  name        String
+  /// Optional description of what the tag represents.
+  description String?
+  /// The color of the tag for UI display (hex color code).
+  color       String?  @default("#3B82F6")
+  /// Whether this tag is created by the system (true) or by users (false).
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  /// The user who created this tag (null for system tags).
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Many-to-many relationship with bookmarks
+  bookmarkTags BookmarkTag[]
+
+  @@unique([name, userId])
+  @@index([userId])
+  @@index([name])
+  @@index([isSystem])
+}
+
+/// Junction table for the many-to-many relationship between bookmarks and tags.
+model BookmarkTag {
+  id        String   @id @default(ulid())
+  createdAt DateTime @default(now())
+
+  bookmarkId String
+  bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([bookmarkId, tagId])
+  @@index([bookmarkId])
+  @@index([tagId])
 }
 
 /// Represents a flag/report submitted by a user on content or comments.
@@ -399,37 +443,6 @@ model Review {
   @@index([courseId])
   @@index([programId])
   @@index([createdAt])
-}
-
-/// Represents a user's enrollment in a course or program, granting them access.
-/// This can be linked to a subscription or a team purchase.
-model Enrollment {
-  id String @id @default(ulid())
-
-  /// The subscription that grants this enrollment.
-  subscription   Subscription? @relation(fields: [subscriptionId], references: [subscriptionId])
-  subscriptionId String?
-
-  enrolledAt DateTime @default(now())
-
-  /// The user who is enrolled. This is always required.
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
-  /// The team through which the user is enrolled (if applicable).
-  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId String?
-
-  programId String?
-  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  courseId String?
-  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@unique([userId, courseId])
-  @@unique([userId, programId])
-  @@index([subscriptionId])
-  @@index([teamId])
 }
 
 /// Tracks the amount of time a user has spent on a specific lesson.

@@ -1,22 +1,52 @@
 import React from "react";
 
 import type { Route } from "../+types/article";
-import { Await, useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { Await, useLoaderData, useRevalidator } from "react-router";
 import { ChartBar, Eye } from "lucide-react";
 import { cn } from "~/utils/misc";
 import { useOptionalUser } from "~/hooks/user";
 import { Skeleton } from "~/components/ui/skeleton";
 import { EmptyState } from "~/components/empty-state";
-import { FlagDialog } from "~/components/flag-dialog";
+import { ReportButton } from "~/components/report-button";
 import { UpvoteButton } from "~/components/upvote-button";
 import { BookmarkButton } from "~/components/bookmark-button";
 
-type Like = {
-  count: number;
-  userId: string;
-};
+/**
+ * Props for the Metrics component
+ */
+interface MetricsProps {
+  /** Additional CSS classes to apply to the metrics container */
+  className?: string;
+}
 
-export function Metrics({ className }: { className?: string }) {
+/**
+ * Main metrics component that displays article engagement statistics.
+ *
+ * This component provides a comprehensive view of article metrics including:
+ * - Upvote functionality with optimistic updates
+ * - Bookmark management with tags and notes
+ * - Content reporting/flagging system
+ * - View count display
+ * - Loading states and error handling
+ *
+ * The component handles asynchronous data loading with React Suspense and
+ * provides fallback UI for loading, error, and empty states.
+ *
+ * @param {MetricsProps} props - Component configuration
+ * @param {string} [props.className] - Additional CSS classes
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * <Metrics />
+ *
+ * // With custom styling
+ * <Metrics className="my-custom-class" />
+ * ```
+ *
+ * @returns {JSX.Element} A metrics display with engagement controls
+ */
+export function Metrics({ className }: MetricsProps) {
   const loaderData = useLoaderData<Route.ComponentProps["loaderData"]>();
   const metrics = loaderData.metrics;
   const revalidator = useRevalidator();
@@ -39,7 +69,7 @@ export function Metrics({ className }: { className?: string }) {
       >
         {(metrics) =>
           metrics ? (
-            <ArticleMetricsContent metrics={metrics} className={className} />
+            <ResolvedMetrics metrics={metrics} className={className} />
           ) : (
             <EmptyState
               icon={<ChartBar className="text-muted-foreground size-10" />}
@@ -54,7 +84,27 @@ export function Metrics({ className }: { className?: string }) {
   );
 }
 
-function MetricsSkeleton({ className }: { className?: string }) {
+/**
+ * Props for the MetricsSkeleton component
+ */
+interface MetricsSkeletonProps {
+  /** Additional CSS classes to apply to the skeleton container */
+  className?: string;
+}
+
+/**
+ * Skeleton loading component for the metrics display.
+ *
+ * Provides a placeholder UI that matches the layout of the actual metrics
+ * component while data is being loaded. Shows 4 skeleton elements to
+ * represent the upvote, bookmark, report, and views sections.
+ *
+ * @param {MetricsSkeletonProps} props - Component configuration
+ * @param {string} [props.className] - Additional CSS classes
+ *
+ * @returns {JSX.Element} A skeleton loading state for metrics
+ */
+function MetricsSkeleton({ className }: MetricsSkeletonProps) {
   return (
     <div
       className={cn(
@@ -62,87 +112,110 @@ function MetricsSkeleton({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="flex items-center space-x-6">
-        <Skeleton className="h-4 w-8 rounded-xl" />
-        <Skeleton className="h-4 w-8 rounded-xl" />
-        <Skeleton className="h-4 w-14 rounded-xl" />
+      <div className="flex items-center gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-4 w-12 rounded-xl" />
+        ))}
       </div>
     </div>
   );
 }
 
-function ArticleMetricsContent({
-  metrics,
-  className,
-}: {
+/**
+ * Props for the ResolvedMetrics component
+ */
+interface ResolvedMetricsProps {
+  /** The resolved metrics data from the loader */
   metrics: Awaited<Route.ComponentProps["loaderData"]["metrics"]>;
+  /** Additional CSS classes to apply to the metrics container */
   className?: string;
-}) {
-  const fetcher = useFetcher();
+}
+
+/**
+ * Resolved metrics component that displays the actual metrics data.
+ *
+ * This component processes the metrics data and renders the engagement controls:
+ * - Calculates total likes and user-specific like count
+ * - Determines bookmark and flag status for the current user
+ * - Renders interactive buttons for upvoting, bookmarking, and reporting
+ * - Displays view count
+ *
+ * The component uses React.useMemo for efficient data processing and
+ * provides optimistic updates through the individual button components.
+ *
+ * @param {ResolvedMetricsProps} props - Component configuration
+ * @param {Awaited<Route.ComponentProps["loaderData"]["metrics"]>} props.metrics - The metrics data
+ * @param {string} [props.className] - Additional CSS classes
+ *
+ * @returns {JSX.Element} The resolved metrics display with engagement controls
+ */
+function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
   const user = useOptionalUser();
   const userId = user?.id;
-  const MAX_LIKES = 5;
   const LEAST_COUNT = 0;
 
-  const { totalLikes, userLikes, isBookmarked, isFlagged } =
+  /**
+   * Process metrics data to extract user-specific engagement information.
+   *
+   * This useMemo hook efficiently processes the metrics data in a single pass:
+   * - Calculates total likes across all users
+   * - Identifies likes given by the current user
+   * - Determines if the current user has bookmarked the content
+   * - Determines if the current user has flagged the content
+   * - Computes whether the user has liked the content (userLikes > 0)
+   *
+   * The processing is optimized to avoid multiple array iterations and
+   * provides fallback values when data is missing or user is not authenticated.
+   */
+  const { totalLikes, userLikes, isBookmarked, isFlagged, isLiked } =
     React.useMemo(() => {
-      const totalLikes =
-        metrics?.likes?.reduce(
-          (total: number, like: Like) => total + like.count,
-          0,
-        ) ?? LEAST_COUNT;
-      const userLikes =
-        metrics?.likes.find((like: Like) => like.userId === userId)?.count ??
-        LEAST_COUNT;
-      const isBookmarked =
-        metrics?.bookmarks.some((bookmark) => bookmark.userId === userId) ??
+      if (!metrics) {
+        return {
+          totalLikes: LEAST_COUNT,
+          userLikes: LEAST_COUNT,
+          isBookmarked: false,
+          isFlagged: false,
+          isLiked: false,
+        };
+      }
+
+      let totalLikes = LEAST_COUNT;
+      let userLikes = LEAST_COUNT;
+      let isBookmarked = false;
+      let isFlagged = false;
+
+      // Single pass through likes array for optimal performance
+      if (metrics.likes?.length) {
+        totalLikes = 0;
+        for (const like of metrics.likes) {
+          totalLikes += like.count;
+          if (like.userId === userId) {
+            userLikes = like.count;
+          }
+        }
+        if (totalLikes === 0) totalLikes = LEAST_COUNT;
+      }
+
+      // Check bookmarks and flags for current user
+      isBookmarked =
+        metrics.bookmarks?.some((bookmark) => bookmark.userId === userId) ??
         false;
-      const isFlagged =
-        metrics?.flags.some((flag) => flag.userId === userId) ?? false;
-      return { totalLikes, userLikes, isBookmarked, isFlagged };
-    }, [metrics, userId]);
+      isFlagged =
+        metrics.flags?.some((flag) => flag.userId === userId) ?? false;
 
-  const [optimisticState, setOptimisticState] = React.useState({
-    totalLikes,
-    userLikes,
-  });
+      const isLiked = userLikes > LEAST_COUNT;
 
-  React.useEffect(() => {
-    if (metrics) {
-      setOptimisticState({
+      return {
         totalLikes,
         userLikes,
-      });
-    }
-  }, [metrics, totalLikes, userLikes]);
-
-  function handleUpvote() {
-    if (optimisticState.userLikes >= MAX_LIKES) return;
-    setOptimisticState((prev) => ({
-      totalLikes: prev.totalLikes + 1,
-      userLikes: prev.userLikes + 1,
-    }));
-
-    fetcher.submit(
-      {
-        intent: "upvote-article",
-        data: JSON.stringify({ itemId: metrics?.id ?? "", userId: userId! }),
-      },
-      { method: "post" },
-    );
-  }
-
-  function handleBookmark() {
-    fetcher.submit(
-      {
-        intent: "bookmark-article",
-        data: JSON.stringify({ itemId: metrics?.id ?? "", userId: userId! }),
-      },
-      { method: "post" },
-    );
-  }
+        isBookmarked,
+        isFlagged,
+        isLiked,
+      };
+    }, [metrics, userId]);
 
   if (!metrics) return <MetricsSkeleton className={className} />;
+
   return (
     <div
       className={cn(
@@ -152,18 +225,20 @@ function ArticleMetricsContent({
     >
       <div className="flex flex-wrap items-center gap-4">
         <UpvoteButton
-          onUpvote={handleUpvote}
-          totalLikes={optimisticState.totalLikes}
-          isFilled={optimisticState.userLikes > LEAST_COUNT}
-          isDisabled={optimisticState.userLikes >= MAX_LIKES}
-          showMaxLabel={true}
+          isLiked={isLiked}
+          totalLikes={totalLikes}
+          userLikes={userLikes}
+          itemId={metrics?.id ?? ""}
+          contentType="article"
+          userId={userId!}
         />
         <BookmarkButton
           size="sm"
           isBookmarked={isBookmarked}
-          onBookmark={handleBookmark}
+          itemId={metrics?.id ?? ""}
+          contentType="article"
         />
-        <FlagDialog
+        <ReportButton
           itemId={metrics?.id}
           isFlagged={isFlagged}
           contentType="article"
@@ -175,7 +250,36 @@ function ArticleMetricsContent({
   );
 }
 
-function Views({ views, className }: { views: number; className?: string }) {
+/**
+ * Props for the Views component
+ */
+interface ViewsProps {
+  /** Number of views to display */
+  views: number;
+  /** Additional CSS classes to apply to the views container */
+  className?: string;
+}
+
+/**
+ * Displays the view count for an article with an eye icon.
+ *
+ * This component renders a simple view counter with an eye icon and
+ * the formatted view count. The count is formatted using toLocaleString()
+ * for proper number formatting with commas.
+ *
+ * @param {ViewsProps} props - Component configuration
+ * @param {number} props.views - Number of views to display
+ * @param {string} [props.className] - Additional CSS classes
+ *
+ * @example
+ * ```tsx
+ * <Views views={1234} />
+ * // Renders: 👁 1,234 views
+ * ```
+ *
+ * @returns {JSX.Element} A view count display with eye icon
+ */
+function Views({ views, className }: ViewsProps) {
   return (
     <div className={cn("flex items-center space-x-1 text-sm", className)}>
       <Eye className="size-4" />

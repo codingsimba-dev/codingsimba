@@ -12,7 +12,7 @@ import { Share } from "~/components/share-content";
 import type { Tutorial } from "~/utils/content.server/turorials/types";
 import { Dialog } from "~/components/ui/dialog";
 import { Link, useParams } from "react-router";
-import { FlagDialog } from "~/components/flag-dialog";
+import { ReportButton } from "~/components/report-button";
 
 export function Engagement({ tutorial }: { tutorial: Tutorial }) {
   const { tutorialId, lessonId } = useParams();
@@ -57,7 +57,7 @@ export function Engagement({ tutorial }: { tutorial: Tutorial }) {
               <MessageSquare className="h-4 w-4" />
             </Button>
           </Link>
-          <FlagDialog
+          <ReportButton
             itemId={tutorial.id}
             isFlagged={false}
             contentType="tutorial"

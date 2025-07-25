@@ -66,3 +66,34 @@ enum Plan {
   team_pro
   team_enterprise
 }
+
+/// Represents a user's enrollment in a course or program, granting them access.
+/// This can be linked to a subscription or a team purchase.
+model Enrollment {
+  id String @id @default(ulid())
+
+  /// The subscription that grants this enrollment.
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [subscriptionId])
+  subscriptionId String?
+
+  enrolledAt DateTime @default(now())
+
+  /// The user who is enrolled. This is always required.
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  /// The team through which the user is enrolled (if applicable).
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String?
+
+  programId String?
+  program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, courseId])
+  @@unique([userId, programId])
+  @@index([subscriptionId])
+  @@index([teamId])
+}

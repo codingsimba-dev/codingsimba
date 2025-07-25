@@ -1,103 +1,31 @@
-// import * as React from "react";
-
-// export interface TOCItem {
-//   id: string;
-//   level: number;
-//   text: string;
-// }
-
-// export type TOCHeadings = TOCItem[];
-
-// export interface UseTOCProps {
-//   containerId?: string;
-//   selectors?: string;
-//   rootMargin?: string;
-//   threshold?: number;
-// }
-
-// export type UseTOCReturn = {
-//   headings: TOCHeadings;
-//   activeId: string | null;
-// };
-
-// export const useToc = ({
-//   containerId = "markdown-content",
-//   selectors = "h1, h2, h3, h4, h5, h6",
-//   rootMargin = "0px 0px -80% 0px",
-//   threshold = 0.1,
-// }: UseTOCProps = {}): UseTOCReturn => {
-//   const [headings, setHeadings] = React.useState<TOCHeadings>([]);
-//   const [activeId, setActiveId] = React.useState<string | null>(null);
-
-//   React.useEffect(() => {
-//     const handleHashChange = () => {
-//       if (window.location.hash) {
-//         setActiveId(window.location.hash.replace("#", ""));
-//       }
-//     };
-//     handleHashChange();
-//     window.addEventListener("hashchange", handleHashChange);
-//     return () => window.removeEventListener("hashchange", handleHashChange);
-//   }, []);
-
-//   React.useEffect(() => {
-//     const container = containerId && document.getElementById(containerId);
-//     if (!container) {
-//       console.warn(`Container with id "${containerId}" not found.`);
-//       return;
-//     }
-
-//     const headingElements = Array.from(
-//       container.querySelectorAll(selectors),
-//     ).filter((heading) => Boolean(heading.textContent)) as HTMLElement[];
-
-//     const toc = headingElements.map((heading) => ({
-//       id: heading.id,
-//       level: parseInt(heading.tagName.substring(1)),
-//       text: heading.textContent!,
-//     }));
-
-//     setHeadings((prevHeadings) => {
-//       if (JSON.stringify(prevHeadings) === JSON.stringify(toc)) {
-//         return prevHeadings;
-//       }
-//       return toc;
-//     });
-
-//     const observer = new IntersectionObserver(
-//       (entries) => {
-//         entries.forEach((entry) => {
-//           if (entry.isIntersecting) {
-//             setActiveId((prevId) => {
-//               return prevId !== entry.target.id ? entry.target.id : prevId;
-//             });
-//           }
-//         });
-//       },
-//       { root: null, rootMargin, threshold },
-//     );
-
-//     headingElements.forEach((element) => observer.observe(element));
-
-//     return () => {
-//       headingElements.forEach((element) => observer.unobserve(element));
-//     };
-//   }, [containerId, rootMargin, threshold, selectors]);
-
-//   return { headings, activeId };
-// };
-
 import * as React from "react";
 
+/**
+ * Represents a single table of contents item
+ *
+ * @interface TOCItem
+ */
 export interface TOCItem {
+  /** Unique identifier for the heading */
   id: string;
+  /** Heading level (1-6, where 1 is h1, 2 is h2, etc.) */
   level: number;
+  /** Text content of the heading */
   text: string;
-  element?: HTMLElement; // Reference to DOM element for advanced operations
+  /** Reference to the DOM element for advanced operations */
+  element?: HTMLElement;
 }
 
+/**
+ * Array of table of contents items
+ */
 export type TOCHeadings = TOCItem[];
 
+/**
+ * Configuration options for the useTOC hook
+ *
+ * @interface UseTOCProps
+ */
 export interface UseTOCProps {
   /**
    * ID of the container element to scan for headings
@@ -110,17 +38,19 @@ export interface UseTOCProps {
    */
   selectors?: string;
   /**
-   * Root margin for IntersectionObserver
+   * Root margin for IntersectionObserver (similar to CSS margin)
+   * Controls when headings are considered "visible"
    * @default "0px 0px -80% 0px"
    */
   rootMargin?: string;
   /**
-   * Intersection threshold (0-1)
+   * Intersection threshold (0-1) - percentage of element that must be visible
    * @default 0.1
    */
   threshold?: number;
   /**
-   * Debounce delay for active ID updates (ms)
+   * Debounce delay for active ID updates in milliseconds
+   * Prevents rapid state changes during scrolling
    * @default 100
    */
   debounceDelay?: number;
@@ -131,6 +61,10 @@ export interface UseTOCProps {
   generateIds?: boolean;
   /**
    * Custom ID generator function
+   * @param text - The heading text content
+   * @param level - The heading level (1-6)
+   * @param index - The index of the heading in the document
+   * @returns A unique ID string
    */
   idGenerator?: (text: string, level: number, index: number) => string;
   /**
@@ -139,31 +73,62 @@ export interface UseTOCProps {
    */
   enableErrorHandling?: boolean;
   /**
-   * Custom error handler
+   * Custom error handler function
+   * @param error - The error that occurred
+   * @param context - The context where the error occurred
    */
   onError?: (error: Error, context: string) => void;
 }
 
+/**
+ * Return value from the useTOC hook
+ *
+ * @interface UseTOCReturn
+ */
 export interface UseTOCReturn {
+  /** Array of detected headings with their metadata */
   headings: TOCHeadings;
+  /** Currently active heading ID (null if none) */
   activeId: string | null;
+  /** Error message if something went wrong (null if no error) */
   error: string | null;
+  /** Whether the hook is currently scanning for headings */
   isLoading: boolean;
   /**
-   * Programmatically set active heading
+   * Programmatically set the active heading
+   * @param id - The ID of the heading to activate
    */
   setActiveHeading: (id: string) => void;
   /**
-   * Refresh TOC (useful for dynamic content)
+   * Refresh the table of contents (useful for dynamic content)
+   * Triggers a re-scan of the document for headings
    */
   refresh: () => void;
   /**
-   * Navigate to a heading
+   * Navigate to a specific heading
+   * @param id - The ID of the heading to navigate to
+   * @param behavior - Scroll behavior ("auto", "smooth", or "instant")
    */
   navigateToHeading: (id: string, behavior?: ScrollBehavior) => void;
 }
 
-// Utility function to generate slug-like IDs
+/**
+ * Generates a URL-friendly slug from text content
+ *
+ * Converts text to lowercase, removes special characters,
+ * replaces spaces and underscores with hyphens, and
+ * removes leading/trailing hyphens.
+ *
+ * @param text - The text to convert to a slug
+ * @returns A URL-friendly slug string
+ *
+ * @example
+ * ```ts
+ * generateSlug("Hello World!") // "hello-world"
+ * generateSlug("Section 2.1") // "section-21"
+ * generateSlug("Special@#$%") // "special"
+ * ```
+ */
 const generateSlug = (text: string): string => {
   return text
     .toLowerCase()
@@ -173,7 +138,24 @@ const generateSlug = (text: string): string => {
     .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 };
 
-// Default ID generator
+/**
+ * Default ID generator function
+ *
+ * Creates unique IDs for headings by combining a slugified version
+ * of the text with the heading level and index as fallback.
+ *
+ * @param text - The heading text content
+ * @param level - The heading level (1-6)
+ * @param index - The index of the heading in the document
+ * @returns A unique ID string
+ *
+ * @example
+ * ```ts
+ * defaultIdGenerator("Introduction", 1, 0) // "introduction"
+ * defaultIdGenerator("Getting Started", 2, 1) // "getting-started"
+ * defaultIdGenerator("", 1, 2) // "heading-1-2"
+ * ```
+ */
 const defaultIdGenerator = (
   text: string,
   level: number,
@@ -183,7 +165,22 @@ const defaultIdGenerator = (
   return slug || `heading-${level}-${index}`;
 };
 
-// Debounce utility
+/**
+ * Custom debounce hook for values
+ *
+ * Delays updating a value until after a specified delay period.
+ * Useful for preventing rapid state changes during scrolling.
+ *
+ * @template T - The type of the value to debounce
+ * @param value - The current value
+ * @param delay - The delay in milliseconds
+ * @returns The debounced value
+ *
+ * @example
+ * ```ts
+ * const debouncedScrollPosition = useDebounce(scrollY, 100);
+ * ```
+ */
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
 
@@ -200,7 +197,24 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// Custom hook for managing refs that persist across renders
+/**
+ * Custom hook for managing stable callback references
+ *
+ * Ensures that callback functions maintain stable references
+ * across renders, preventing unnecessary re-renders of child
+ * components that depend on these callbacks.
+ *
+ * @template T - The type of the callback function
+ * @param callback - The callback function to stabilize
+ * @returns A stable reference to the callback
+ *
+ * @example
+ * ```ts
+ * const stableCallback = useStableCallback(() => {
+ *   console.log('This callback has a stable reference');
+ * });
+ * ```
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
   const callbackRef = React.useRef<T>(callback);
@@ -215,6 +229,108 @@ function useStableCallback<T extends (...args: any[]) => any>(callback: T): T {
   );
 }
 
+/**
+ * Custom hook for creating an interactive table of contents
+ *
+ * This hook provides a complete solution for creating dynamic table of contents
+ * that automatically detects headings, tracks the currently visible section,
+ * and provides navigation functionality.
+ *
+ * ## Features
+ *
+ * - **Automatic heading detection**: Scans the DOM for heading elements
+ * - **Intersection Observer**: Tracks which heading is currently visible
+ * - **Debounced updates**: Prevents rapid state changes during scrolling
+ * - **URL hash synchronization**: Updates URL hash when navigating to headings
+ * - **Error handling**: Graceful error handling with custom error callbacks
+ * - **Dynamic content support**: Can refresh when content changes
+ * - **Accessibility**: Proper focus management and keyboard navigation
+ *
+ * ## Usage
+ *
+ * ```tsx
+ * function Article() {
+ *   const { headings, activeId, navigateToHeading } = useTOC({
+ *     containerId: "article-content",
+ *     selectors: "h1, h2, h3",
+ *     debounceDelay: 150
+ *   });
+ *
+ *   return (
+ *     <div>
+ *       <nav>
+ *         {headings.map(heading => (
+ *           <button
+ *             key={heading.id}
+ *             onClick={() => navigateToHeading(heading.id)}
+ *             className={activeId === heading.id ? 'active' : ''}
+ *           >
+ *             {heading.text}
+ *           </button>
+ *         ))}
+ *       </nav>
+ *       <div id="article-content">
+ *         {/* Your article content with h1, h2, h3 elements *\/}
+ *       </div>
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * ## Advanced Usage
+ *
+ * ```tsx
+ * const { headings, activeId, error, isLoading, refresh } = useTOC({
+ *   containerId: "dynamic-content",
+ *   selectors: "h1, h2, h3, h4",
+ *   rootMargin: "0px 0px -70% 0px",
+ *   threshold: 0.5,
+ *   debounceDelay: 200,
+ *   generateIds: true,
+ *   idGenerator: (text, level, index) => `section-${level}-${index}`,
+ *   enableErrorHandling: true,
+ *   onError: (error, context) => {
+ *     console.error(`TOC Error in ${context}:`, error);
+ *   }
+ * });
+ * ```
+ *
+ * @param {UseTOCProps} options - Configuration options for the hook
+ * @param {string} [options.containerId="markdown-content"] - ID of the container element
+ * @param {string} [options.selectors="h1, h2, h3, h4, h5, h6"] - CSS selectors for headings
+ * @param {string} [options.rootMargin="0px 0px -80% 0px"] - IntersectionObserver root margin
+ * @param {number} [options.threshold=0.1] - IntersectionObserver threshold
+ * @param {number} [options.debounceDelay=100] - Debounce delay in milliseconds
+ * @param {boolean} [options.generateIds=true] - Whether to generate IDs for headings
+ * @param {Function} [options.idGenerator] - Custom ID generator function
+ * @param {boolean} [options.enableErrorHandling=true] - Whether to enable error handling
+ * @param {Function} [options.onError] - Custom error handler
+ *
+ * @returns {UseTOCReturn} Object containing headings, active state, and utility functions
+ *
+ * @throws {Error} When container is not found or selectors are invalid
+ *
+ * @example
+ * ```tsx
+ * // Basic usage
+ * const toc = useTOC();
+ *
+ * // Advanced usage with custom configuration
+ * const toc = useTOC({
+ *   containerId: "my-content",
+ *   selectors: "h1, h2, h3",
+ *   rootMargin: "0px 0px -60% 0px",
+ *   threshold: 0.2,
+ *   debounceDelay: 150,
+ *   generateIds: true,
+ *   idGenerator: (text, level) => `heading-${level}-${text.toLowerCase().replace(/\s+/g, '-')}`,
+ *   enableErrorHandling: true,
+ *   onError: (error, context) => {
+ *     console.error(`TOC Error in ${context}:`, error);
+ *   }
+ * });
+ * ```
+ */
 export const useTOC = ({
   containerId = "markdown-content",
   selectors = "h1, h2, h3, h4, h5, h6",
@@ -244,7 +360,12 @@ export const useTOC = ({
   // Debounced active ID to prevent rapid state changes
   const debouncedActiveId = useDebounce(internalActiveId, debounceDelay);
 
-  // Error handler
+  /**
+   * Error handler that manages error state and calls custom error handlers
+   *
+   * @param err - The error that occurred
+   * @param context - The context where the error occurred
+   */
   const handleError = useStableCallback((err: Error, context: string) => {
     if (!enableErrorHandling) return;
 
@@ -263,7 +384,9 @@ export const useTOC = ({
     setError(null);
   }, [containerId, selectors, rootMargin, threshold]);
 
-  // Cleanup function
+  /**
+   * Cleanup function that disconnects observers and clears references
+   */
   const cleanup = useStableCallback(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
@@ -313,6 +436,9 @@ export const useTOC = ({
     setIsLoading(true);
     cleanup();
 
+    /**
+     * Scans the document for headings and sets up intersection observers
+     */
     const scanHeadings = async () => {
       try {
         // Validate selector
@@ -485,7 +611,11 @@ export const useTOC = ({
     };
   }, [cleanup]);
 
-  // Utility functions
+  /**
+   * Programmatically set the active heading
+   *
+   * @param id - The ID of the heading to activate
+   */
   const setActiveHeading = useStableCallback((id: string) => {
     if (headings.find((h) => h.id === id)) {
       setActiveId(id);
@@ -494,12 +624,27 @@ export const useTOC = ({
     }
   });
 
+  /**
+   * Refresh the table of contents
+   *
+   * Triggers a re-scan of the document for headings.
+   * Useful when content is dynamically loaded or changed.
+   */
   const refresh = useStableCallback(() => {
     setIsLoading(true);
     // Trigger re-scan by updating a dependency
     setError(null);
   });
 
+  /**
+   * Navigate to a specific heading
+   *
+   * Scrolls to the heading, updates the URL hash, sets it as active,
+   * and focuses the element for accessibility.
+   *
+   * @param id - The ID of the heading to navigate to
+   * @param behavior - Scroll behavior ("auto", "smooth", or "instant")
+   */
   const navigateToHeading = useStableCallback(
     (id: string, behavior: ScrollBehavior = "smooth") => {
       const element = document.getElementById(id);

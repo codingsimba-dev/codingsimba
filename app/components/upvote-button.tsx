@@ -2,6 +2,14 @@ import React from "react";
 import { Heart } from "lucide-react";
 import { cn } from "~/utils/misc";
 import { AnimatePresence, motion } from "framer-motion";
+import { useFetcher } from "react-router";
+
+export enum UpvoteIntent {
+  UPVOTE_ARTICLE = "UPVOTE_ARTICLE",
+  UPVOTE_TUTORIAL = "UPVOTE_TUTORIAL",
+  UPVOTE_COMMENT = "UPVOTE_COMMENT",
+  UPVOTE_REPLY = "UPVOTE_REPLY",
+}
 
 /**
  * Props for the UpvoteButton component
@@ -9,12 +17,18 @@ import { AnimatePresence, motion } from "framer-motion";
 interface UpvoteButtonProps {
   /** Total number of likes for the content */
   totalLikes: number;
+  /** Number of likes the current user has given to this content */
+  userLikes: number;
+  /** Maximum number of likes a user can give to content */
+  maxLikes?: number;
   /** Whether the current user has liked the content */
-  isFilled: boolean;
-  /** Whether the button should be disabled (e.g., user has reached max likes) */
-  isDisabled: boolean;
-  /** Callback function called when the upvote button is clicked */
-  onUpvote: () => void;
+  isLiked: boolean;
+  /** Unique identifier of the content being upvoted */
+  itemId: string;
+  /** Type of content being upvoted */
+  contentType: "article" | "tutorial" | "comment" | "reply";
+  /** User ID for the current user */
+  userId: string;
   /** Additional CSS classes to apply to the button */
   className?: string;
   /** Size variant of the button */
@@ -49,21 +63,49 @@ interface UpvoteButtonProps {
  */
 export function UpvoteButton({
   totalLikes,
-  isFilled,
-  isDisabled,
-  onUpvote,
+  isLiked,
+  userLikes,
+  maxLikes = 5,
+  itemId,
+  contentType,
+  userId,
   className,
   size = "md",
-  showMaxLabel = false,
+  showMaxLabel = true,
   showFloatingAnimation = true,
 }: UpvoteButtonProps) {
   const [showFloating, setShowFloating] = React.useState(false);
   const [animationKey, setAnimationKey] = React.useState(0);
+  const [optimisticState, setOptimisticState] = React.useState({
+    totalLikes,
+    userLikes,
+  });
+  const fetcher = useFetcher();
+
+  // Update optimistic state when props change
+  React.useEffect(() => {
+    setOptimisticState({
+      totalLikes,
+      userLikes,
+    });
+  }, [totalLikes, userLikes]);
+
+  const isDisabled = optimisticState.userLikes >= maxLikes;
+  const isFilled = optimisticState.userLikes > 0 || isLiked;
 
   /**
-   * Handles the upvote button click with optional floating animation
+   * Handles the upvote button click with optimistic updates and floating animation
    */
-  const handleUpvote = () => {
+  function handleUpvote() {
+    if (isDisabled) return;
+
+    // Optimistic update
+    setOptimisticState((prev) => ({
+      totalLikes: prev.totalLikes + 1,
+      userLikes: prev.userLikes + 1,
+    }));
+
+    // Floating animation
     if (showFloatingAnimation) {
       setShowFloating(true);
       setAnimationKey((prev) => prev + 1);
@@ -73,8 +115,18 @@ export function UpvoteButton({
       }, 1000);
     }
 
-    onUpvote();
-  };
+    // Submit form data
+    fetcher.submit(
+      {
+        intent:
+          UpvoteIntent[
+            `UPVOTE_${contentType.toUpperCase()}` as keyof typeof UpvoteIntent
+          ],
+        data: JSON.stringify({ itemId, userId }),
+      },
+      { method: "post" },
+    );
+  }
   /** Size classes for different button variants */
   const sizeClasses = {
     sm: "size-4",
@@ -106,9 +158,13 @@ export function UpvoteButton({
             "opacity-80": isDisabled,
           })}
         />
-        <span className={textSizes[size]}>{totalLikes.toLocaleString()}</span>
+        <span className={textSizes[size]}>
+          {optimisticState.totalLikes.toLocaleString()}
+        </span>
         {showMaxLabel && isDisabled ? (
-          <sub className="text-muted-foreground">max</sub>
+          <sub className={cn("text-muted-foreground text-xs", textSizes[size])}>
+            max
+          </sub>
         ) : null}
       </button>
       <AnimatePresence>

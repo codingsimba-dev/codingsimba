@@ -9,11 +9,11 @@ import { Reply } from "./reply";
 import { CommentForm } from "./comment-form";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
-import { useUpvote, useDelete, useCreate, useUpdate } from "~/hooks/content";
+import { useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { getSeed } from "~/utils/misc";
-import { FlagDialog } from "~/components/flag-dialog";
+import { ReportButton } from "~/components/report-button";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import { CommentIntent, ReplyIntent } from ".";
@@ -41,6 +41,8 @@ export function Comment({ comment }: { comment: CommentData }) {
 
   const isFlagged = comment.flags.some((flag) => flag.userId === userId);
   const isLiked = comment.likes?.some((like) => like.userId === userId);
+  const userLikes =
+    comment?.likes?.find((like) => like.userId === userId)?.count ?? 0;
   const totalLikes = comment?.likes?.reduce(
     (total, like) => total + like.count,
     0,
@@ -75,14 +77,6 @@ export function Comment({ comment }: { comment: CommentData }) {
     },
     { showSuccessToast: true },
   );
-
-  const { submit: upvoteComment } = useUpvote({
-    intent: CommentIntent.UPVOTE_COMMENT,
-    data: {
-      itemId: comment.id,
-      userId: userId!,
-    },
-  });
 
   const { submit: updateComment, isPending: isUpdating } = useUpdate({
     intent: CommentIntent.UPDATE_COMMENT,
@@ -170,11 +164,12 @@ export function Comment({ comment }: { comment: CommentData }) {
           <div className="mt-2 flex items-center space-x-4">
             <UpvoteButton
               size="sm"
-              onUpvote={upvoteComment}
+              isLiked={isLiked}
+              userLikes={userLikes}
+              itemId={comment.id}
+              contentType="comment"
+              userId={userId!}
               totalLikes={totalLikes}
-              isFilled={isLiked}
-              isDisabled={isLiked}
-              showMaxLabel={false}
             />
             {user ? (
               <button
@@ -201,7 +196,7 @@ export function Comment({ comment }: { comment: CommentData }) {
               className={buttonClasses}
             />
             {!isOwner && user ? (
-              <FlagDialog
+              <ReportButton
                 size="sm"
                 itemId={comment.id}
                 isFlagged={isFlagged}

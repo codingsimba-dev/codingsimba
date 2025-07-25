@@ -25,13 +25,13 @@ export const content = [
   { name: "store", path: "store" },
   { name: "support", path: "support" },
   { name: "roadmap", path: "roadmap" },
-  { name: "color scheme", path: "color-scheme" },
 ];
 
 export const platform = [
   { name: "about", path: "about" },
   { name: "contact", path: "contact" },
   { name: "FAQs", path: "support#faqs" },
+  { name: "color scheme", path: "color-scheme" },
 ];
 
 export const legal = [

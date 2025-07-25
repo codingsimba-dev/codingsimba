@@ -41,6 +41,7 @@ import { GeneralErrorBoundary } from "~/components/error-boundary";
 import { generateMetadata } from "~/utils/meta";
 import { Metrics } from "./components/metrics";
 import { checkHoneypot } from "~/utils/honeypot.server";
+import { UpvoteIntent } from "~/components/upvote-button";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -92,12 +93,12 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const result = await SubmitSchema.safeParseAsync(submittedData);
+  console.log(result);
   invariantResponse(result.success, "Invalid form data", {
     status: StatusCodes.BAD_REQUEST,
   });
 
   enum MiscTypes {
-    UPVOTE_ARTICLE = "upvote-article",
     BOOKMARK_ARTICLE = "bookmark-article",
     FLAG_ARTICLE = "flag-article",
     TRACK_PAGE_VIEW = "track-page-view",
@@ -107,7 +108,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const { data, intent } = result.data;
 
-  switch (intent as CommentIntent | ReplyIntent | MiscTypes) {
+  switch (intent as CommentIntent | ReplyIntent | MiscTypes | UpvoteIntent) {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
     case ReplyIntent.ADD_REPLY:
@@ -116,17 +117,17 @@ export async function action({ request }: Route.ActionArgs) {
       return await updateComment(request, data);
     case CommentIntent.DELETE_COMMENT:
       return await deleteComment(request, data);
-    case CommentIntent.UPVOTE_COMMENT:
-      return await upvoteComment(data);
     case ReplyIntent.UPDATE_REPLY:
       return await updateReply(request, data);
     case ReplyIntent.DELETE_REPLY:
       return await deleteReply(request, data);
-    case ReplyIntent.UPVOTE_REPLY:
-      return await upvoteReply(data);
+    case UpvoteIntent.UPVOTE_COMMENT:
+      return await upvoteComment(data);
     case MiscTypes.TRACK_PAGE_VIEW:
       return await trackPageView({ itemId: data.itemId as string });
-    case MiscTypes.UPVOTE_ARTICLE:
+    case UpvoteIntent.UPVOTE_REPLY:
+      return await upvoteReply(data);
+    case UpvoteIntent.UPVOTE_ARTICLE:
       return await upvoteArticle(data);
     case MiscTypes.BOOKMARK_ARTICLE:
       return await bookmarkArticle(data);

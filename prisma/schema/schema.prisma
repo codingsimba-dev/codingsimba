@@ -38,6 +38,7 @@ model User {
   likes                Like[]
   comments             Comment[]
   bookmarks            Bookmark[]
+  tags                 Tag[]
   flags                ContentFlag[]
   resolvedFlags        ContentFlag[]        @relation("FlagResolver")
   reviews              Review[]

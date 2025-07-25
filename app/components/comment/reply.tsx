@@ -5,13 +5,13 @@ import { getSeed } from "~/utils/misc";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
-import { useUpvote, useDelete, useUpdate } from "~/hooks/content";
+import { useDelete, useUpdate } from "~/hooks/content";
 import { CommentForm } from "./comment-form";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
 import { ReplyIntent } from ".";
-import { FlagDialog } from "~/components/flag-dialog";
+import { ReportButton } from "~/components/report-button";
 import { CommentActions } from "./comment-actions";
 import { UpvoteButton } from "../upvote-button";
 
@@ -32,7 +32,8 @@ export function Reply({ reply }: { reply: ReplyData }) {
     (total, like) => total + like.count,
     0,
   );
-
+  const userLikes =
+    reply?.likes?.find((like) => like.userId === userId)?.count ?? 0;
   const canDelete = userHasPermission(
     user,
     isOwner ? "DELETE:REPLY:OWN" : "DELETE:REPLY:ANY",
@@ -44,14 +45,6 @@ export function Reply({ reply }: { reply: ReplyData }) {
 
   const { submit: deleteReply, isPending: isDeleting } = useDelete({
     intent: ReplyIntent.DELETE_REPLY,
-    data: {
-      itemId: reply.id,
-      userId: userId!,
-    },
-  });
-
-  const { submit: upvoteReply } = useUpvote({
-    intent: ReplyIntent.UPVOTE_REPLY,
     data: {
       itemId: reply.id,
       userId: userId!,
@@ -119,11 +112,12 @@ export function Reply({ reply }: { reply: ReplyData }) {
         <div className="mt-2 flex items-center gap-4">
           <UpvoteButton
             size="sm"
-            onUpvote={upvoteReply}
+            isLiked={isLiked}
+            userLikes={userLikes}
+            itemId={reply.id}
+            contentType="reply"
+            userId={userId!}
             totalLikes={totalLikes}
-            isFilled={isLiked}
-            isDisabled={isLiked}
-            showMaxLabel={false}
           />
           <CommentActions
             canUpdate={canUpdate}
@@ -136,7 +130,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
             className={buttonClasses}
           />
           {!isOwner && user ? (
-            <FlagDialog
+            <ReportButton
               size="sm"
               itemId={reply.id}
               isFlagged={isFlagged}

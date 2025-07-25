@@ -30,7 +30,7 @@ export function Footer() {
     <>
       <section
         className={cn("bg-background relative overflow-hidden py-24", {
-          "p hidden": user,
+          "p hidden": user || hideFooter,
         })}
       >
         <div className="to-background absolute inset-0 bg-gradient-to-r from-blue-500/10" />
@@ -46,7 +46,7 @@ export function Footer() {
         })}
       >
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-between md:flex-row">
+          <div className="flex flex-col items-start justify-between md:flex-row">
             <section className="mb-6 md:mb-0">
               <Logo />
               <p className="text-muted-foreground mt-2">{slogan}</p>
@@ -57,12 +57,8 @@ export function Footer() {
                 <h3 className="text-foreground mb-3 font-medium">Learning</h3>
                 <ul className="space-y-2">
                   {learning.map((item) => (
-                    <li key={item.name}>
-                      <NavLink
-                        key={item.name}
-                        name={item.name}
-                        path={item.path}
-                      />
+                    <li key={item.name} className="text-muted-foreground">
+                      <NavLink name={item.name} path={item.path} />
                     </li>
                   ))}
                 </ul>
@@ -71,13 +67,9 @@ export function Footer() {
               <div>
                 <h3 className="text-foreground mb-3 font-medium">Platform</h3>
                 <ul className="space-y-2">
-                  {[...platform, ...content].map((item) => (
+                  {[...content, ...platform].map((item) => (
                     <li key={item.name}>
-                      <NavLink
-                        key={item.name}
-                        name={item.name}
-                        path={item.path}
-                      />
+                      <NavLink name={item.name} path={item.path} />
                     </li>
                   ))}
                 </ul>
@@ -88,11 +80,7 @@ export function Footer() {
                 <ul className="space-y-2">
                   {legal.map((item) => (
                     <li key={item.name}>
-                      <NavLink
-                        key={item.name}
-                        name={item.name}
-                        path={item.path}
-                      />
+                      <NavLink name={item.name} path={item.path} />
                     </li>
                   ))}
                 </ul>
@@ -103,11 +91,7 @@ export function Footer() {
                 <ul className="space-y-2">
                   {social.map((item) => (
                     <li key={item.name}>
-                      <NavLink
-                        key={item.name}
-                        name={item.name}
-                        path={item.path}
-                      />
+                      <NavLink name={item.name} path={item.path} />
                     </li>
                   ))}
                 </ul>

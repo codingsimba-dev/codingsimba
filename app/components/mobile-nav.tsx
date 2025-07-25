@@ -6,7 +6,7 @@ import {
   SheetTitle,
 } from "./ui/sheet";
 import { Logo } from "./logo";
-import { useMobileNav } from "~/contexts/mobile-nav";
+import { useMobileNav } from "~/utils/mobile-nav-provider";
 import { navLinks, learning, slogan, learningIcons } from "~/utils/constants";
 import { NavLink } from "./nav-link";
 import { Separator } from "./ui/separator";

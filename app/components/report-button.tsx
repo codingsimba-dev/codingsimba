@@ -66,11 +66,11 @@ const textSizes = {
 } as const;
 
 /**
- * Props for the FlagDialog component
+ * Props for the ReportButton component
  *
- * @interface FlagDialogProps
+ * @interface ReportButtonProps
  */
-interface FlagDialogProps {
+interface ReportButtonProps {
   /** Unique identifier of the content item being flagged */
   itemId: string;
   /** Whether the content has already been flagged by the current user */
@@ -132,14 +132,14 @@ interface FlagDialogProps {
  *
  * @returns {JSX.Element} A flag button that opens a flagging dialog
  */
-export function FlagDialog({
+export function ReportButton({
   itemId,
   contentType,
   isFlagged,
   size = "md",
   showText = true,
   className,
-}: FlagDialogProps) {
+}: ReportButtonProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [flagData, setFlagData] = React.useState({
     reason: "",
@@ -160,7 +160,7 @@ export function FlagDialog({
   function handleSubmit() {
     fetcher.submit(
       {
-        intent: `flag-${contentType}`,
+        intent: isFlagged ? `unflag-${contentType}` : `flag-${contentType}`,
         data: JSON.stringify({
           itemId,
           userId: user?.id,
@@ -189,7 +189,7 @@ export function FlagDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button
-          disabled={isPending || isFlagged}
+          disabled={isPending}
           aria-label={isFlagged ? "Remove flag" : "Flag content"}
           className={cn(
             "hover:text-foreground text-muted-foreground flex items-center space-x-1 transition-colors",
@@ -204,44 +204,66 @@ export function FlagDialog({
           />
           {showText ? (
             <span className={textSizes[size]}>
-              {isFlagged ? "Flagged" : "Flag"}
+              {isFlagged ? "Reported" : "Report"}
             </span>
           ) : null}
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Flag this {contentType}</DialogTitle>
+          <DialogTitle>
+            {isFlagged
+              ? `Remove report for this ${contentType}`
+              : `Report this ${contentType}`}
+          </DialogTitle>
           <DialogDescription>
-            Please select a reason for flagging this {contentType}.
+            {isFlagged
+              ? `Are you sure you want to remove your report for this ${contentType}?`
+              : `Please select a reason for reporting this ${contentType}.`}
           </DialogDescription>
         </DialogHeader>
-        <Select
-          value={flagData.reason}
-          onValueChange={(value) => setFlagData({ ...flagData, reason: value })}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select a reason" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Reason</SelectLabel>
-              {flagReasons.map((reason) => (
-                <SelectItem key={reason} value={reason} className="capitalize">
-                  {reason.replace("_", " ")}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Textarea
-          value={flagData.details}
-          onChange={(e) =>
-            setFlagData({ ...flagData, details: e.target.value })
-          }
-          placeholder="Enter additional details (optional)"
-          className="mt-4"
-        />
+        {!isFlagged && (
+          <>
+            <Select
+              value={flagData.reason}
+              onValueChange={(value) =>
+                setFlagData({ ...flagData, reason: value })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Reason</SelectLabel>
+                  {flagReasons.map((reason) => (
+                    <SelectItem
+                      key={reason}
+                      value={reason}
+                      className="capitalize"
+                    >
+                      {reason.replace("_", " ")}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <div className="space-y-2">
+              <Textarea
+                value={flagData.details}
+                onChange={(e) =>
+                  setFlagData({ ...flagData, details: e.target.value })
+                }
+                placeholder="Enter additional details (optional)"
+                maxLength={500}
+                rows={3}
+              />
+              <p className="text-muted-foreground text-xs">
+                {flagData.details.length}/500 characters
+              </p>
+            </div>
+          </>
+        )}
         <DialogFooter>
           <Button
             variant="outline"
@@ -252,12 +274,15 @@ export function FlagDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isPending || !flagData.reason}
+            disabled={isPending || (!isFlagged && !flagData.reason)}
+            variant={isFlagged ? "destructive" : "default"}
           >
-            {`Flag ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}
             {isPending ? (
-              <Loader2 className="ml-2 size-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
             ) : null}
+            {isFlagged
+              ? `Remove Report`
+              : `Report ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}
           </Button>
         </DialogFooter>
       </DialogContent>

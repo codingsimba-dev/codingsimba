@@ -25,7 +25,7 @@ import { Footer } from "./components/footer";
 import { themeSessionResolver } from "~/utils/theme.server";
 import { GeneralErrorBoundary } from "./components/error-boundary";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
-import { MobileNavProvider } from "./contexts/mobile-nav";
+import { MobileNavProvider } from "./utils/mobile-nav-provider";
 import { MobileNav } from "./components/mobile-nav";
 import { prisma } from "./utils/db.server";
 import { sessionKey, signout } from "./utils/auth.server";
