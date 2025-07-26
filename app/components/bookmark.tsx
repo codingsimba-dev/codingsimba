@@ -1,5 +1,12 @@
 import React from "react";
-import { Bookmark, BookmarkCheck, Loader2, Plus, X, Tag } from "lucide-react";
+import {
+  Bookmark as BookmarkIcon,
+  BookmarkCheck,
+  Loader2,
+  Plus,
+  X,
+  Tag,
+} from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -43,7 +50,11 @@ interface BookmarkButtonProps {
   existingBookmark?: {
     id: string;
     notes?: string | null;
-    tags?: string | null;
+    bookmarkTags?: {
+      tag: {
+        name: string;
+      };
+    }[];
   };
 }
 
@@ -109,7 +120,7 @@ interface BookmarkButtonProps {
  *
  * @returns {JSX.Element} A bookmark button that opens a bookmarking dialog
  */
-export function BookmarkButton({
+export function Bookmark({
   itemId,
   contentType,
   isBookmarked,
@@ -125,38 +136,28 @@ export function BookmarkButton({
   const fetcher = useFetcher();
   const user = useOptionalUser();
 
-  const isPending = fetcher.state === "submitting";
+  const isPending = fetcher.state !== "idle";
   const canCloseDialog = fetcher.state === "idle" && fetcher.data?.success;
 
   React.useEffect(() => {
     if (existingBookmark) {
       setNotes(existingBookmark.notes || "");
-      if (existingBookmark.tags) {
-        setTags(
-          existingBookmark.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter(Boolean),
-        );
+      if (existingBookmark.bookmarkTags?.length) {
+        setTags(existingBookmark.bookmarkTags.map((bt) => bt.tag.name));
       }
     }
   }, [existingBookmark]);
 
   React.useEffect(() => {
-    if (!open) {
+    if (canCloseDialog) {
+      setOpen(false);
       if (!existingBookmark) {
         setTags([]);
         setNotes("");
       }
       setTagInput("");
     }
-  }, [open, existingBookmark]);
-
-  React.useEffect(() => {
-    if (canCloseDialog) {
-      setOpen(false);
-    }
-  }, [canCloseDialog]);
+  }, [canCloseDialog, existingBookmark]);
 
   const sizeClasses = {
     sm: "h-8 px-2 text-xs",
@@ -170,9 +171,11 @@ export function BookmarkButton({
     lg: "size-5",
   };
 
+  const TAG_LIMIT = 5;
+
   function handleAddTag() {
     const trimmedTag = tagInput.trim().toLowerCase();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 10) {
+    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < TAG_LIMIT) {
       setTags([...tags, trimmedTag]);
       setTagInput("");
     }
@@ -226,40 +229,38 @@ export function BookmarkButton({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          disabled={isPending}
-          aria-label={isBookmarked ? "Edit bookmark" : "Add bookmark"}
-          className={cn(
-            "border-input bg-background ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-            sizeClasses[size],
-            isBookmarked &&
-              "bg-primary text-primary-foreground hover:bg-primary/90",
-            className,
-          )}
-        >
-          {isPending ? (
-            <Loader2
-              className={cn(
-                iconSizes[size],
-                "text-muted-foreground animate-spin",
-              )}
-            />
-          ) : isBookmarked ? (
-            <BookmarkCheck className={iconSizes[size]} />
-          ) : (
-            <Bookmark className={iconSizes[size]} />
-          )}
-          {showText && (
-            <span>
-              {isPending
-                ? "Saving..."
-                : isBookmarked
-                  ? "Bookmarked"
-                  : "Bookmark"}
-            </span>
-          )}
-        </button>
+      <DialogTrigger
+        disabled={isPending}
+        aria-label={isBookmarked ? "Edit bookmark" : "Add bookmark"}
+        className={cn("flex items-center", sizeClasses[size], className)}
+      >
+        {isPending ? (
+          <Loader2
+            className={cn(
+              iconSizes[size],
+              "text-muted-foreground animate-spin",
+            )}
+          />
+        ) : isBookmarked ? (
+          <BookmarkCheck
+            className={cn(
+              iconSizes[size],
+              "size-4 fill-blue-500 hover:fill-blue-500",
+            )}
+          />
+        ) : (
+          <BookmarkIcon
+            className={cn(
+              iconSizes[size],
+              "text-muted-foreground hover:text-muted-foreground size-4",
+            )}
+          />
+        )}
+        {showText && (
+          <span>
+            {isPending ? "Saving..." : isBookmarked ? "Bookmarked" : "Bookmark"}
+          </span>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -303,20 +304,20 @@ export function BookmarkButton({
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleKeyPress}
                 maxLength={20}
-                disabled={tags.length >= 10}
+                disabled={tags.length >= TAG_LIMIT}
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAddTag}
-                disabled={!tagInput.trim() || tags.length >= 10}
+                disabled={!tagInput.trim() || tags.length >= TAG_LIMIT}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
             <p className="text-muted-foreground text-xs">
-              {tags.length}/10 tags • Press Enter to add
+              {tags.length}/{TAG_LIMIT} tags • Press Enter to add
             </p>
           </div>
 

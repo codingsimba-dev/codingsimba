@@ -75,7 +75,7 @@ export async function getTutorialComments({
     select: {
       id: true,
       body: true,
-      flags: {
+      reports: {
         select: {
           userId: true,
         },
@@ -98,7 +98,7 @@ export async function getTutorialComments({
         select: {
           id: true,
           body: true,
-          flags: {
+          reports: {
             select: {
               userId: true,
             },

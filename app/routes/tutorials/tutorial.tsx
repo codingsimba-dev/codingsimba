@@ -13,7 +13,7 @@ import { TutorialSidebar } from "./components/sidebar";
 import { usePageView } from "use-page-view";
 import { z } from "zod";
 import { getTutorialComments, getTutorialMetrics } from "./loader.server";
-import { CommentIntent, Comments, ReplyIntent } from "~/components/comment";
+import { CommentIntent, Comments } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { LessonsNavigation } from "./components/lessons-navigation";
 import { SideBarContainer } from "./components/sidebar-container";
@@ -21,13 +21,9 @@ import { SubmitSchema, useCreate } from "~/hooks/content";
 import {
   addComment,
   trackPageView,
-  addReply,
   updateComment,
   deleteComment,
   upvoteComment,
-  updateReply,
-  deleteReply,
-  upvoteReply,
 } from "./action.server";
 import { checkHoneypot } from "~/utils/honeypot.server";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
@@ -93,23 +89,15 @@ export async function action({ request }: Route.ActionArgs) {
 
   const { data, intent } = result.data;
 
-  switch (intent as CommentIntent | ReplyIntent | "track-page-view") {
+  switch (intent as CommentIntent | "track-page-view") {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
-    case ReplyIntent.ADD_REPLY:
-      return await addReply(data);
     case CommentIntent.UPDATE_COMMENT:
       return await updateComment(request, data);
     case CommentIntent.DELETE_COMMENT:
       return await deleteComment(request, data);
     case CommentIntent.UPVOTE_COMMENT:
       return await upvoteComment(data);
-    case ReplyIntent.UPDATE_REPLY:
-      return await updateReply(request, data);
-    case ReplyIntent.DELETE_REPLY:
-      return await deleteReply(request, data);
-    case ReplyIntent.UPVOTE_REPLY:
-      return await upvoteReply(data);
     case "track-page-view":
       return await trackPageView({ itemId: data.itemId as string });
 

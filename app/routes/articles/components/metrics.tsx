@@ -7,9 +7,9 @@ import { cn } from "~/utils/misc";
 import { useOptionalUser } from "~/hooks/user";
 import { Skeleton } from "~/components/ui/skeleton";
 import { EmptyState } from "~/components/empty-state";
-import { ReportButton } from "~/components/report";
-import { UpvoteButton } from "~/components/upvote";
-import { BookmarkButton } from "~/components/bookmark";
+import { Report } from "~/components/report";
+import { Upvote } from "~/components/upvote";
+import { Bookmark } from "~/components/bookmark";
 
 /**
  * Props for the Metrics component
@@ -73,8 +73,8 @@ export function Metrics({ className }: MetricsProps) {
           ) : (
             <EmptyState
               icon={<ChartBar className="text-muted-foreground size-10" />}
-              title="No metrics"
-              description="This article has no metrics."
+              title="No metrics yet"
+              description="Metrics will be available after the first view."
               className="mb-2 pt-4"
             />
           )
@@ -167,14 +167,15 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
    * The processing is optimized to avoid multiple array iterations and
    * provides fallback values when data is missing or user is not authenticated.
    */
-  const { totalLikes, userLikes, isBookmarked, isFlagged, isLiked } =
+  const { totalLikes, userLikes, bookmark, isBookmarked, isReported, isLiked } =
     React.useMemo(() => {
       if (!metrics) {
         return {
           totalLikes: LEAST_COUNT,
           userLikes: LEAST_COUNT,
+          bookmark: undefined,
           isBookmarked: false,
-          isFlagged: false,
+          isReported: false,
           isLiked: false,
         };
       }
@@ -182,7 +183,7 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
       let totalLikes = LEAST_COUNT;
       let userLikes = LEAST_COUNT;
       let isBookmarked = false;
-      let isFlagged = false;
+      let isReported = false;
 
       // Single pass through likes array for optimal performance
       if (metrics.likes?.length) {
@@ -196,20 +197,22 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
         if (totalLikes === 0) totalLikes = LEAST_COUNT;
       }
 
-      // Check bookmarks and flags for current user
-      isBookmarked =
-        metrics.bookmarks?.some((bookmark) => bookmark.userId === userId) ??
-        false;
-      isFlagged =
-        metrics.flags?.some((flag) => flag.userId === userId) ?? false;
+      const bookmark =
+        metrics.bookmarks.find((bookmark) => bookmark.userId === userId) ??
+        undefined;
+      isBookmarked = !!bookmark;
+
+      isReported =
+        metrics.reports?.some((report) => report.userId === userId) ?? false;
 
       const isLiked = userLikes > LEAST_COUNT;
 
       return {
         totalLikes,
         userLikes,
+        bookmark,
         isBookmarked,
-        isFlagged,
+        isReported,
         isLiked,
       };
     }, [metrics, userId]);
@@ -224,25 +227,26 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
       )}
     >
       <div className="flex flex-wrap items-center gap-4">
-        <UpvoteButton
+        <Upvote
           isLiked={isLiked}
           totalLikes={totalLikes}
           userLikes={userLikes}
-          itemId={metrics?.id ?? ""}
+          itemId={metrics?.id}
           contentType="article"
           userId={userId!}
         />
-        <BookmarkButton
+        <Bookmark
           size="sm"
+          contentType="article"
           isBookmarked={isBookmarked}
-          itemId={metrics?.id ?? ""}
-          contentType="article"
+          itemId={isBookmarked ? metrics?.id : metrics?.sanityId}
+          existingBookmark={bookmark}
         />
-        <ReportButton
-          itemId={metrics?.id}
-          isFlagged={isFlagged}
-          contentType="article"
+        <Report
           size="sm"
+          contentType="article"
+          isReported={isReported}
+          itemId={isReported ? metrics?.id : metrics?.sanityId}
         />
         <Views views={metrics?.views ?? LEAST_COUNT} />
       </div>

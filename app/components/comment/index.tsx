@@ -14,17 +14,10 @@ import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 export enum CommentIntent {
-  ADD_COMMENT = "add-comment",
-  UPDATE_COMMENT = "update-comment",
-  DELETE_COMMENT = "delete-comment",
-  UPVOTE_COMMENT = "upvote-comment",
-}
-
-export enum ReplyIntent {
-  ADD_REPLY = "add-reply",
-  UPDATE_REPLY = "update-reply",
-  DELETE_REPLY = "delete-reply",
-  UPVOTE_REPLY = "upvote-reply",
+  ADD_COMMENT = "ADD_COMMENT",
+  UPDATE_COMMENT = "UPDATE_COMMENT",
+  DELETE_COMMENT = "DELETE_COMMENT",
+  UPVOTE_COMMENT = "UPVOTE_COMMENT",
 }
 
 export function Comments() {
@@ -74,7 +67,7 @@ export function Comments() {
 
   return (
     <section className="mb-8" id="comments">
-      <React.Suspense fallback={<div>Loading...</div>}>
+      <React.Suspense fallback={<CommentSkeleton />}>
         <Await resolve={loaderData.comments}>
           {(comments) => (
             <>
@@ -128,5 +121,13 @@ export function Comments() {
         </Await>
       </React.Suspense>
     </section>
+  );
+}
+
+function CommentSkeleton() {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="bg-muted h-4 w-24" />
+    </div>
   );
 }

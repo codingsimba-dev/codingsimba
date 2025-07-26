@@ -13,27 +13,9 @@ import {
   getPopularTags,
 } from "~/utils/content.server/articles/utils";
 import { invariant, invariantResponse } from "~/utils/misc";
-import { CommentIntent, Comments, ReplyIntent } from "~/components/comment";
+import { CommentIntent, Comments } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { StatusCodes } from "http-status-codes";
-import {
-  addComment,
-  addReply,
-  updateComment,
-  deleteComment,
-  upvoteComment,
-  updateReply,
-  deleteReply,
-  upvoteReply,
-  trackPageView,
-  upvoteArticle,
-  bookmarkArticle,
-  reportArticle,
-  reportReply,
-  reportComment,
-  deleteReport,
-} from "./action.server";
-import { getArticleMetrics, getArticleComments } from "./loader.server";
 import { SubmitSchema, useCreate } from "~/hooks/content";
 import { z } from "zod";
 import { useOptionalUser } from "~/hooks/user";
@@ -44,6 +26,25 @@ import { Metrics } from "./components/metrics";
 import { checkHoneypot } from "~/utils/honeypot.server";
 import { UpvoteIntent } from "~/components/upvote";
 import { ReportIntent } from "~/components/report";
+import { BookmarkIntent } from "~/components/bookmark";
+import {
+  getContentComments,
+  getContentMetrics,
+} from "~/utils/content.server/loader.server";
+import {
+  addComment,
+  bookmarkContent,
+  deleteBookmark,
+  deleteComment,
+  deleteReport,
+  reportComment,
+  reportContent,
+  trackPageView,
+  updateBookmark,
+  updateComment,
+  upvoteComment,
+  upvoteContent,
+} from "~/utils/content.server/action";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -59,19 +60,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   invariantResponse(parsedParams.success, "Invalid comment search params", {
     status: StatusCodes.BAD_REQUEST,
   });
-
-  invariant(params.articleSlug, "Article slug is required");
-
   const articleSlug = params.articleSlug;
+  invariant(articleSlug, "Article slug is required");
 
   const tags = getPopularTags();
-  const metrics = getArticleMetrics({ articleSlug });
-  const comments = getArticleComments({
-    articleSlug,
+  const metrics = getContentMetrics({
+    slugOrId: articleSlug,
+    type: "ARTICLE",
+  });
+  const comments = getContentComments({
+    slugOrId: articleSlug,
+    type: "ARTICLE",
     ...parsedParams.data,
   });
   const article = await getArticleDetails(articleSlug);
-
   invariantResponse(article, `Article with title: '${articleSlug}' not found`, {
     status: StatusCodes.NOT_FOUND,
   });
@@ -86,7 +88,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-
   await checkHoneypot(formData);
   const formDataObj = Object.fromEntries(formData);
   const submittedData = {
@@ -100,49 +101,45 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   enum MiscTypes {
-    BOOKMARK_ARTICLE = "BOOKMARK_ARTICLE",
     TRACK_PAGE_VIEW = "TRACK_PAGE_VIEW",
   }
 
   const { data, intent } = result.data;
-  console.log(intent);
+  console.log(intent, data);
 
   switch (
     intent as
       | CommentIntent
-      | ReplyIntent
       | MiscTypes
       | UpvoteIntent
       | ReportIntent
+      | BookmarkIntent
   ) {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
-    case ReplyIntent.ADD_REPLY:
-      return await addReply(data);
     case CommentIntent.UPDATE_COMMENT:
       return await updateComment(request, data);
     case CommentIntent.DELETE_COMMENT:
       return await deleteComment(request, data);
-    case ReplyIntent.UPDATE_REPLY:
-      return await updateReply(request, data);
-    case ReplyIntent.DELETE_REPLY:
-      return await deleteReply(request, data);
     case UpvoteIntent.UPVOTE_COMMENT:
       return await upvoteComment(data);
     case MiscTypes.TRACK_PAGE_VIEW:
-      return await trackPageView({ itemId: data.itemId as string });
-    case UpvoteIntent.UPVOTE_REPLY:
-      return await upvoteReply(data);
-    case UpvoteIntent.UPVOTE_ARTICLE:
-      return await upvoteArticle(data);
-    case MiscTypes.BOOKMARK_ARTICLE:
-      return await bookmarkArticle(data);
-    case ReportIntent.FLAG_ARTICLE:
-      return await reportArticle(data);
-    case ReportIntent.FLAG_COMMENT:
+      return await trackPageView({
+        pageId: data.pageId as string,
+        type: "ARTICLE",
+      });
+    case UpvoteIntent.UPVOTE_CONTENT:
+      return await upvoteContent(data);
+    case BookmarkIntent.CREATE_BOOKMARK:
+      return await bookmarkContent(data);
+    case BookmarkIntent.UPDATE_BOOKMARK:
+      return await updateBookmark(data);
+    case BookmarkIntent.DELETE_BOOKMARK:
+      return await deleteBookmark(data);
+    case ReportIntent.REPORT_CONTENT:
+      return await reportContent(data);
+    case ReportIntent.REPORT_COMMENT:
       return await reportComment(data);
-    case ReportIntent.FLAG_REPLY:
-      return await reportReply(data);
     case ReportIntent.DELETE_REPORT:
       return await deleteReport(data);
     default:
@@ -171,10 +168,10 @@ export default function ArticleDetailsRoute({
 
   const user = useOptionalUser();
 
-  const { submit: submitPageView } = useCreate(
+  const { submit } = useCreate(
     {
-      intent: "track-page-view",
-      data: { itemId: article.id },
+      intent: "TRACK_PAGE_VIEW",
+      data: { pageId: article.id },
     },
     { showSuccessToast: false },
   );
@@ -183,7 +180,7 @@ export default function ArticleDetailsRoute({
     pageId: article.id,
     trackOnce: true,
     trackOnceDelay: 30,
-    onPageView: submitPageView,
+    onPageView: submit,
   });
 
   return (
@@ -220,7 +217,7 @@ export default function ArticleDetailsRoute({
             <Metrics className="md:hidden" />
             <p>
               Share the topics you&apos;d like to see covered in future
-              articles!
+              articles.
             </p>
             <Separator className="mb-4 mt-2" />
             <Comments />

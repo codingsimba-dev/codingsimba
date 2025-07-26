@@ -39,8 +39,6 @@ model User {
   comments             Comment[]
   bookmarks            Bookmark[]
   tags                 Tag[]
-  flags                ContentFlag[]
-  resolvedFlags        ContentFlag[]        @relation("FlagResolver")
   reviews              Review[]
   programs             Program[]
   courses              Course[]
@@ -53,6 +51,8 @@ model User {
   teams                Team[]
   teamMembers          TeamMember[]
   teamInvites          TeamInvite[]
+  contentReports       ContentReport[]
+  resolvedReports      ContentReport[]      @relation("ResolvedReports")
 
   // Audit log relations
   auditLogs       AuditLog[]
@@ -211,7 +211,8 @@ enum Action {
 enum Entity {
   USER
   COMMENT
-  REPLY
+  CONTENT_REPORT
+  BOOKMARK
   REVIEW
   SETTINGS
   TEAM

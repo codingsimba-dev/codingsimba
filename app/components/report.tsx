@@ -25,10 +25,8 @@ import { Flag, Loader2 } from "lucide-react";
 import { useOptionalUser } from "~/hooks/user";
 
 export enum ReportIntent {
-  FLAG_ARTICLE = "FLAG_ARTICLE",
-  FLAG_TUTORIAL = "FLAG_TUTORIAL",
-  FLAG_COMMENT = "FLAG_COMMENT",
-  FLAG_REPLY = "FLAG_REPLY",
+  REPORT_COMMENT = "REPORT_COMMENT",
+  REPORT_CONTENT = "REPORT_CONTENT",
   DELETE_REPORT = "DELETE_REPORT",
 }
 
@@ -82,9 +80,9 @@ interface ReportButtonProps {
   /** Unique identifier of the content item being flagged */
   itemId: string;
   /** Whether the content has already been flagged by the current user */
-  isFlagged: boolean;
+  isReported: boolean;
   /** Type of content being flagged - determines the action intent and display text */
-  contentType: "article" | "tutorial" | "comment" | "reply";
+  contentType: "article" | "tutorial" | "comment";
   /** Size variant for the flag button and icon */
   size?: "sm" | "md" | "lg";
   /** Whether to display the text label alongside the flag icon */
@@ -114,7 +112,7 @@ interface ReportButtonProps {
  * @param {FlagDialogProps} props - Component configuration
  * @param {string} props.itemId - Unique identifier of the content to flag
  * @param {boolean} props.isFlagged - Whether content is already flagged
- * @param {"article" | "tutorial" | "comment" | "reply"} props.contentType - Type of content being flagged
+ * @param {"article" | "tutorial" | "comment"} props.contentType - Type of content being flagged
  * @param {"sm" | "md" | "lg"} [props.size="md"] - Size variant for the button
  * @param {boolean} [props.showText=true] - Whether to show text label
  * @param {string} [props.className] - Additional CSS classes
@@ -140,10 +138,10 @@ interface ReportButtonProps {
  *
  * @returns {JSX.Element} A flag button that opens a flagging dialog
  */
-export function ReportButton({
+export function Report({
   itemId,
   contentType,
-  isFlagged,
+  isReported,
   size = "md",
   showText = true,
   className,
@@ -157,7 +155,8 @@ export function ReportButton({
   const fetcher = useFetcher();
   const user = useOptionalUser();
   const isPending = fetcher.state !== "idle";
-  const shouldCloseDialog = fetcher.state === "idle";
+  const canCloseDialog = fetcher.state === "idle";
+  const isContent = contentType === "article" || contentType === "tutorial";
 
   /**
    * Submits the flag data to the server
@@ -166,11 +165,14 @@ export function ReportButton({
    * for processing by the moderation system.
    */
   function handleSubmit() {
+    const intent = isReported
+      ? ReportIntent.DELETE_REPORT
+      : isContent
+        ? ReportIntent.REPORT_CONTENT
+        : ReportIntent.REPORT_COMMENT;
     fetcher.submit(
       {
-        intent: isFlagged
-          ? ReportIntent.DELETE_REPORT
-          : ReportIntent.FLAG_ARTICLE,
+        intent,
         data: JSON.stringify({
           itemId,
           userId: user?.id,
@@ -189,18 +191,18 @@ export function ReportButton({
    * and resets form data when the submission is successful.
    */
   React.useEffect(() => {
-    if (shouldCloseDialog) {
+    if (canCloseDialog) {
       setIsOpen(false);
       setFlagData({ reason: "", details: "" });
     }
-  }, [shouldCloseDialog]);
+  }, [canCloseDialog]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button
           disabled={isPending}
-          aria-label={isFlagged ? "Remove flag" : "Flag content"}
+          aria-label={isReported ? "Delete report" : "Report content"}
           className={cn(
             "hover:text-foreground text-muted-foreground flex items-center space-x-1 transition-colors",
             className,
@@ -208,13 +210,13 @@ export function ReportButton({
         >
           <Flag
             className={cn(sizeClasses[size], {
-              "fill-red-500 text-red-500": isFlagged,
-              "hover:fill-red-500 hover:text-red-500": !isFlagged,
+              "fill-red-500 text-red-500": isReported,
+              "hover:fill-red-500 hover:text-red-500": !isReported,
             })}
           />
           {showText ? (
             <span className={textSizes[size]}>
-              {isFlagged ? "Reported" : "Report"}
+              {isReported ? "Reported" : "Report"}
             </span>
           ) : null}
         </button>
@@ -222,17 +224,17 @@ export function ReportButton({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isFlagged
+            {isReported
               ? `Remove report for this ${contentType}`
               : `Report this ${contentType}`}
           </DialogTitle>
           <DialogDescription>
-            {isFlagged
+            {isReported
               ? `Are you sure you want to remove your report for this ${contentType}?`
               : `Please select a reason for reporting this ${contentType}.`}
           </DialogDescription>
         </DialogHeader>
-        {!isFlagged && (
+        {!isReported && (
           <>
             <Select
               value={flagData.reason}
@@ -247,12 +249,8 @@ export function ReportButton({
                 <SelectGroup>
                   <SelectLabel>Reason</SelectLabel>
                   {flagReasons.map((reason) => (
-                    <SelectItem
-                      key={reason}
-                      value={reason}
-                      className="capitalize"
-                    >
-                      {reason.replace("_", " ")}
+                    <SelectItem key={reason} value={reason}>
+                      {reason.replace("_", " ").toLocaleUpperCase()}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -284,13 +282,13 @@ export function ReportButton({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isPending || (!isFlagged && !flagData.reason)}
-            variant={isFlagged ? "destructive" : "default"}
+            disabled={isPending || (!isReported && !flagData.reason)}
+            variant={isReported ? "destructive" : "default"}
           >
             {isPending ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : null}
-            {isFlagged
+            {isReported
               ? `Remove Report`
               : `Report ${contentType.charAt(0).toUpperCase() + contentType.slice(1)}`}
           </Button>

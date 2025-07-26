@@ -10,10 +10,10 @@ import { CommentForm } from "./comment-form";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
-import { ReplyIntent } from ".";
-import { ReportButton } from "~/components/report";
+import { Report } from "~/components/report";
 import { CommentActions } from "./comment-actions";
-import { UpvoteButton } from "../upvote";
+import { Upvote } from "../upvote";
+import { CommentIntent } from ".";
 
 type ReplyData = NonNullable<CommentData["replies"]>[0];
 
@@ -27,7 +27,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
   const isOwner = userId === reply.authorId;
 
   const isLiked = reply.likes?.some((like) => like.userId === userId);
-  const isFlagged = reply.flags?.some((flag) => flag.userId === userId);
+  const isReported = reply.reports?.some((report) => report.userId === userId);
   const totalLikes = reply?.likes?.reduce(
     (total, like) => total + like.count,
     0,
@@ -44,7 +44,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
   );
 
   const { submit: deleteReply, isPending: isDeleting } = useDelete({
-    intent: ReplyIntent.DELETE_REPLY,
+    intent: CommentIntent.DELETE_COMMENT,
     data: {
       itemId: reply.id,
       userId: userId!,
@@ -52,7 +52,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
   });
 
   const { submit: updateReply, isPending: isUpdating } = useUpdate({
-    intent: ReplyIntent.UPDATE_REPLY,
+    intent: CommentIntent.UPDATE_COMMENT,
     data: {
       itemId: reply.id,
       userId: userId!,
@@ -110,12 +110,12 @@ export function Reply({ reply }: { reply: ReplyData }) {
           </div>
         )}
         <div className="mt-2 flex items-center gap-4">
-          <UpvoteButton
+          <Upvote
             size="sm"
             isLiked={isLiked}
             userLikes={userLikes}
             itemId={reply.id}
-            contentType="reply"
+            contentType="comment"
             userId={userId!}
             totalLikes={totalLikes}
           />
@@ -130,11 +130,11 @@ export function Reply({ reply }: { reply: ReplyData }) {
             className={buttonClasses}
           />
           {!isOwner && user ? (
-            <ReportButton
+            <Report
               size="sm"
               itemId={reply.id}
-              isFlagged={isFlagged}
-              contentType="reply"
+              isReported={isReported}
+              contentType="comment"
               showText={false}
             />
           ) : null}

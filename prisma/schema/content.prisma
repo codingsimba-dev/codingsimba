@@ -15,7 +15,7 @@ model Content {
   likes     Like[]
   comments  Comment[]
   bookmarks Bookmark[]
-  flags     ContentFlag[]
+  reports   ContentReport[]
 
   @@unique([sanityId, type])
 }
@@ -321,7 +321,7 @@ model BookmarkTag {
 }
 
 /// Represents a flag/report submitted by a user on content or comments.
-model ContentFlag {
+model ContentReport {
   id         String     @id @default(ulid())
   /// The reason for flagging the content.
   reason     FlagReason
@@ -342,7 +342,7 @@ model ContentFlag {
 
   /// The admin who resolved the flag (optional).
   resolvedById String?
-  resolvedBy   User?   @relation("FlagResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedBy   User?   @relation("ResolvedReports", fields: [resolvedById], references: [id], onDelete: SetNull)
 
   /// The content being flagged (articles, tutorials).
   contentId String?
@@ -352,6 +352,8 @@ model ContentFlag {
   commentId String?
   comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
+  @@unique([contentId, userId])
+  @@unique([commentId, userId])
   @@index([userId])
   @@index([contentId])
   @@index([commentId])
@@ -399,8 +401,8 @@ model Comment {
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   contentId String
-  content   Content       @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  flags     ContentFlag[]
+  content   Content         @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reports   ContentReport[]
 
   @@index([authorId])
   @@index([contentId])

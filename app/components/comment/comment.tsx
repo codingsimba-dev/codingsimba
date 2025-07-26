@@ -13,11 +13,11 @@ import { useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { getSeed } from "~/utils/misc";
-import { ReportButton } from "~/components/report";
+import { Report } from "~/components/report";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { userHasPermission } from "~/utils/permissions";
-import { CommentIntent, ReplyIntent } from ".";
-import { UpvoteButton } from "../upvote";
+import { CommentIntent } from ".";
+import { Upvote } from "../upvote";
 import { CommentActions } from "./comment-actions";
 
 export type CommentData = NonNullable<
@@ -39,7 +39,7 @@ export function Comment({ comment }: { comment: CommentData }) {
   const author = comment?.author;
   const isOwner = userId === comment.authorId;
 
-  const isFlagged = comment.flags.some((flag) => flag.userId === userId);
+  const isReported = comment.reports.some((report) => report.userId === userId);
   const isLiked = comment.likes?.some((like) => like.userId === userId);
   const userLikes =
     comment?.likes?.find((like) => like.userId === userId)?.count ?? 0;
@@ -58,7 +58,7 @@ export function Comment({ comment }: { comment: CommentData }) {
   );
 
   const { submit: submitReply, isPending: isCreating } = useCreate({
-    intent: ReplyIntent.ADD_REPLY,
+    intent: CommentIntent.ADD_COMMENT,
     data: {
       userId: userId!,
       itemId: comment.contentId,
@@ -162,7 +162,7 @@ export function Comment({ comment }: { comment: CommentData }) {
             </div>
           )}
           <div className="mt-2 flex items-center space-x-4">
-            <UpvoteButton
+            <Upvote
               size="sm"
               isLiked={isLiked}
               userLikes={userLikes}
@@ -196,10 +196,10 @@ export function Comment({ comment }: { comment: CommentData }) {
               className={buttonClasses}
             />
             {!isOwner && user ? (
-              <ReportButton
+              <Report
                 size="sm"
                 itemId={comment.id}
-                isFlagged={isFlagged}
+                isReported={isReported}
                 contentType="comment"
                 showText={true}
               />

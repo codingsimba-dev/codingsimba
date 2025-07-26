@@ -5,10 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useFetcher } from "react-router";
 
 export enum UpvoteIntent {
-  UPVOTE_ARTICLE = "UPVOTE_ARTICLE",
-  UPVOTE_TUTORIAL = "UPVOTE_TUTORIAL",
+  UPVOTE_CONTENT = "UPVOTE_CONTENT",
   UPVOTE_COMMENT = "UPVOTE_COMMENT",
-  UPVOTE_REPLY = "UPVOTE_REPLY",
 }
 
 /**
@@ -26,7 +24,7 @@ interface UpvoteButtonProps {
   /** Unique identifier of the content being upvoted */
   itemId: string;
   /** Type of content being upvoted */
-  contentType: "article" | "tutorial" | "comment" | "reply";
+  contentType: "article" | "tutorial" | "comment";
   /** User ID for the current user */
   userId: string;
   /** Additional CSS classes to apply to the button */
@@ -61,7 +59,7 @@ interface UpvoteButtonProps {
  * />
  * ```
  */
-export function UpvoteButton({
+export function Upvote({
   totalLikes,
   isLiked,
   userLikes,
@@ -92,6 +90,7 @@ export function UpvoteButton({
 
   const isDisabled = optimisticState.userLikes >= maxLikes;
   const isFilled = optimisticState.userLikes > 0 || isLiked;
+  const isContent = contentType === "article" || contentType === "tutorial";
 
   /**
    * Handles the upvote button click with optimistic updates and floating animation
@@ -118,10 +117,9 @@ export function UpvoteButton({
     // Submit form data
     fetcher.submit(
       {
-        intent:
-          UpvoteIntent[
-            `UPVOTE_${contentType.toUpperCase()}` as keyof typeof UpvoteIntent
-          ],
+        intent: isContent
+          ? UpvoteIntent.UPVOTE_CONTENT
+          : UpvoteIntent.UPVOTE_COMMENT,
         data: JSON.stringify({ itemId, userId }),
       },
       { method: "post" },

@@ -1,35 +1,56 @@
-import { getArticleIdBySlug } from "~/utils/content.server/articles/utils";
-import { prisma } from "~/utils/db.server";
-import { bundleMDX } from "~/utils/mdx.server";
+import type { ContentType } from "~/generated/prisma/client";
+import { getArticleIdBySlug } from "./articles/utils";
+import { prisma } from "../db.server";
 import { MarkdownConverter } from "~/utils/misc.server";
+import { bundleMDX } from "mdx-bundler";
 
 /**
- * Retrieves metrics for a specific article including views, likes, and comment counts
- * @param articleSlug - The slug of the article
- * @returns Object containing article metrics and likes, or undefined if article not found
+ * Retrieves metrics for article or tutorial by slug or id including views, likes, and comment counts
+ * @param slugOrId - The slug or id of the article or tutorial
+ * @param type - The type of the content
+ * @returns Object containing content metrics and likes, or undefined if content not found
  */
-export async function getArticleMetrics({
-  articleSlug,
+export async function getContentMetrics({
+  slugOrId,
+  type,
 }: {
-  articleSlug: string;
+  slugOrId: string;
+  type: ContentType;
 }) {
-  const articleId = await getArticleIdBySlug(articleSlug);
-  if (!articleId) {
+  const isArticle = type === "ARTICLE";
+  let articleId: string | undefined = undefined;
+  if (isArticle) {
+    articleId = await getArticleIdBySlug(slugOrId);
+  }
+  if (!articleId && isArticle) {
     return null;
   }
   return await prisma.content.findUnique({
     where: {
-      sanityId: articleId,
+      sanityId: isArticle ? articleId : slugOrId,
+      type,
     },
     select: {
       id: true,
+      sanityId: true,
       views: true,
       bookmarks: {
         select: {
+          id: true,
           userId: true,
+          notes: true,
+          bookmarkTags: {
+            select: {
+              tag: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
-      flags: {
+      reports: {
         select: {
           userId: true,
         },
@@ -51,28 +72,35 @@ export async function getArticleMetrics({
 }
 
 /**
- * Retrieves comments and their replies for a specific article
- * @param articleSlug - The slug of the article
+ * Retrieves comments and their replies for an article or tutorial by slug or id
+ * @param slugOrId - The slug or id of the article or tutorial
+ * @param type - The type of the content
  * @param commentTake - Number of comments to retrieve
  * @param replyTake - Number of replies to retrieve per comment
  * @returns Array of comments with their associated replies and author information
  */
-export async function getArticleComments({
-  articleSlug,
+export async function getContentComments({
+  slugOrId,
+  type,
   commentTake,
   replyTake,
 }: {
-  articleSlug: string;
+  slugOrId: string;
+  type: ContentType;
   commentTake: number;
   replyTake: number;
 }) {
-  const articleId = await getArticleIdBySlug(articleSlug);
-  if (!articleId) {
+  const isArticle = type === "ARTICLE";
+  let articleId: string | undefined = undefined;
+  if (isArticle) {
+    articleId = await getArticleIdBySlug(slugOrId);
+  }
+  if (!articleId && isArticle) {
     return [];
   }
 
   const content = await prisma.content.findUnique({
-    where: { sanityId: articleId },
+    where: { sanityId: isArticle ? articleId : slugOrId, type },
     select: { id: true },
   });
 
@@ -88,7 +116,7 @@ export async function getArticleComments({
     select: {
       id: true,
       body: true,
-      flags: {
+      reports: {
         select: {
           userId: true,
         },
@@ -111,7 +139,7 @@ export async function getArticleComments({
         select: {
           id: true,
           body: true,
-          flags: {
+          reports: {
             select: {
               userId: true,
             },
