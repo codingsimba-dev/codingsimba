@@ -1,24 +1,26 @@
 import React from "react";
 import type { Route } from "../../routes/articles/+types/article";
-import { useSearchParams } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { MessageSquareQuote, ChevronDown, Loader } from "lucide-react";
 import { Reply } from "./reply";
-import { CommentForm } from "./comment-form";
+import { CommentForm } from "./form";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
-import { useDelete, useCreate, useUpdate } from "~/hooks/content";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { getSeed } from "~/utils/misc";
 import { Report } from "~/components/report";
 import { getImgSrc, getInitials } from "~/utils/misc";
-import { userHasPermission } from "~/utils/permissions";
-import { CommentIntent } from ".";
 import { Upvote } from "../upvote";
 import { CommentActions } from "./comment-actions";
+import {
+  handleAddComment,
+  handleDeleteComment,
+  handleUpdateComment,
+} from "./utils";
 
 export type CommentData = NonNullable<
   Awaited<Route.ComponentProps["loaderData"]["comments"]>
@@ -30,8 +32,9 @@ export function Comment({ comment }: { comment: CommentData }) {
   const [reply, setReply] = React.useState("");
   const [showReplyForm, setShowReplyForm] = React.useState(false);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const fetcher = useFetcher();
   const user = useOptionalUser();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const replyTake = Number(searchParams.get("replyTake") ?? 3);
 
@@ -48,59 +51,44 @@ export function Comment({ comment }: { comment: CommentData }) {
     0,
   );
 
-  const canDelete = userHasPermission(
-    user,
-    isOwner ? "DELETE:COMMENT:OWN" : "DELETE:COMMENT:ANY",
-  );
-  const canUpdate = userHasPermission(
-    user,
-    isOwner ? "UPDATE:COMMENT:OWN" : "UPDATE:COMMENT:ANY",
-  );
+  const isCreating = false;
 
-  const { submit: submitReply, isPending: isCreating } = useCreate({
-    intent: CommentIntent.ADD_COMMENT,
-    data: {
-      userId: userId!,
-      itemId: comment.contentId,
-      parentId: comment.id,
-      body: reply,
-    },
-  });
-
-  const { submit: deleteComment, isPending: isDeleting } = useDelete(
-    {
-      intent: CommentIntent.DELETE_COMMENT,
-      data: {
-        itemId: comment.id,
-        userId: userId!,
-      },
-    },
-    { showSuccessToast: true },
-  );
-
-  const { submit: updateComment, isPending: isUpdating } = useUpdate({
-    intent: CommentIntent.UPDATE_COMMENT,
-    data: {
-      itemId: comment.id,
-      userId: userId!,
-      body: commentBody,
-    },
-  });
-
-  const handleReplySubmit = () => {
+  function createReply() {
     if (!reply.trim()) return;
-    submitReply();
+    handleAddComment({
+      fetcher,
+      body: reply,
+      userId: user!.id,
+      itemId: comment.id,
+      parentId: comment.id,
+    });
     setShowReplyForm(false);
     setReply("");
-  };
+  }
 
-  const handleUpdateSubmit = () => {
-    if (!commentBody.trim()) return;
-    updateComment();
+  function updateComment() {
+    if (!editComment) {
+      setEditComment(true);
+      return;
+    }
+    handleUpdateComment({
+      fetcher,
+      userId: user!.id,
+      itemId: comment.id,
+      body: commentBody,
+    });
     setEditComment(false);
-  };
+  }
 
-  const handleLoadMoreReplies = () => {
+  function deleteComment() {
+    handleDeleteComment({
+      fetcher,
+      userId: user!.id,
+      itemId: comment.id,
+    });
+  }
+
+  function handleLoadMoreReplies() {
     setSearchParams(
       (prev) => {
         prev.set("replyTake", String(replyTake + 3));
@@ -108,7 +96,7 @@ export function Comment({ comment }: { comment: CommentData }) {
       },
       { preventScrollReset: true },
     );
-  };
+  }
 
   const anonymous = "Anonymous";
 
@@ -153,7 +141,7 @@ export function Comment({ comment }: { comment: CommentData }) {
               isForUpdate
               comment={commentBody}
               setComment={setCommentBody}
-              onSubmit={handleUpdateSubmit}
+              onSubmit={updateComment}
               onCancel={() => setEditComment(false)}
             />
           ) : (
@@ -186,14 +174,11 @@ export function Comment({ comment }: { comment: CommentData }) {
               </button>
             ) : null}
             <CommentActions
-              canUpdate={canUpdate}
-              canDelete={canDelete}
-              isUpdating={isUpdating}
-              isDeleting={isDeleting}
+              item={comment}
               contentType="comment"
-              onEdit={() => setEditComment(true)}
-              onDelete={deleteComment}
               className={buttonClasses}
+              onUpdate={updateComment}
+              onDelete={deleteComment}
             />
             {!isOwner && user ? (
               <Report
@@ -210,7 +195,7 @@ export function Comment({ comment }: { comment: CommentData }) {
             <CommentForm
               comment={reply}
               setComment={setReply}
-              onSubmit={handleReplySubmit}
+              onSubmit={createReply}
               onCancel={() => setShowReplyForm(false)}
             />
           ) : null}

@@ -3,15 +3,21 @@ import type { Route as ArticleRoute } from "../../routes/articles/+types/article
 import type { Route as TutorialRoute } from "../../routes/tutorials/+types/tutorial";
 import { MessageSquareOff } from "lucide-react";
 import { EmptyState } from "../empty-state";
-import { CommentForm } from "./comment-form";
+import { CommentForm } from "./form";
 import { Comment } from "./comment";
 import { useOptionalUser } from "~/hooks/user";
 import { Badge } from "../ui/badge";
-import { useCreate } from "~/hooks/content";
-import { Await, Link, useLoaderData, useSearchParams } from "react-router";
+import {
+  Await,
+  Link,
+  useFetcher,
+  useLoaderData,
+  useSearchParams,
+} from "react-router";
 import { Button } from "../ui/button";
 import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { handleAddComment } from "./utils";
 
 export enum CommentIntent {
   ADD_COMMENT = "ADD_COMMENT",
@@ -28,34 +34,26 @@ export function Comments() {
   const [comment, setComment] = React.useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const commentTake = Number(searchParams.get("commentTake")) || 5;
+
+  const fetcher = useFetcher();
   const user = useOptionalUser();
 
   const itemId =
     "article" in loaderData ? loaderData.article.id : loaderData.tutorial.id;
 
-  const { submit } = useCreate(
-    {
-      intent: CommentIntent.ADD_COMMENT,
-      data: {
-        itemId: itemId,
-        userId: user?.id ?? "",
-        body: comment,
-      },
-    },
-    {
-      errorMessage: "Failed to add comment",
-      successMessage: "Comment added successfully",
-      showErrorToast: true,
-    },
-  );
-
-  const handleSubmit = () => {
+  function handleSubmit() {
     if (!comment.trim()) return;
-    submit();
+    handleAddComment({
+      itemId,
+      fetcher,
+      parentId: null,
+      userId: user!.id,
+      body: comment,
+    });
     setComment("");
-  };
+  }
 
-  const handleLoadMoreComments = () => {
+  function handleLoadMoreComments() {
     setSearchParams(
       (prev) => {
         prev.set("commentTake", String(commentTake + 5));
@@ -63,7 +61,7 @@ export function Comments() {
       },
       { preventScrollReset: true },
     );
-  };
+  }
 
   return (
     <section className="mb-8" id="comments">

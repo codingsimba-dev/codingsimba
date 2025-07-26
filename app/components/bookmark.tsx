@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Bookmark as BookmarkIcon,
-  BookmarkCheck,
-  Loader2,
-  Plus,
-  X,
-  Tag,
-} from "lucide-react";
+import { Bookmark as BookmarkIcon, Loader2, Plus, X, Tag } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -24,32 +17,46 @@ import { useFetcher } from "react-router";
 import { cn } from "~/utils/misc";
 import { useOptionalUser } from "~/hooks/user";
 
+/**
+ * Intent types for bookmark operations
+ *
+ * These constants define the different actions that can be performed
+ * on bookmarks through the form submission system.
+ */
 export enum BookmarkIntent {
+  /** Create a new bookmark with tags and notes */
   CREATE_BOOKMARK = "CREATE_BOOKMARK",
+  /** Update an existing bookmark's tags and notes */
   UPDATE_BOOKMARK = "UPDATE_BOOKMARK",
+  /** Delete an existing bookmark */
   DELETE_BOOKMARK = "DELETE_BOOKMARK",
 }
 
 /**
- * Props for the BookmarkButton component
+ * Props for the Bookmark component
+ *
+ * @interface BookmarkButtonProps
  */
 interface BookmarkButtonProps {
-  /** Unique identifier of the content to bookmark */
+  /** Unique identifier of the content to bookmark (Sanity ID for new bookmarks, bookmark ID for updates) */
   itemId: string;
-  /** Type of content being bookmarked */
+  /** Type of content being bookmarked - determines the display text and validation */
   contentType: "article" | "tutorial";
-  /** Whether the content is already bookmarked */
+  /** Whether the content is already bookmarked by the current user */
   isBookmarked: boolean;
-  /** Size variant for the button */
+  /** Size variant for the button styling */
   size?: "sm" | "md" | "lg";
-  /** Whether to show text label */
+  /** Whether to display the text label alongside the bookmark icon */
   showText?: boolean;
-  /** Additional CSS classes */
+  /** Additional CSS classes to apply to the button */
   className?: string;
-  /** Existing bookmark data if already bookmarked */
+  /** Existing bookmark data for editing - includes tags and notes */
   existingBookmark?: {
+    /** Unique identifier of the bookmark */
     id: string;
+    /** Optional notes associated with the bookmark */
     notes?: string | null;
+    /** Array of tags associated with the bookmark */
     bookmarkTags?: {
       tag: {
         name: string;
@@ -70,6 +77,7 @@ interface BookmarkButtonProps {
  * - Automatic dialog closure on successful submission
  * - Visual feedback for bookmarked vs unbookmarked states
  * - Edit functionality for existing bookmarks
+ * - Delete functionality for existing bookmarks
  *
  * The component handles the entire bookmarking workflow, including:
  * - Opening/closing the dialog
@@ -77,6 +85,7 @@ interface BookmarkButtonProps {
  * - Submitting bookmark data via fetcher
  * - Resetting form on successful submission
  * - Tag management (add, remove, validation)
+ * - Loading state management for different operations
  *
  * @param {BookmarkButtonProps} props - Component configuration
  * @param {string} props.itemId - Unique identifier of the content to bookmark
@@ -89,15 +98,15 @@ interface BookmarkButtonProps {
  *
  * @example
  * ```tsx
- * // Basic usage
- * <BookmarkButton
+ * // Basic usage for new bookmark
+ * <Bookmark
  *   itemId="article-123"
  *   isBookmarked={false}
  *   contentType="article"
  * />
  *
  * // Compact version without text
- * <BookmarkButton
+ * <Bookmark
  *   itemId="tutorial-456"
  *   isBookmarked={true}
  *   contentType="tutorial"
@@ -106,14 +115,17 @@ interface BookmarkButtonProps {
  * />
  *
  * // With existing bookmark data for editing
- * <BookmarkButton
+ * <Bookmark
  *   itemId="article-123"
  *   isBookmarked={true}
  *   contentType="article"
  *   existingBookmark={{
  *     id: "bookmark-123",
  *     notes: "Great article about React hooks",
- *     tags: "react,hooks,frontend"
+ *     bookmarkTags: [
+ *       { tag: { name: "react" } },
+ *       { tag: { name: "hooks" } }
+ *     ]
  *   }}
  * />
  * ```
@@ -136,9 +148,17 @@ export function Bookmark({
   const fetcher = useFetcher();
   const user = useOptionalUser();
 
+  const intent = fetcher.formData?.get("intent");
   const isPending = fetcher.state !== "idle";
-  const canCloseDialog = fetcher.state === "idle" && fetcher.data?.success;
+  const data = fetcher.data;
+  const isSuccess = data && data?.success === true && fetcher.state === "idle";
 
+  /**
+   * Initialize form data when existing bookmark is provided
+   *
+   * Populates the form fields with existing bookmark data when editing
+   * an existing bookmark, including notes and tags.
+   */
   React.useEffect(() => {
     if (existingBookmark) {
       setNotes(existingBookmark.notes || "");
@@ -148,8 +168,15 @@ export function Bookmark({
     }
   }, [existingBookmark]);
 
+  /**
+   * Handle successful form submission
+   *
+   * Closes the dialog and resets form data when a successful submission
+   * is detected. Only resets form data for new bookmarks, preserving
+   * existing data for edits.
+   */
   React.useEffect(() => {
-    if (canCloseDialog) {
+    if (isSuccess) {
       setOpen(false);
       if (!existingBookmark) {
         setTags([]);
@@ -157,22 +184,35 @@ export function Bookmark({
       }
       setTagInput("");
     }
-  }, [canCloseDialog, existingBookmark]);
+  }, [isSuccess, existingBookmark]);
 
+  /** CSS classes for different button sizes */
   const sizeClasses = {
     sm: "h-8 px-2 text-xs",
     md: "h-9 px-3 text-sm",
     lg: "h-10 px-4 text-base",
   };
 
+  /** Icon sizes for different button variants */
   const iconSizes = {
     sm: "size-3",
     md: "size-4",
     lg: "size-5",
   };
 
+  /** Maximum number of tags allowed per bookmark */
   const TAG_LIMIT = 5;
 
+  /**
+   * Adds a new tag to the bookmark
+   *
+   * Validates the tag input and adds it to the tags array if it's:
+   * - Not empty after trimming
+   * - Not already in the tags array
+   * - Within the tag limit
+   *
+   * @param {string} tagInput - The tag input value to process
+   */
   function handleAddTag() {
     const trimmedTag = tagInput.trim().toLowerCase();
     if (trimmedTag && !tags.includes(trimmedTag) && tags.length < TAG_LIMIT) {
@@ -181,10 +221,23 @@ export function Bookmark({
     }
   }
 
+  /**
+   * Removes a tag from the bookmark
+   *
+   * @param {string} tagToRemove - The tag to remove from the tags array
+   */
   function handleRemoveTag(tagToRemove: string) {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   }
 
+  /**
+   * Handles keyboard events for tag input
+   *
+   * Allows users to press Enter to add a tag, providing a better UX
+   * for keyboard navigation.
+   *
+   * @param {React.KeyboardEvent} e - The keyboard event
+   */
   function handleKeyPress(e: React.KeyboardEvent) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -192,6 +245,13 @@ export function Bookmark({
     }
   }
 
+  /**
+   * Submits the bookmark form data
+   *
+   * Creates or updates a bookmark with the current tags and notes.
+   * Validates that at least one tag is present before submission.
+   * Uses different intents for create vs update operations.
+   */
   function handleSubmit() {
     if (tags.length === 0) return;
     const formData: Record<string, string> = {
@@ -212,6 +272,12 @@ export function Bookmark({
     );
   }
 
+  /**
+   * Deletes an existing bookmark
+   *
+   * Removes the bookmark from the database. Only available for
+   * existing bookmarks, not for new ones.
+   */
   function handleDelete() {
     if (!existingBookmark) return;
     const formData: Record<string, string> = {
@@ -238,29 +304,19 @@ export function Bookmark({
           <Loader2
             className={cn(
               iconSizes[size],
-              "text-muted-foreground animate-spin",
-            )}
-          />
-        ) : isBookmarked ? (
-          <BookmarkCheck
-            className={cn(
-              iconSizes[size],
-              "size-4 fill-blue-500 hover:fill-blue-500",
+              "text-muted-foreground mr-1 animate-spin",
             )}
           />
         ) : (
           <BookmarkIcon
             className={cn(
               iconSizes[size],
-              "text-muted-foreground hover:text-muted-foreground size-4",
+              "text-muted-foreground hover:text-muted-foreground mr-1 size-4 transition-colors",
+              { "fill-blue-500 text-blue-500": isBookmarked },
             )}
           />
         )}
-        {showText && (
-          <span>
-            {isPending ? "Saving..." : isBookmarked ? "Bookmarked" : "Bookmark"}
-          </span>
-        )}
+        {showText && <span>{isBookmarked ? "Bookmarked" : "Bookmark"}</span>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -345,11 +401,10 @@ export function Bookmark({
               onClick={handleDelete}
               disabled={isPending}
             >
-              {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                "Delete Bookmark"
-              )}
+              Delete
+              {isPending && intent === BookmarkIntent.DELETE_BOOKMARK ? (
+                <Loader2 className="ml-2 size-4 animate-spin" />
+              ) : null}
             </Button>
           )}
           <Button
@@ -365,13 +420,12 @@ export function Bookmark({
             onClick={handleSubmit}
             disabled={isPending || tags.length === 0}
           >
-            {isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : existingBookmark ? (
-              "Update Bookmark"
-            ) : (
-              "Save Bookmark"
-            )}
+            {existingBookmark ? "Update" : "Save"}
+            {isPending &&
+            (intent === BookmarkIntent.CREATE_BOOKMARK ||
+              intent === BookmarkIntent.UPDATE_BOOKMARK) ? (
+              <Loader2 className="ml-2 size-4 animate-spin" />
+            ) : null}
           </Button>
         </DialogFooter>
       </DialogContent>

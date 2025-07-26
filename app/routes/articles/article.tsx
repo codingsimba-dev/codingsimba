@@ -16,7 +16,6 @@ import { invariant, invariantResponse } from "~/utils/misc";
 import { CommentIntent, Comments } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { StatusCodes } from "http-status-codes";
-import { SubmitSchema, useCreate } from "~/hooks/content";
 import { z } from "zod";
 import { useOptionalUser } from "~/hooks/user";
 import { usePageView } from "use-page-view";
@@ -32,6 +31,7 @@ import {
   getContentMetrics,
 } from "~/utils/content.server/loader.server";
 import {
+  ActionSchema,
   addComment,
   bookmarkContent,
   deleteBookmark,
@@ -45,6 +45,8 @@ import {
   upvoteComment,
   upvoteContent,
 } from "~/utils/content.server/action";
+import { useFetcher } from "react-router";
+import { useCallback } from "react";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -95,7 +97,7 @@ export async function action({ request }: Route.ActionArgs) {
     intent: formDataObj.intent,
   };
 
-  const result = await SubmitSchema.safeParseAsync(submittedData);
+  const result = await ActionSchema.safeParseAsync(submittedData);
   invariantResponse(result.success, "Invalid form data", {
     status: StatusCodes.BAD_REQUEST,
   });
@@ -105,7 +107,6 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const { data, intent } = result.data;
-  console.log(intent, data);
 
   switch (
     intent as
@@ -167,20 +168,21 @@ export default function ArticleDetailsRoute({
   });
 
   const user = useOptionalUser();
+  const fetcher = useFetcher();
 
-  const { submit } = useCreate(
-    {
+  const trackPageView = useCallback(() => {
+    fetcher.submit({
       intent: "TRACK_PAGE_VIEW",
       data: { pageId: article.id },
-    },
-    { showSuccessToast: false },
-  );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   usePageView({
     pageId: article.id,
     trackOnce: true,
     trackOnceDelay: 30,
-    onPageView: submit,
+    onPageView: trackPageView,
   });
 
   return (

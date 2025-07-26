@@ -13,6 +13,8 @@ import { Bookmark } from "~/components/bookmark";
 
 /**
  * Props for the Metrics component
+ *
+ * @interface MetricsProps
  */
 interface MetricsProps {
   /** Additional CSS classes to apply to the metrics container */
@@ -30,7 +32,9 @@ interface MetricsProps {
  * - Loading states and error handling
  *
  * The component handles asynchronous data loading with React Suspense and
- * provides fallback UI for loading, error, and empty states.
+ * provides fallback UI for loading, error, and empty states. It processes
+ * metrics data to extract user-specific engagement information and renders
+ * interactive buttons for various engagement actions.
  *
  * @param {MetricsProps} props - Component configuration
  * @param {string} [props.className] - Additional CSS classes
@@ -86,6 +90,8 @@ export function Metrics({ className }: MetricsProps) {
 
 /**
  * Props for the MetricsSkeleton component
+ *
+ * @interface MetricsSkeletonProps
  */
 interface MetricsSkeletonProps {
   /** Additional CSS classes to apply to the skeleton container */
@@ -123,6 +129,8 @@ function MetricsSkeleton({ className }: MetricsSkeletonProps) {
 
 /**
  * Props for the ResolvedMetrics component
+ *
+ * @interface ResolvedMetricsProps
  */
 interface ResolvedMetricsProps {
   /** The resolved metrics data from the loader */
@@ -142,6 +150,7 @@ interface ResolvedMetricsProps {
  *
  * The component uses React.useMemo for efficient data processing and
  * provides optimistic updates through the individual button components.
+ * It processes all metrics in a single pass for optimal performance.
  *
  * @param {ResolvedMetricsProps} props - Component configuration
  * @param {Awaited<Route.ComponentProps["loaderData"]["metrics"]>} props.metrics - The metrics data
@@ -152,6 +161,7 @@ interface ResolvedMetricsProps {
 function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
   const user = useOptionalUser();
   const userId = user?.id;
+  /** Minimum count value for likes and views */
   const LEAST_COUNT = 0;
 
   /**
@@ -163,9 +173,19 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
    * - Determines if the current user has bookmarked the content
    * - Determines if the current user has flagged the content
    * - Computes whether the user has liked the content (userLikes > 0)
+   * - Finds the user's existing bookmark data for editing
    *
    * The processing is optimized to avoid multiple array iterations and
    * provides fallback values when data is missing or user is not authenticated.
+   * It handles edge cases like empty arrays and missing user data gracefully.
+   *
+   * @returns {Object} Processed metrics data including user engagement status
+   * @returns {number} returns.totalLikes - Total likes across all users
+   * @returns {number} returns.userLikes - Current user's like count
+   * @returns {Object} returns.bookmark - User's existing bookmark data (if any)
+   * @returns {boolean} returns.isBookmarked - Whether user has bookmarked content
+   * @returns {boolean} returns.isReported - Whether user has reported content
+   * @returns {boolean} returns.isLiked - Whether user has liked content
    */
   const { totalLikes, userLikes, bookmark, isBookmarked, isReported, isLiked } =
     React.useMemo(() => {
@@ -197,14 +217,17 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
         if (totalLikes === 0) totalLikes = LEAST_COUNT;
       }
 
+      // Find user's existing bookmark for editing functionality
       const bookmark =
         metrics.bookmarks.find((bookmark) => bookmark.userId === userId) ??
         undefined;
       isBookmarked = !!bookmark;
 
+      // Check if user has reported the content
       isReported =
         metrics.reports?.some((report) => report.userId === userId) ?? false;
 
+      // Determine if user has liked the content
       const isLiked = userLikes > LEAST_COUNT;
 
       return {
@@ -236,7 +259,6 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
           userId={userId!}
         />
         <Bookmark
-          size="sm"
           contentType="article"
           isBookmarked={isBookmarked}
           itemId={isBookmarked ? metrics?.id : metrics?.sanityId}
@@ -256,6 +278,8 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
 
 /**
  * Props for the Views component
+ *
+ * @interface ViewsProps
  */
 interface ViewsProps {
   /** Number of views to display */
@@ -269,7 +293,8 @@ interface ViewsProps {
  *
  * This component renders a simple view counter with an eye icon and
  * the formatted view count. The count is formatted using toLocaleString()
- * for proper number formatting with commas.
+ * for proper number formatting with commas. It provides a consistent
+ * visual representation of article popularity.
  *
  * @param {ViewsProps} props - Component configuration
  * @param {number} props.views - Number of views to display

@@ -11,27 +11,27 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { cn } from "~/utils/misc";
+import { userHasPermission } from "~/utils/permissions";
+import { useOptionalUser } from "~/hooks/user";
+import type { CommentData } from "./comment";
+import type { ReplyData } from "./reply";
+import { useFetcher } from "react-router";
+import { CommentIntent } from ".";
 
 /**
  * Props for the CommentActions component
  */
 interface CommentActionsProps {
-  /** Whether the user can edit the content */
-  canUpdate: boolean;
-  /** Whether the user can delete the content */
-  canDelete: boolean;
-  /** Whether the content is currently being updated */
-  isUpdating: boolean;
-  /** Whether the content is currently being deleted */
-  isDeleting: boolean;
+  /** The item to display actions for */
+  item: CommentData | ReplyData;
   /** Type of content for display purposes */
   contentType: "comment" | "reply";
-  /** Function to handle edit action */
-  onEdit: () => void;
-  /** Function to handle delete action */
-  onDelete: () => void;
   /** Additional CSS classes */
   className?: string;
+  /** Function to handle update */
+  onUpdate?: () => void;
+  /** Function to handle delete */
+  onDelete?: () => void;
 }
 
 /**
@@ -42,40 +42,46 @@ interface CommentActionsProps {
  * confirmation dialogs.
  *
  * @param {CommentActionsProps} props - Component configuration
- * @param {boolean} props.canUpdate - Whether user can edit the content
- * @param {boolean} props.canDelete - Whether user can delete the content
- * @param {boolean} props.isUpdating - Whether content is being updated
- * @param {boolean} props.isDeleting - Whether content is being deleted
  * @param {"comment" | "reply"} props.contentType - Type of content for display
- * @param {() => void} props.onEdit - Function to handle edit action
- * @param {() => void} props.onDelete - Function to handle delete action
  * @param {string} [props.className] - Additional CSS classes
  *
  * @example
  * ```tsx
  * <CommentActions
- *   canUpdate={canUpdate}
- *   canDelete={canDelete}
- *   isUpdating={isUpdating}
- *   isDeleting={isDeleting}
  *   contentType="comment"
- *   onEdit={() => setEditMode(true)}
- *   onDelete={handleDelete}
  * />
  * ```
  *
  * @returns {JSX.Element} Edit and delete action buttons
  */
 export function CommentActions({
-  canUpdate,
-  canDelete,
-  isUpdating,
-  isDeleting,
+  item,
+  onUpdate = () => {},
+  onDelete = () => {},
   contentType,
-  onEdit,
-  onDelete,
   className = "",
 }: CommentActionsProps) {
+  const fetcher = useFetcher();
+  const user = useOptionalUser();
+
+  const userId = user?.id;
+  const isOwner = userId === item.authorId;
+  const canDelete = userHasPermission(
+    user,
+    isOwner ? "DELETE:COMMENT:OWN" : "DELETE:COMMENT:ANY",
+  );
+  const canUpdate = userHasPermission(
+    user,
+    isOwner ? "UPDATE:COMMENT:OWN" : "UPDATE:COMMENT:ANY",
+  );
+
+  const isUpdating =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === CommentIntent.UPDATE_COMMENT;
+  const isDeleting =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === CommentIntent.DELETE_COMMENT;
+
   const buttonClasses = cn(
     "flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground",
     className,
@@ -85,8 +91,8 @@ export function CommentActions({
     <>
       {canUpdate ? (
         <button
-          onClick={onEdit}
-          disabled={isUpdating}
+          onClick={onUpdate}
+          disabled={isUpdating || isDeleting}
           className={buttonClasses}
           aria-label={
             isUpdating ? `updating ${contentType}` : `update ${contentType}`

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/tutorial";
 import type { ChatBotLesson } from "~/utils/content.server/turorials/types";
-import { Outlet } from "react-router";
+import { Outlet, useFetcher } from "react-router";
 import {
   getChatBotLessonDetails,
   getTutorialDetails,
@@ -17,16 +17,17 @@ import { CommentIntent, Comments } from "~/components/comment";
 import { Separator } from "~/components/ui/separator";
 import { LessonsNavigation } from "./components/lessons-navigation";
 import { SideBarContainer } from "./components/sidebar-container";
-import { SubmitSchema, useCreate } from "~/hooks/content";
 import {
+  ActionSchema,
   addComment,
   trackPageView,
   updateComment,
   deleteComment,
   upvoteComment,
-} from "./action.server";
+} from "~/utils/content.server/action";
 import { checkHoneypot } from "~/utils/honeypot.server";
 import { GeneralErrorBoundary } from "~/components/error-boundary";
+import { useCallback } from "react";
 // import { generateMetadata } from "~/utils/meta";
 
 const SearchParamsSchema = z.object({
@@ -82,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
     data: JSON.parse(formDataObj.data as string),
     intent: formDataObj.intent,
   };
-  const result = await SubmitSchema.safeParseAsync(submittedData);
+  const result = await ActionSchema.safeParseAsync(submittedData);
   invariantResponse(result.success, "Invalid form data", {
     status: StatusCodes.BAD_REQUEST,
   });
@@ -123,16 +124,20 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
   //   type: "article",
   // });
 
-  const { submit: submitPageView } = useCreate({
-    intent: "track-page-view",
-    data: { itemId: tutorial.id },
-  });
+  const fetcher = useFetcher();
+  const trackPageView = useCallback(() => {
+    fetcher.submit({
+      intent: "TRACK_PAGE_VIEW",
+      data: { pageId: tutorial.id },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   usePageView({
     pageId: tutorial.id,
     trackOnce: true,
     trackOnceDelay: 30,
-    onPageView: submitPageView,
+    onPageView: trackPageView,
   });
 
   return (

@@ -9,11 +9,15 @@ import {
   BookOpen,
   CreditCard,
   User,
+  Bookmark,
+  Flag,
   type LucideIcon,
 } from "lucide-react";
 import { Courses } from "./components/courses";
 import { Certificates } from "./components/certificates";
 import { Subscription } from "./components/subscription";
+import { Bookmarks } from "./components/bookmarks";
+import { ContentReports } from "./components/content-reports";
 import {
   Notifications,
   NotificationSettingsSchema,
@@ -38,7 +42,7 @@ import { authSessionStorage } from "~/utils/session.server";
 import { invariantResponse } from "~/utils/misc";
 import { generateMetadata } from "~/utils/meta";
 import { redirectWithToast } from "~/utils/toast.server";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useLoaderData } from "react-router";
 import { getSubscription } from "~/utils/subcription.server";
 
 const IntentSchema = z.object({
@@ -82,7 +86,64 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     },
   });
-  return { user, subscription };
+
+  // Fetch user bookmarks with content and tags
+  const bookmarks = await prisma.bookmark.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      notes: true,
+      createdAt: true,
+      content: {
+        select: {
+          id: true,
+          sanityId: true,
+          type: true,
+          views: true,
+        },
+      },
+      bookmarkTags: {
+        select: {
+          tag: {
+            select: {
+              name: true,
+              color: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Fetch user content reports with content and comments
+  const reports = await prisma.contentReport.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      reason: true,
+      details: true,
+      status: true,
+      createdAt: true,
+      resolvedAt: true,
+      content: {
+        select: {
+          id: true,
+          sanityId: true,
+          type: true,
+        },
+      },
+      comment: {
+        select: {
+          id: true,
+          body: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return { user, subscription, bookmarks, reports };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -196,11 +257,15 @@ export type TabValue =
   | "My Courses"
   | "Certificates"
   | "Subscription"
-  | "Notifications";
+  | "Notifications"
+  | "Bookmarks"
+  | "Content Reports";
 
 export default function ProfileRoute() {
   const metadata = generateMetadata({ title: "Profile" });
   const [searchParams, setSearchParams] = useSearchParams();
+  const { bookmarks, reports } =
+    useLoaderData<Route.ComponentProps["loaderData"]>();
 
   const tabs = [
     { value: "Account", Icon: User },
@@ -208,6 +273,8 @@ export default function ProfileRoute() {
     { value: "Certificates", Icon: Award },
     { value: "Subscription", Icon: CreditCard },
     { value: "Notifications", Icon: Bell },
+    { value: "Bookmarks", Icon: Bookmark },
+    { value: "Content Reports", Icon: Flag },
   ] as { value: TabValue; Icon: LucideIcon }[];
 
   const tabValues = tabs.map((tab) => tab.value);
@@ -244,6 +311,10 @@ export default function ProfileRoute() {
         return <Subscription />;
       case "Notifications":
         return <Notifications />;
+      case "Bookmarks":
+        return <Bookmarks bookmarks={bookmarks} />;
+      case "Content Reports":
+        return <ContentReports reports={reports} />;
       default:
         return <Account />;
     }

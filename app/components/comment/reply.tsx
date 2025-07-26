@@ -5,22 +5,22 @@ import { getSeed } from "~/utils/misc";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
-import { useDelete, useUpdate } from "~/hooks/content";
-import { CommentForm } from "./comment-form";
+import { CommentForm } from "./form";
 import { getImgSrc, getInitials } from "~/utils/misc";
-import { userHasPermission } from "~/utils/permissions";
 import type { CommentData } from "./comment";
 import { Report } from "~/components/report";
 import { CommentActions } from "./comment-actions";
 import { Upvote } from "../upvote";
-import { CommentIntent } from ".";
+import { handleDeleteComment, handleUpdateComment } from "./utils";
+import { useFetcher } from "react-router";
 
-type ReplyData = NonNullable<CommentData["replies"]>[0];
+export type ReplyData = NonNullable<CommentData["replies"]>[0];
 
 export function Reply({ reply }: { reply: ReplyData }) {
   const [replyBody, setReplyBody] = React.useState(reply.html);
   const [editReply, setEditReply] = React.useState(false);
   const user = useOptionalUser();
+  const fetcher = useFetcher();
 
   const author = reply?.author;
   const userId = user?.id;
@@ -34,42 +34,34 @@ export function Reply({ reply }: { reply: ReplyData }) {
   );
   const userLikes =
     reply?.likes?.find((like) => like.userId === userId)?.count ?? 0;
-  const canDelete = userHasPermission(
-    user,
-    isOwner ? "DELETE:REPLY:OWN" : "DELETE:REPLY:ANY",
-  );
-  const canUpdate = userHasPermission(
-    user,
-    isOwner ? "UPDATE:REPLY:OWN" : "UPDATE:REPLY:ANY",
-  );
 
-  const { submit: deleteReply, isPending: isDeleting } = useDelete({
-    intent: CommentIntent.DELETE_COMMENT,
-    data: {
+  function updateReply() {
+    if (!editReply) {
+      setEditReply(true);
+      return;
+    }
+    handleUpdateComment({
+      fetcher,
+      userId: user!.id,
       itemId: reply.id,
-      userId: userId!,
-    },
-  });
-
-  const { submit: updateReply, isPending: isUpdating } = useUpdate({
-    intent: CommentIntent.UPDATE_COMMENT,
-    data: {
-      itemId: reply.id,
-      userId: userId!,
       body: replyBody,
-    },
-  });
-
-  function handleUpdateReply() {
-    if (!replyBody) return;
-    updateReply();
+    });
     setEditReply(false);
+  }
+
+  function deleteReply() {
+    handleDeleteComment({
+      fetcher,
+      userId: user!.id,
+      itemId: reply.id,
+    });
   }
 
   const anonymous = "Anonymous";
 
   const buttonClasses =
     "space-x-1 text-sm text-muted-foreground hover:text-foreground";
+
   return (
     <li>
       <div className="overflow-hidden">
@@ -101,7 +93,7 @@ export function Reply({ reply }: { reply: ReplyData }) {
             isForUpdate
             comment={replyBody}
             setComment={setReplyBody}
-            onSubmit={handleUpdateReply}
+            onSubmit={updateReply}
             onCancel={() => setEditReply(false)}
           />
         ) : (
@@ -120,14 +112,11 @@ export function Reply({ reply }: { reply: ReplyData }) {
             totalLikes={totalLikes}
           />
           <CommentActions
-            canUpdate={canUpdate}
-            canDelete={canDelete}
-            isUpdating={isUpdating}
-            isDeleting={isDeleting}
+            item={reply}
             contentType="reply"
-            onEdit={() => setEditReply(!editReply)}
-            onDelete={deleteReply}
             className={buttonClasses}
+            onUpdate={updateReply}
+            onDelete={deleteReply}
           />
           {!isOwner && user ? (
             <Report

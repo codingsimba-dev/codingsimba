@@ -1,10 +1,17 @@
-import type { SubmitPayload } from "~/hooks/content";
 import { invariant, invariantResponse } from "~/utils/misc";
 import { prisma } from "../db.server";
 import type { ContentType, FlagReason } from "~/generated/prisma/client";
 import { MarkdownConverter } from "../misc.server";
 import { StatusCodes } from "http-status-codes";
 import { requireUserWithPermission } from "~/utils/permissions.server";
+import { z } from "zod";
+
+export const ActionSchema = z.object({
+  intent: z.string(),
+  data: z.record(z.string()),
+});
+
+export type ActionPayload = z.infer<typeof ActionSchema>;
 
 /**
  * Adds a new comment to an article
@@ -14,7 +21,7 @@ import { requireUserWithPermission } from "~/utils/permissions.server";
  * @returns The created comment with its ID
  * @throws {Error} If comment body is missing
  */
-export async function addComment(data: SubmitPayload["data"]) {
+export async function addComment(data: ActionPayload["data"]) {
   const { itemId, body, userId, parentId } = data;
   invariant(body, "Comment body is required to add  a comment");
   const article = await prisma.content.upsert({
@@ -26,14 +33,13 @@ export async function addComment(data: SubmitPayload["data"]) {
 
   const comment = await prisma.comment.create({
     data: {
-      parentId,
       authorId: userId,
       contentId: article.id,
+      parentId: parentId ?? null,
       body: MarkdownConverter.toMarkdown(body),
     },
     select: { id: true },
   });
-
   return comment;
 }
 
@@ -47,7 +53,7 @@ export async function addComment(data: SubmitPayload["data"]) {
  */
 export async function updateComment(
   request: Request,
-  { itemId, body }: SubmitPayload["data"],
+  { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Comment body is required");
   const comment = await prisma.comment.findUnique({
@@ -78,7 +84,7 @@ export async function updateComment(
  */
 export async function deleteComment(
   request: Request,
-  { itemId, userId }: SubmitPayload["data"],
+  { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
   const comment = await prisma.comment.findUnique({
@@ -108,7 +114,7 @@ export async function deleteComment(
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteContent(data: SubmitPayload["data"]) {
+export async function upvoteContent(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   const upsertLike = await prisma.like.upsert({
@@ -127,7 +133,7 @@ export async function upvoteContent(data: SubmitPayload["data"]) {
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteComment(data: SubmitPayload["data"]) {
+export async function upvoteComment(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -147,7 +153,7 @@ export async function upvoteComment(data: SubmitPayload["data"]) {
  * @returns The updated content record with its ID
  * @description Creates a new content record if it doesn't exist, otherwise increments the view count
  */
-export async function trackPageView(data: SubmitPayload["data"]) {
+export async function trackPageView(data: ActionPayload["data"]) {
   const { pageId, type } = data;
   invariant(pageId, "Page ID is required");
   invariant(type, "Type is required");
@@ -170,7 +176,7 @@ export async function trackPageView(data: SubmitPayload["data"]) {
  * @returns The created report with its ID
  * @throws {Error} If page ID or user ID is missing
  */
-export async function reportContent(data: SubmitPayload["data"]) {
+export async function reportContent(data: ActionPayload["data"]) {
   const { itemId: pageId, userId, reason, details } = data;
   const reportReason = reason.toUpperCase() as FlagReason;
   invariant(pageId, "Page ID is required");
@@ -196,7 +202,7 @@ export async function reportContent(data: SubmitPayload["data"]) {
  * @returns The created report with its ID
  * @throws {Error} If item ID or user ID is missing
  */
-export async function reportComment(data: SubmitPayload["data"]) {
+export async function reportComment(data: ActionPayload["data"]) {
   const { itemId, userId, reason, details } = data;
   const reportReason = reason.toUpperCase() as FlagReason;
   invariant(itemId, "Item ID is required");
@@ -216,7 +222,7 @@ export async function reportComment(data: SubmitPayload["data"]) {
  * @returns Object indicating successful deletion
  * @throws {Error} If item ID or user ID is missing
  */
-export async function deleteReport(data: SubmitPayload["data"]) {
+export async function deleteReport(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -238,7 +244,7 @@ export async function deleteReport(data: SubmitPayload["data"]) {
  * @returns The created bookmark with its ID
  * @throws {Error} If page ID or user ID is missing
  */
-export async function bookmarkContent(data: SubmitPayload["data"]) {
+export async function bookmarkContent(data: ActionPayload["data"]) {
   const { itemId: pageId, userId, tags, notes } = data;
   invariant(pageId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -259,7 +265,10 @@ export async function bookmarkContent(data: SubmitPayload["data"]) {
     },
     select: { id: true },
   });
-  return bookmark;
+  if (!bookmark) {
+    return { success: false };
+  }
+  return { success: true };
 }
 
 /**
@@ -271,7 +280,7 @@ export async function bookmarkContent(data: SubmitPayload["data"]) {
  * @returns The updated bookmark with its ID
  * @throws {Error} If item ID or user ID is missing
  */
-export async function updateBookmark(data: SubmitPayload["data"]) {
+export async function updateBookmark(data: ActionPayload["data"]) {
   const { itemId, userId, tags, notes } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -289,7 +298,10 @@ export async function updateBookmark(data: SubmitPayload["data"]) {
     },
     select: { id: true },
   });
-  return bookmark;
+  if (!bookmark) {
+    return { success: false };
+  }
+  return { success: true };
 }
 
 /**
@@ -330,7 +342,7 @@ function createBookmarkTags(tags: string[], userId: string) {
  * @returns Object indicating successful deletion
  * @throws {Error} If item ID or user ID is missing
  */
-export async function deleteBookmark(data: SubmitPayload["data"]) {
+export async function deleteBookmark(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");

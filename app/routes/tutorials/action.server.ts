@@ -1,9 +1,9 @@
 import { prisma } from "~/utils/db.server";
-import type { SubmitPayload } from "~/hooks/content";
 import { invariant, invariantResponse } from "~/utils/misc";
 import { MarkdownConverter } from "~/utils/misc.server";
 import { requireUserWithPermission } from "~/utils/permissions.server";
 import { StatusCodes } from "http-status-codes";
+import type { ActionPayload } from "~/utils/content.server/action";
 
 /**
  * Adds a new comment to a tutorial
@@ -11,7 +11,7 @@ import { StatusCodes } from "http-status-codes";
  * @returns The created comment with its ID
  * @throws {Error} If comment body is missing or user lacks CREATE:COMMENT permission
  */
-export async function addComment(data: SubmitPayload["data"]) {
+export async function addComment(data: ActionPayload["data"]) {
   const { itemId, body, userId } = data;
   invariant(body, "Comment body is required to add  a comment");
   const tutorial = await prisma.content.upsert({
@@ -43,7 +43,7 @@ export async function addComment(data: SubmitPayload["data"]) {
  * @returns The created reply with its ID
  * @throws {Error} If parent ID or reply content is missing
  */
-export async function addReply(data: SubmitPayload["data"]) {
+export async function addReply(data: ActionPayload["data"]) {
   const { itemId, body, userId, parentId } = data;
   invariant(parentId, "Parent ID is required to reply to a comment");
   invariant(body, "Reply content is required to update a reply");
@@ -78,7 +78,7 @@ export async function addReply(data: SubmitPayload["data"]) {
  */
 export async function updateComment(
   request: Request,
-  { itemId, body }: SubmitPayload["data"],
+  { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Comment body is required");
   const comment = await prisma.comment.findUnique({
@@ -109,7 +109,7 @@ export async function updateComment(
  */
 export async function deleteComment(
   request: Request,
-  { itemId, userId }: SubmitPayload["data"],
+  { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
   const comment = await prisma.comment.findUnique({
@@ -137,7 +137,7 @@ export async function deleteComment(
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteComment(data: SubmitPayload["data"]) {
+export async function upvoteComment(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -161,7 +161,7 @@ export async function upvoteComment(data: SubmitPayload["data"]) {
  */
 export async function updateReply(
   request: Request,
-  { itemId, body }: SubmitPayload["data"],
+  { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Reply body is required");
 
@@ -198,7 +198,7 @@ export async function updateReply(
  */
 export async function deleteReply(
   request: Request,
-  { itemId, userId }: SubmitPayload["data"],
+  { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
 
@@ -230,7 +230,7 @@ export async function deleteReply(
  * @returns The updated like record with its ID
  * @throws {Error} If the comment is not a reply
  */
-export async function upvoteReply(data: SubmitPayload["data"]) {
+export async function upvoteReply(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
@@ -256,7 +256,7 @@ export async function upvoteReply(data: SubmitPayload["data"]) {
  * @returns The updated like record with its ID
  * @throws {Error} If item ID is missing
  */
-export async function upvoteArticle(data: SubmitPayload["data"]) {
+export async function upvoteArticle(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
   const upsertLike = await prisma.like.upsert({
@@ -274,7 +274,7 @@ export async function upvoteArticle(data: SubmitPayload["data"]) {
  * @returns The updated content record with its ID
  * @description Creates a new content record if it doesn't exist, otherwise increments the view count
  */
-export async function trackPageView(data: SubmitPayload["data"]) {
+export async function trackPageView(data: ActionPayload["data"]) {
   const { itemId } = data;
   const content = await prisma.content.upsert({
     where: { sanityId: itemId },

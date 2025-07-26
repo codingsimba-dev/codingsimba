@@ -24,9 +24,18 @@ import { cn } from "~/utils/misc";
 import { Flag, Loader2 } from "lucide-react";
 import { useOptionalUser } from "~/hooks/user";
 
+/**
+ * Intent types for report operations
+ *
+ * These constants define the different actions that can be performed
+ * on content through the reporting system.
+ */
 export enum ReportIntent {
+  /** Report a comment for moderation */
   REPORT_COMMENT = "REPORT_COMMENT",
+  /** Report content (articles or tutorials) for moderation */
   REPORT_CONTENT = "REPORT_CONTENT",
+  /** Delete/remove an existing report */
   DELETE_REPORT = "DELETE_REPORT",
 }
 
@@ -35,6 +44,7 @@ export enum ReportIntent {
  *
  * These reasons are used to categorize flagged content for review by moderators.
  * Each reason corresponds to a specific violation of community guidelines.
+ * The reasons are displayed in a user-friendly format in the UI.
  */
 export const flagReasons = [
   "spam",
@@ -52,7 +62,8 @@ export const flagReasons = [
 /**
  * Size variants for the flag button icon
  *
- * Maps size prop to corresponding CSS classes for consistent sizing.
+ * Maps size prop to corresponding CSS classes for consistent sizing
+ * across different contexts where the report button is used.
  */
 const sizeClasses = {
   sm: "size-4",
@@ -63,7 +74,8 @@ const sizeClasses = {
 /**
  * Text size variants for the flag button label
  *
- * Maps size prop to corresponding text size classes.
+ * Maps size prop to corresponding text size classes for consistent
+ * typography across different button sizes.
  */
 const textSizes = {
   sm: "text-sm",
@@ -72,7 +84,7 @@ const textSizes = {
 } as const;
 
 /**
- * Props for the ReportButton component
+ * Props for the Report component
  *
  * @interface ReportButtonProps
  */
@@ -99,19 +111,22 @@ interface ReportButtonProps {
  * - Reason selection dropdown with predefined violation categories
  * - Optional details textarea for additional context
  * - Loading states during form submission
- * - Form validation (reason is required)
+ * - Form validation (reason is required for new reports)
  * - Automatic dialog closure on successful submission
  * - Visual feedback for flagged vs unflaggged states
+ * - Support for both creating and removing reports
  *
  * The component handles the entire flagging workflow, including:
  * - Opening/closing the dialog
- * - Managing form state
+ * - Managing form state (reason and details)
  * - Submitting flag data via fetcher
  * - Resetting form on successful submission
+ * - Dynamic content based on report status
+ * - Proper intent mapping for different content types
  *
- * @param {FlagDialogProps} props - Component configuration
+ * @param {ReportButtonProps} props - Component configuration
  * @param {string} props.itemId - Unique identifier of the content to flag
- * @param {boolean} props.isFlagged - Whether content is already flagged
+ * @param {boolean} props.isReported - Whether content is already flagged
  * @param {"article" | "tutorial" | "comment"} props.contentType - Type of content being flagged
  * @param {"sm" | "md" | "lg"} [props.size="md"] - Size variant for the button
  * @param {boolean} [props.showText=true] - Whether to show text label
@@ -119,20 +134,28 @@ interface ReportButtonProps {
  *
  * @example
  * ```tsx
- * // Basic usage
- * <FlagDialog
+ * // Basic usage for new report
+ * <Report
  *   itemId="article-123"
- *   isFlagged={false}
+ *   isReported={false}
  *   contentType="article"
  * />
  *
  * // Compact version without text
- * <FlagDialog
+ * <Report
  *   itemId="comment-456"
- *   isFlagged={true}
+ *   isReported={true}
  *   contentType="comment"
  *   size="sm"
  *   showText={false}
+ * />
+ *
+ * // With custom styling
+ * <Report
+ *   itemId="tutorial-789"
+ *   isReported={false}
+ *   contentType="tutorial"
+ *   className="my-custom-class"
  * />
  * ```
  *
@@ -146,7 +169,9 @@ export function Report({
   showText = true,
   className,
 }: ReportButtonProps) {
+  /** State for controlling dialog visibility */
   const [isOpen, setIsOpen] = React.useState(false);
+  /** State for managing form data */
   const [flagData, setFlagData] = React.useState({
     reason: "",
     details: "",
@@ -156,13 +181,22 @@ export function Report({
   const user = useOptionalUser();
   const isPending = fetcher.state !== "idle";
   const canCloseDialog = fetcher.state === "idle";
+  /** Whether this is content (article/tutorial) vs comment */
   const isContent = contentType === "article" || contentType === "tutorial";
 
   /**
    * Submits the flag data to the server
    *
    * Creates a form submission with the flag reason, details, and metadata
-   * for processing by the moderation system.
+   * for processing by the moderation system. The intent is determined based on:
+   * - Whether this is a new report or removing an existing one
+   * - The type of content being reported (content vs comment)
+   *
+   * The form data includes:
+   * - itemId: The ID of the content being flagged
+   * - userId: The ID of the user submitting the flag
+   * - reason: The selected reason for flagging (for new reports)
+   * - details: Additional context provided by the user (for new reports)
    */
   function handleSubmit() {
     const intent = isReported
@@ -188,7 +222,8 @@ export function Report({
    * Resets form data and closes dialog when submission completes
    *
    * Monitors the fetcher state and automatically closes the dialog
-   * and resets form data when the submission is successful.
+   * and resets form data when the submission is successful. This ensures
+   * a clean state for the next interaction.
    */
   React.useEffect(() => {
     if (canCloseDialog) {
