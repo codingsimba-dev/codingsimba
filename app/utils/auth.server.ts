@@ -233,6 +233,18 @@ export async function signout(
   const sessionId = authSession.get(sessionKey);
 
   if (sessionId) {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    });
+
+    if (session) {
+      await prisma.user.update({
+        where: { id: session.userId },
+        data: { lastSeenAt: new Date() },
+      });
+    }
+
     void prisma.session
       .deleteMany({ where: { id: sessionId } })
       .catch(() => {});

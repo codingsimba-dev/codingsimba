@@ -16,7 +16,7 @@ export default [
   route("signin", "routes/auth/signin.tsx"),
   route("signout", "routes/auth/signout.ts"),
   route("forgot-password", "routes/auth/forgot-password.tsx"),
-  route("authors/:authorSlug", "routes/article-author.tsx"),
+  route("authors/:authorSlug", "routes/author.tsx"),
   route("roadmap", "routes/roadmap/index.tsx"),
   route("color-scheme", "routes/color-scheme.tsx"),
   route("*", "routes/not-found.tsx"),
@@ -109,7 +109,6 @@ export default [
 
   ...prefix("teams", [index("routes/teams/index.tsx")]),
 
-  // Chat
   ...prefix("chat", [
     index("routes/chat/index.tsx"),
     // route("chatbot", "routes/chat/chatbot.ts"),

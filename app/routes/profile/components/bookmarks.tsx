@@ -9,7 +9,7 @@ import {
   Play,
   Filter,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Badge } from "~/components/ui/badge";
@@ -64,6 +64,7 @@ interface BookmarksProps {
  * @returns {JSX.Element} A bookmarks management interface
  */
 export function Bookmarks({ bookmarks }: BookmarksProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [contentTypeFilter, setContentTypeFilter] =
     React.useState<string>("all");
@@ -119,7 +120,7 @@ export function Bookmarks({ bookmarks }: BookmarksProps) {
             description="Start bookmarking articles and tutorials to see them here. You can add tags and notes to organize your content."
             action={{
               label: "Browse Content",
-              onClick: () => (window.location.href = "/articles"),
+              onClick: () => navigate("/articles"),
             }}
           />
         </Container>

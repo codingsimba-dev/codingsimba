@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { Button } from "~/components/ui/button";
 import { ChevronRight, CreditCard } from "lucide-react";
 import { EmptyState } from "~/components/empty-state";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useNavigate } from "react-router";
 import { format } from "date-fns";
 import { cn } from "~/utils/misc";
 
 export function Subscription() {
   const { subscription } = useLoaderData<Route.ComponentProps["loaderData"]>();
+  const navigate = useNavigate();
   const statusesToCheck = ["canceled", "past_due", "unpaid"];
   return (
     <motion.div
@@ -27,6 +28,10 @@ export function Subscription() {
               icon={<CreditCard className="size-8" />}
               title="No Subscription Found!"
               description="You don't have an active subscription."
+              action={{
+                label: "Subscribe Now",
+                onClick: () => navigate("/subscription"),
+              }}
             />
           ) : (
             <>

@@ -1,4 +1,4 @@
-import type { Route } from "./+types/article-author";
+import type { Route } from "./+types/author";
 import { Link } from "react-router";
 import {
   getAuthorArticles,
