@@ -46,10 +46,8 @@ export function Mission() {
           <div className="relative mx-auto aspect-square w-full max-w-md">
             <div className="relative h-full w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
               <img
-                src={getImgSrc({ path: "assets", fileKey: "logo.png" })}
+                src={getImgSrc({ fileKey: "tekbreedlogo.png" })}
                 alt="TekBreed"
-                // width={500}
-                // height={500}
                 className="h-full w-full object-contain"
               />
             </div>

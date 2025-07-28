@@ -137,7 +137,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
               <CardDescription>Enter your email to continue</CardDescription>
             </CardHeader>
 
-            <CardContent className="my-8 space-y-6">
+            <CardContent className="space-y-6">
               <Form {...getFormProps(form)} method="post" className="space-y-4">
                 <HoneypotInputs />
                 <input

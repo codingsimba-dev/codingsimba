@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { useOptionalUser } from "~/hooks/user";
-import { getImgSrc, getInitials, getSeed } from "~/utils/misc";
+import { getImgSrc, getInitials } from "~/utils/misc";
 import { SignoutButton } from "./signout-button";
 
 export function MobileNav() {
@@ -95,9 +95,8 @@ export function MobileNav() {
                 <Avatar className="border-border size-9 border">
                   <AvatarImage
                     src={getImgSrc({
-                      path: "users",
                       fileKey: user.image?.fileKey,
-                      seed: getSeed(user.name),
+                      seed: user.name,
                     })}
                     alt={user.name}
                   />

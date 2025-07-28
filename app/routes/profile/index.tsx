@@ -11,6 +11,7 @@ import {
   Bookmark,
   Flag,
   type LucideIcon,
+  Users,
 } from "lucide-react";
 import { Courses } from "./components/courses";
 import { Certificates } from "./components/certificates";
@@ -28,6 +29,8 @@ import {
   getUserProfle,
 } from "./loader.server";
 import { handleActions } from "./action.server";
+import { Programs } from "./components/programs";
+import { Teams } from "./components/teams";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const userId = await requireUserId(request);
@@ -45,7 +48,9 @@ export async function action({ request }: Route.ActionArgs) {
 
 export type TabValue =
   | "Account"
+  | "My Programs"
   | "My Courses"
+  | "My Teams"
   | "Certificates"
   | "Subscription"
   | "Notifications"
@@ -60,7 +65,9 @@ export default function ProfileRoute() {
 
   const tabs = [
     { value: "Account", Icon: User },
+    { value: "My Programs", Icon: BookOpen },
     { value: "My Courses", Icon: BookOpen },
+    { value: "My Teams", Icon: Users },
     { value: "Certificates", Icon: Award },
     { value: "Subscription", Icon: CreditCard },
     { value: "Notifications", Icon: Bell },
@@ -94,8 +101,12 @@ export default function ProfileRoute() {
     switch (activeTab) {
       case "Account":
         return <Account />;
+      case "My Programs":
+        return <Programs />;
       case "My Courses":
         return <Courses />;
+      case "My Teams":
+        return <Teams />;
       case "Certificates":
         return <Certificates />;
       case "Subscription":

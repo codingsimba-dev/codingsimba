@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardDescription,
 } from "~/components/ui/card";
-import { getImgSrc, getInitials, getSeed, useIsPending } from "~/utils/misc";
+import { getImgSrc, getInitials, invariant, useIsPending } from "~/utils/misc";
 import { parseFormData } from "@mjackson/form-data-parser";
 import { StatusCodes } from "http-status-codes";
 import { generateMetadata } from "~/utils/meta";
@@ -85,9 +85,9 @@ export async function action({ request }: Route.ActionArgs) {
           where: { userId },
           select: { fileKey: true },
         });
+        invariant(file?.fileKey, "File key is required");
         const response = await deleteFileFromStorage({
-          path: "users",
-          fileKey: file!.fileKey,
+          fileKey: file.fileKey,
         });
         if (response.status !== "success") {
           ctx.addIssue({
@@ -102,8 +102,8 @@ export async function action({ request }: Route.ActionArgs) {
       if (data.photoFile.size <= 0) return z.NEVER;
       const { photoFile, intent } = data;
       const response = await uploadFIleToStorage({
-        path: "users",
         file: data.photoFile,
+        fileKey: photoFile.name,
       });
 
       if (response.status !== "success") {
@@ -216,8 +216,7 @@ export default function ChangePhoto({
                     src={
                       newImageSrc ??
                       getImgSrc({
-                        path: "users",
-                        seed: getSeed(user.name),
+                        seed: user.name,
                         fileKey: user.image?.fileKey,
                       })
                     }

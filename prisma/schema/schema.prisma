@@ -21,10 +21,6 @@ model User {
   isSubscribed    Boolean   @default(false)
   /// The timestamp of the user's last seen activity.
   lastSeenAt      DateTime?
-  /// The user's timezone (e.g., "America/New_York").
-  timezone        String?
-  /// JSON object for storing user-specific preferences.
-  preferences     Json?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -80,37 +76,24 @@ model Password {
   userId String @unique
 }
 
-/// Represents a user's profile image.
+/// Represents  an image.
 model Image {
-  id       String    @id @default(cuid())
-  /// The key or path to the image file in the storage service (Bunny CDN).
-  fileKey  String
-  filePath ImagePath @default(users)
-  altText  String?
+  id      String  @id @default(ulid())
+  fileKey String
+  altText String?
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+
+  team         Team?         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamSettings TeamSettings? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId       String?       @unique
+
+  badge   Badge?  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badgeId String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user   User?  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String @unique
-
-  team   Team?  @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  teamId String @unique
-
-  teamCertificate   TeamCertificate? @relation(fields: [teamCertificateId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  teamCertificateId String           @unique
-
-  teamSetting    TeamSettings? @relation(fields: [teamSettingsId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  teamSettingsId String        @unique
-
-  challengeBadge Badge? @relation(fields: [badgeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  badgeId        String @unique
-}
-
-enum ImagePath {
-  assets
-  users
-  content
 }
 
 /// Represents a user's login session.
@@ -264,17 +247,4 @@ model NotificationSetting {
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-}
-
-/// Represents a certificate of completion earned by a user.
-model Certificate {
-  id        String   @id @default(ulid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([userId])
 }

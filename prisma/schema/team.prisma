@@ -47,7 +47,6 @@ model Team {
   invites               TeamInvite[]
   learningPaths         TeamLearningPath[]
   enrollments           Enrollment[]
-  certificates          TeamCertificate[]
   analytics             TeamAnalytics[]
   integrations          TeamIntegration[]
   settings              TeamSettings?
@@ -172,36 +171,13 @@ model TeamLearningPathCourse {
   @@index([order])
 }
 
-/// Represents a custom certificate that can be awarded to team members.
-model TeamCertificate {
-  id          String  @id @default(ulid())
-  /// The name of the certificate.
-  name        String
-  /// A description of the certificate.
-  description String?
-  /// A URL to the certificate's image or template.
-  image       Image?
-  /// Whether the certificate is currently active and awardable.
-  isActive    Boolean @default(true)
-
-  // Relations
-  teamId String
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  members TeamMemberCertificate[]
-
-  @@index([teamId])
-}
-
 /// Represents an instance of a team certificate that has been awarded to a team member.
 model TeamMemberCertificate {
   id        String    @id @default(ulid())
-  /// The timestamp when the certificate was earned.
   earnedAt  DateTime  @default(now())
-  /// The timestamp when the certificate expires (if applicable).
   expiresAt DateTime?
 
-  // Relations
+  // Links the same certificate to team context
   teamId String
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
@@ -209,11 +185,12 @@ model TeamMemberCertificate {
   member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   certificateId String
-  certificate   TeamCertificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, memberId, certificateId])
   @@index([teamId])
   @@index([memberId])
+  @@index([certificateId])
 }
 
 /// Stores aggregated analytics data for a team.
@@ -283,6 +260,7 @@ model TeamIntegration {
 /// Defines the types of third-party integrations available.
 enum IntegrationType {
   SLACK
+  DISCORD
   MICROSOFT_TEAMS
   GOOGLE_WORKSPACE
   ZOOM

@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { getSeed } from "~/utils/misc";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
@@ -70,9 +69,8 @@ export function Reply({ reply }: { reply: ReplyData }) {
             <Avatar className="border-border size-6 border">
               <AvatarImage
                 src={getImgSrc({
-                  path: "users",
                   fileKey: author?.image?.fileKey,
-                  seed: getSeed(author?.name ?? anonymous),
+                  seed: author?.name ?? anonymous,
                 })}
                 alt={author?.name ?? anonymous}
               />

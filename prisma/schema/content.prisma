@@ -1,276 +1,539 @@
+// =============================================================================
+// CONTENT MANAGEMENT & LEARNING SYSTEM
+// =============================================================================
+// This file contains all models related to content management, learning paths,
+// user engagement, and educational progress tracking.
+
+// =============================================================================
+// CORE CONTENT MODELS
+// =============================================================================
+
 /// Represents a generic piece of content that can be liked or commented on.
 /// This is used to abstract content types like articles and tutorials for engagement features.
+/// 
+/// Design Pattern: Content Abstraction Layer
+/// - Separates content metadata from actual content (stored in CMS)
+/// - Enables unified engagement features across different content types
+/// - Tracks engagement metrics (views, likes, comments)
+/// 
+/// Integration Notes:
+/// - sanityId links to headless CMS (Sanity)
+/// - Views are tracked for analytics and recommendations
+/// - Type determines how content is displayed and categorized
 model Content {
   id       String      @id @default(ulid())
-  /// The unique identifier from the headless CMS (e.g., Sanity).
+  /// The unique identifier from the headless CMS (e.g., Sanity)
   sanityId String      @unique
-  /// The type of content (e.g., ARTICLE, TUTORIAL).
+  /// The type of content (determines display and behavior)
   type     ContentType
-  /// The number of views this content has received.
+  /// The number of views this content has received (for analytics)
   views    Int         @default(0)
 
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // =============================================================================
+  // ENGAGEMENT RELATIONS
+  // =============================================================================
+
+  /// User likes on this content
   likes     Like[]
+  /// Comments and discussions on this content
   comments  Comment[]
+  /// User bookmarks for later reference
   bookmarks Bookmark[]
+  /// User-submitted reports and flags
   reports   ContentReport[]
 
+  // Performance indexes
   @@unique([sanityId, type])
+  @@index([type, views])
+  @@index([createdAt, type])
+  @@index([views])
 }
 
-/// The type of content.
+/// The type of content supported by the system.
+/// Add new types here as content offerings expand.
 enum ContentType {
+  /// Blog articles and written content
   ARTICLE
+  /// Step-by-step tutorials and guides
   TUTORIAL
 }
 
 /// The user's progress status on a piece of content.
+/// Used throughout the learning system for progress tracking.
 enum ContentStatus {
+  /// Content is not yet accessible to the user
   LOCKED
+  /// User has started but not completed the content
   IN_PROGRESS
+  /// User has successfully completed the content
   COMPLETED
 }
 
-/**
- * Time spent programs will be a summation of time spent on it courses
- */
+// =============================================================================
+// LEARNING HIERARCHY MODELS
+// =============================================================================
+// The learning system follows a hierarchical structure:
+// Programs > Courses > Modules > SubModules > Lessons
+// Each level tracks user progress and completion status.
+
 /// Represents a learning program, which is a collection of courses.
-/// User-specific progress is tracked directly on this model.
+/// Programs are the highest level in the learning hierarchy.
+/// 
+/// Program Features:
+/// - Collection of related courses forming a complete learning path
+/// - User-specific progress tracking and completion status
+/// - Time spent is calculated from constituent courses
+/// - Can have reviews and ratings from users
+/// 
+/// Business Logic:
+/// - Progress is calculated as average of course progress
+/// - Completion requires all courses to be completed
+/// - Unlocking follows prerequisite chains
 model Program {
   id       String @id @default(ulid())
-  /// The unique identifier from the headless CMS.
+  /// The unique identifier from the headless CMS
   sanityId String @unique
 
-  /// The user's completion progress percentage for the program.
-  progress    Int           @default(0)
-  /// The timestamp when the user unlocked the program.
-  unlockedAt  DateTime      @default(now())
-  /// The timestamp when the user completed the program.
-  completedAt DateTime?
-  /// The user's current status in the program.
-  status      ContentStatus @default(LOCKED)
-  courses     Course[]
-  reviews     Review[]
-  enrollments Enrollment[]
+  // =============================================================================
+  // PROGRESS TRACKING
+  // =============================================================================
 
+  /// The user's completion progress percentage (0-100)
+  progress    Int           @default(0)
+  /// When the user first gained access to this program
+  unlockedAt  DateTime      @default(now())
+  /// When the user completed the entire program
+  completedAt DateTime?
+  /// The user's current status in the program
+  status      ContentStatus @default(LOCKED)
+
+  // =============================================================================
+  // PROGRAM RELATIONS
+  // =============================================================================
+
+  /// Courses that make up this program
+  courses      Course[]
+  /// User reviews and ratings for this program
+  reviews      Review[]
+  /// Enrollment records for access control
+  enrollments  Enrollment[]
+  certificates Certificate[]
+
+  // User relation (each user has their own progress record)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  // Performance indexes
   @@index([userId])
   @@index([userId, status])
+  @@index([status])
+  @@index([completedAt])
 }
 
-/**
- * Time spent courses will be a summation of time spent on it modules
- */
 /// Represents a course, which is a collection of modules.
-/// User-specific progress is tracked on this model.
+/// Courses are the main learning units that users enroll in.
+/// 
+/// Course Features:
+/// - Can be standalone or part of a program
+/// - Modular structure with modules and lessons
+/// - Individual progress tracking per user
+/// - Team learning path integration
+/// - Review and rating system
+/// 
+/// Business Logic:
+/// - Progress calculated from module completion
+/// - Time spent aggregated from lessons
+/// - Can be assigned to team learning paths
 model Course {
   id       String @id @default(ulid())
-  /// The unique identifier from the headless CMS.
+  /// The unique identifier from the headless CMS
   sanityId String @unique
 
-  /// The user's completion progress percentage for the course.
-  progress          Int                      @default(0)
-  /// The timestamp when the user unlocked the course.
-  unlockedAt        DateTime                 @default(now())
-  /// The timestamp when the user completed the course.
-  completedAt       DateTime?
-  /// The user's current status in the course.
-  status            ContentStatus            @default(LOCKED)
+  // =============================================================================
+  // PROGRESS TRACKING
+  // =============================================================================
+
+  /// The user's completion progress percentage (0-100)
+  progress    Int           @default(0)
+  /// When the user first gained access to this course
+  unlockedAt  DateTime      @default(now())
+  /// When the user completed the entire course
+  completedAt DateTime?
+  /// The user's current status in the course
+  status      ContentStatus @default(LOCKED)
+
+  // =============================================================================
+  // COURSE RELATIONS
+  // =============================================================================
+
+  /// Modules that make up this course
   modules           Module[]
+  /// User reviews and ratings for this course
   reviews           Review[]
+  /// Enrollment records for access control
   enrollments       Enrollment[]
+  certificates      Certificate[]
+  /// Team learning paths that include this course
   teamLearningPaths TeamLearningPathCourse[]
 
+  // User relation (each user has their own progress record)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
+  // Optional program relation (courses can be standalone or part of a program)
   program   Program? @relation(fields: [programId], references: [id])
   programId String?
 
+  // Performance indexes
   @@index([userId])
   @@index([programId])
   @@index([userId, status])
+  @@index([status])
+  @@index([completedAt])
 }
 
-/**
- * Time spent modules will be a summation of time spent on it sub-modules
- */
 /// Represents a module within a course, which is a collection of sub-modules.
-/// User-specific progress is tracked on this model.
+/// Modules group related lessons and can include assessments.
+/// 
+/// Module Features:
+/// - Contains sub-modules and lessons
+/// - Each module has an associated test/assessment
+/// - Can be content modules or exercise modules
+/// - Individual progress tracking per user
+/// 
+/// Business Logic:
+/// - Progress calculated from sub-module completion
+/// - Must complete associated test to finish module
+/// - Exercise modules may have different completion criteria
 model Module {
   id       String @id @default(ulid())
-  /// The unique identifier from the headless CMS.
+  /// The unique identifier from the headless CMS
   sanityId String @unique
 
-  /// The user's completion progress percentage for the module.
-  progress    Int           @default(0)
-  /// The timestamp when the user unlocked the module.
-  unlockedAt  DateTime      @default(now())
-  /// The timestamp when the user completed the module.
-  completedAt DateTime?
-  /// The user's current status in the module.
-  status      ContentStatus @default(LOCKED)
-  /// The type of module (default is CONTENT; use EXERCISE for exercise modules).
-  type        ModuleType    @default(CONTENT)
-  subModules  SubModule[]
+  // =============================================================================
+  // PROGRESS TRACKING
+  // =============================================================================
 
-  /// The test this module belongs to (each module must have one test).
+  /// The user's completion progress percentage (0-100)
+  progress    Int           @default(0)
+  /// When the user first gained access to this module
+  unlockedAt  DateTime      @default(now())
+  /// When the user completed the entire module
+  completedAt DateTime?
+  /// The user's current status in the module
+  status      ContentStatus @default(LOCKED)
+  /// The type of module (content vs exercise)
+  type        ModuleType    @default(CONTENT)
+
+  // =============================================================================
+  // MODULE RELATIONS
+  // =============================================================================
+
+  /// Sub-modules that make up this module
+  subModules SubModule[]
+
+  /// The test/assessment associated with this module (required)
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
   testId String
 
+  // User relation (each user has their own progress record)
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Parent course relation
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 
+  // Performance indexes
   @@index([userId])
   @@index([courseId])
   @@index([userId, status])
+  @@index([testId])
 }
 
-/// The type of module (e.g., CONTENT, EXERCISE).
+/// The type of module, determining its behavior and completion criteria.
 enum ModuleType {
+  /// Standard content module with lessons and materials
   CONTENT
+  /// Interactive exercise module with hands-on activities
   EXERCISE
 }
 
-/**
- * Time spent sub modules will be a summation of time spent on it lessons
- */
 /// Represents a sub-module within a module, which is a collection of lessons.
-/// User-specific progress is tracked on this model.
+/// Sub-modules are the smallest grouping unit above individual lessons.
+/// 
+/// Sub-Module Features:
+/// - Contains individual lessons
+/// - Granular progress tracking
+/// - Sequential or flexible lesson ordering
+/// - Time spent aggregation from lessons
+/// 
+/// Business Logic:
+/// - Progress calculated from lesson completion
+/// - May have prerequisites within the module
+/// - Completion unlocks next sub-module or module test
 model SubModule {
   id       String @id @default(ulid())
-  /// The unique identifier from the headless CMS.
+  /// The unique identifier from the headless CMS
   sanityId String @unique
 
-  /// The user's completion progress percentage for the sub-module.
-  progress    Int           @default(0)
-  /// The timestamp when the user unlocked the sub-module.
-  unlockedAt  DateTime      @default(now())
-  /// The timestamp when the user completed the sub-module.
-  completedAt DateTime?
-  /// The user's current status in the sub-module.
-  status      ContentStatus @default(LOCKED)
-  lessons     Lesson[]
+  // =============================================================================
+  // PROGRESS TRACKING
+  // =============================================================================
 
+  /// The user's completion progress percentage (0-100)
+  progress    Int           @default(0)
+  /// When the user first gained access to this sub-module
+  unlockedAt  DateTime      @default(now())
+  /// When the user completed all lessons in this sub-module
+  completedAt DateTime?
+  /// The user's current status in the sub-module
+  status      ContentStatus @default(LOCKED)
+
+  // =============================================================================
+  // SUB-MODULE RELATIONS
+  // =============================================================================
+
+  /// Individual lessons that make up this sub-module
+  lessons Lesson[]
+
+  // User relation (each user has their own progress record)
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Parent module relation
   modules  Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   moduleId String
 
+  // Performance indexes
   @@index([userId])
   @@index([moduleId])
   @@index([userId, status])
 }
 
 /// Represents a lesson, the smallest unit of educational content.
-/// User-specific progress is tracked on this model.
+/// Lessons contain the actual learning materials and track detailed progress.
+/// 
+/// Lesson Features:
+/// - Atomic unit of learning content
+/// - Detailed time tracking
+/// - Binary completion status (complete/incomplete)
+/// - Links to actual content in CMS
+/// 
+/// Business Logic:
+/// - Completion is binary (not percentage-based)
+/// - Time spent is tracked in detail for analytics
+/// - May have prerequisites within sub-module
 model Lesson {
   id       String @id @default(ulid())
-  /// The unique identifier from the headless CMS.
+  /// The unique identifier from the headless CMS
   sanityId String @unique
 
-  /// The timestamp when the user unlocked the lesson.
-  unlockedAt  DateTime      @default(now())
-  /// The timestamp when the user completed the lesson.
-  completedAt DateTime?
-  /// The user's current status in the lesson.
-  status      ContentStatus @default(LOCKED)
-  timeSpent   TimeSpent[]
+  // =============================================================================
+  // PROGRESS TRACKING
+  // =============================================================================
 
+  /// When the user first gained access to this lesson
+  unlockedAt  DateTime      @default(now())
+  /// When the user completed this lesson
+  completedAt DateTime?
+  /// The user's current status for this lesson
+  status      ContentStatus @default(LOCKED)
+
+  // =============================================================================
+  // LESSON RELATIONS
+  // =============================================================================
+
+  /// Time tracking records for this lesson
+  timeSpent TimeSpent[]
+
+  // User relation (each user has their own progress record)
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Parent sub-module relation
   subModule   SubModule @relation(fields: [subModuleId], references: [id], onDelete: Cascade)
   subModuleId String
 
+  // Performance indexes
   @@index([userId])
   @@index([subModuleId])
   @@index([userId, status])
+  @@index([completedAt])
 }
 
+// =============================================================================
+// ASSESSMENT & TESTING MODELS
+// =============================================================================
+
 /// Represents a test tied to a module.
+/// Tests are assessments that users must complete to finish a module.
+/// 
+/// Test Features:
+/// - Multiple question types supported
+/// - Linked to specific modules
+/// - Questions can be randomized
+/// - Supports various assessment formats
+/// 
+/// Business Logic:
+/// - One test per module (required relationship)
+/// - Tests must be passed to complete module
+/// - Question order can be randomized for security
 model Test {
-  id        String         @id @default(ulid())
-  sanityId  String         @unique
-  /// The modules that belong to this test (one test can have many modules).
+  id       String @id @default(ulid())
+  /// The unique identifier from the headless CMS
+  sanityId String @unique
+
+  // =============================================================================
+  // TEST RELATIONS
+  // =============================================================================
+
+  /// The modules that use this test (one-to-many)
   modules   Module[]
+  /// Questions that make up this test
   questions TestQuestion[]
 
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([sanityId])
 }
 
 /// Represents a question in a test.
+/// Supports multiple question types with flexible answer formats.
+/// 
+/// Question Features:
+/// - Multiple question types (multiple choice, true/false, short answer)
+/// - Flexible options and answer storage using JSON
+/// - Support for complex answer validation
+/// - Randomizable for test security
+/// 
+/// Data Structure:
+/// - options: JSON array for multiple choice options
+/// - answer: JSON for flexible answer formats (single, multiple, text)
 model TestQuestion {
   id       String           @id @default(ulid())
+  /// The unique identifier from the headless CMS
   sanityId String           @unique
-  /// The type of question (e.g., MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER).
+  /// The type of question (determines UI and validation)
   type     TestQuestionType @default(MULTIPLE_CHOICE)
   /// JSON array of options (for multiple choice, etc.)
   options  Json?
-  /// JSON array or string for correct answer(s).
+  /// JSON array or string for correct answer(s)
   answer   Json
 
+  // Parent test relation
   testId String
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
 
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([testId])
+  @@index([type])
 }
 
-/// The type of test question.
+/// The type of test question, determining UI and validation behavior.
 enum TestQuestionType {
+  /// Multiple choice with single correct answer
   MULTIPLE_CHOICE
+  /// True/false binary choice
   TRUE_FALSE
+  /// Free-text short answer
   SHORT_ANSWER
 }
 
+// =============================================================================
+// USER ENGAGEMENT MODELS
+// =============================================================================
+
 /// Represents a "like" action from a user on a piece of content or a comment.
+/// Supports both content and comment likes with flexible counting.
+/// 
+/// Like Features:
+/// - Supports content and comment likes
+/// - Flexible count system (typically 1, but allows for future features)
+/// - Prevents duplicate likes with unique constraints
+/// - Tracks engagement for analytics
+/// 
+/// Business Logic:
+/// - Users can like content OR comments (not both in same record)
+/// - Unique constraints prevent duplicate likes
+/// - Count allows for future "super likes" or weighted likes
 model Like {
-  id        String   @id @default(ulid())
-  /// The number of likes (typically 1, but allows for future flexibility).
-  count     Int      @default(0)
+  id    String @id @default(ulid())
+  /// The number of likes (typically 1, allows for future flexibility)
+  count Int    @default(0)
+
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // User relation
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Content relation (optional - either content OR comment)
   contentId String?
   content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  // Comment relation (optional - either content OR comment)
   comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   commentId String?
 
+  // Unique constraints to prevent duplicate likes
   @@unique([contentId, userId])
   @@unique([commentId, userId])
+  @@index([userId])
+  @@index([contentId])
+  @@index([commentId])
 }
 
-/// Represents a bookmark action from a user on a piece of content (article or tutorial).
+/// Represents a bookmark action from a user on a piece of content.
+/// Bookmarks allow users to save content for later reference with optional notes and tags.
+/// 
+/// Bookmark Features:
+/// - Save articles and tutorials for later
+/// - Optional personal notes
+/// - Tag-based organization system
+/// - Full-text search on notes (future)
+/// 
+/// Business Logic:
+/// - One bookmark per user per content item
+/// - Tags enable personal organization
+/// - Notes are private to the user
+/// - Supports bulk operations and exports
 model Bookmark {
-  id        String   @id @default(ulid())
-  /// Optional notes the user can add to their bookmark.
-  notes     String?
+  id    String  @id @default(ulid())
+  /// Optional personal notes the user can add to their bookmark
+  notes String?
+
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // User relation
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Content relation
   contentId String
   content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
-  /// Many-to-many relationship with tags
+  // =============================================================================
+  // BOOKMARK ORGANIZATION
+  // =============================================================================
+
+  /// Many-to-many relationship with tags for organization
   bookmarkTags BookmarkTag[]
 
+  // Unique constraint: one bookmark per user per content
   @@unique([contentId, userId])
   @@index([userId])
   @@index([contentId])
@@ -278,26 +541,46 @@ model Bookmark {
 }
 
 /// Represents a tag that can be used to organize bookmarks.
+/// Tags can be user-created or system-provided for content organization.
+/// 
+/// Tag Features:
+/// - User-created personal tags
+/// - System-provided standard tags
+/// - Color coding for visual organization
+/// - Hierarchical organization (future)
+/// 
+/// Business Logic:
+/// - System tags are shared across all users
+/// - User tags are private to the creator
+/// - Colors help with visual organization
+/// - Names must be unique per user (or system-wide for system tags)
 model Tag {
-  id          String   @id @default(ulid())
-  /// The name of the tag (e.g., "react", "tutorial", "frontend").
+  id          String  @id @default(ulid())
+  /// The name of the tag (e.g., "react", "tutorial", "frontend")
   name        String
-  /// Optional description of what the tag represents.
+  /// Optional description of what the tag represents
   description String?
-  /// The color of the tag for UI display (hex color code).
-  color       String?  @default("#3B82F6")
-  /// Whether this tag is created by the system (true) or by users (false).
-  isSystem    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  /// The color of the tag for UI display (hex color code)
+  color       String? @default("#3B82F6")
+  /// Whether this tag is created by the system (true) or by users (false)
+  isSystem    Boolean @default(false)
 
-  /// The user who created this tag (null for system tags).
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User relation (null for system tags)
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // =============================================================================
+  // TAG RELATIONS
+  // =============================================================================
 
   /// Many-to-many relationship with bookmarks
   bookmarkTags BookmarkTag[]
 
+  // Unique constraint: tag names must be unique per user (or globally for system tags)
   @@unique([name, userId])
   @@index([userId])
   @@index([name])
@@ -305,53 +588,82 @@ model Tag {
 }
 
 /// Junction table for the many-to-many relationship between bookmarks and tags.
+/// Enables flexible tagging system for bookmark organization.
 model BookmarkTag {
   id        String   @id @default(ulid())
   createdAt DateTime @default(now())
 
+  // Bookmark relation
   bookmarkId String
   bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
 
+  // Tag relation
   tagId String
   tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
+  // Unique constraint: one tag per bookmark
   @@unique([bookmarkId, tagId])
   @@index([bookmarkId])
   @@index([tagId])
 }
 
+// =============================================================================
+// CONTENT MODERATION MODELS
+// =============================================================================
+
 /// Represents a flag/report submitted by a user on content or comments.
+/// Enables community moderation and content quality control.
+/// 
+/// Report Features:
+/// - Multiple report reasons (spam, inappropriate, etc.)
+/// - Detailed reporting with user comments
+/// - Admin workflow for review and resolution
+/// - Audit trail for moderation decisions
+/// 
+/// Moderation Workflow:
+/// 1. User submits report with reason and details
+/// 2. Report enters PENDING status
+/// 3. Moderator reviews and changes to UNDER_REVIEW
+/// 4. Final resolution: RESOLVED or DISMISSED
+/// 5. Admin notes document the decision
 model ContentReport {
   id         String     @id @default(ulid())
-  /// The reason for flagging the content.
+  /// The reason for flagging the content
   reason     FlagReason
-  /// Additional details provided by the user.
+  /// Additional details provided by the user
   details    String?
-  /// The current status of the flag.
+  /// The current status of the flag
   status     FlagStatus @default(PENDING)
-  /// Admin notes for internal use.
+  /// Admin notes for internal use and decision documentation
   adminNotes String?
-  /// When the flag was resolved.
+  /// When the flag was resolved by a moderator
   resolvedAt DateTime?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
 
-  /// The user who submitted the flag.
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // =============================================================================
+  // REPORT RELATIONS
+  // =============================================================================
+
+  /// The user who submitted the flag
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// The admin who resolved the flag (optional).
+  /// The admin who resolved the flag (optional)
   resolvedById String?
   resolvedBy   User?   @relation("ResolvedReports", fields: [resolvedById], references: [id], onDelete: SetNull)
 
-  /// The content being flagged (articles, tutorials).
+  /// The content being flagged (articles, tutorials) - optional
   contentId String?
   content   Content? @relation(fields: [contentId], references: [id], onDelete: Cascade)
 
-  /// The comment being flagged.
+  /// The comment being flagged - optional
   commentId String?
   comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
+  // Unique constraints: one report per user per content/comment
   @@unique([contentId, userId])
   @@unique([commentId, userId])
   @@index([userId])
@@ -359,111 +671,223 @@ model ContentReport {
   @@index([commentId])
   @@index([status])
   @@index([createdAt])
+  @@index([resolvedById])
 }
 
 /// The reason for flagging content.
+/// Covers common moderation scenarios and community guidelines violations.
 enum FlagReason {
+  /// Unsolicited promotional content or repetitive posts
   SPAM
+  /// Content violating community guidelines
   INAPPROPRIATE
+  /// Personal attacks or bullying behavior
   HARASSMENT
+  /// False or misleading information
   MISINFORMATION
+  /// Copyright or intellectual property violations
   COPYRIGHT
+  /// Violent or threatening content
   VIOLENCE
+  /// Discriminatory or hateful speech
   HATE_SPEECH
+  /// Adult or explicit content
   ADULT_CONTENT
+  /// Fraudulent or deceptive content
   SCAM
+  /// Other issues not covered by specific categories
   OTHER
 }
 
-/// The status of a content flag.
+/// The status of a content flag in the moderation workflow.
 enum FlagStatus {
+  /// Newly submitted, awaiting moderator attention
   PENDING
+  /// Being actively reviewed by a moderator
   UNDER_REVIEW
+  /// Review completed, appropriate action taken
   RESOLVED
+  /// Review completed, no action needed
   DISMISSED
 }
 
-/// Represents a comment made by a user on a piece of content. Supports nested replies.
+// =============================================================================
+// DISCUSSION & COMMUNITY MODELS
+// =============================================================================
+
+/// Represents a comment made by a user on a piece of content.
+/// Supports nested replies for threaded discussions.
+/// 
+/// Comment Features:
+/// - Threaded replies with unlimited nesting
+/// - Rich text content support
+/// - Like system for comment engagement
+/// - Moderation and reporting system
+/// - Anonymous posting (when author is deleted)
+/// 
+/// Threading Logic:
+/// - parentId creates the reply relationship
+/// - Root comments have parentId = null
+/// - Replies can be nested infinitely
+/// - Deletion cascades to all child replies
 model Comment {
-  id        String   @id @default(ulid())
-  /// The body of the comment.
-  body      String
-  likes     Like[]
+  id   String @id @default(ulid())
+  /// The body of the comment (supports rich text/markdown)
+  body String
+
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  /// The ID of the parent comment, for creating threaded replies.
+  // =============================================================================
+  // COMMENT THREADING
+  // =============================================================================
+
+  /// The ID of the parent comment, for creating threaded replies
   parentId String?
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
+  // =============================================================================
+  // COMMENT RELATIONS
+  // =============================================================================
+
+  /// Likes received on this comment
+  likes   Like[]
+  /// Reports submitted for this comment
+  reports ContentReport[]
+
+  /// The author of the comment (nullable for anonymous/deleted users)
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
+  /// The content this comment belongs to
   contentId String
-  content   Content         @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  reports   ContentReport[]
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  // Performance indexes
   @@index([authorId])
   @@index([contentId])
   @@index([parentId])
   @@index([createdAt])
+  @@index([contentId, createdAt])
 }
 
+// =============================================================================
+// REVIEW & RATING MODELS
+// =============================================================================
+
 /// The moderation status of a user-submitted review.
+/// Ensures review quality and prevents abuse.
 enum ReviewStatus {
+  /// Newly submitted, awaiting moderation
   PENDING
+  /// Approved for public display
   APPROVED
+  /// Rejected due to policy violations
   REJECTED
 }
 
 /// Represents a review submitted by a user for a course or program.
+/// Enables community feedback and quality assessment.
+/// 
+/// Review Features:
+/// - Numerical rating system (1-5 stars)
+/// - Written review content
+/// - Moderation workflow
+/// - Featured review highlighting
+/// - Applies to both courses and programs
+/// 
+/// Business Logic:
+/// - Users can review courses OR programs (not both in same record)
+/// - Reviews require moderation before public display
+/// - Featured reviews are highlighted in UI
+/// - Ratings contribute to overall course/program scores
 model Review {
   id       String       @id @default(ulid())
-  /// The numerical rating given by the user (e.g., 1-5).
+  /// The numerical rating given by the user (e.g., 1-5)
   rating   Int
-  /// The text content of the review.
+  /// The text content of the review
   body     String
-  /// Whether the review is featured on the platform.
+  /// Whether the review is featured on the platform
   featured Boolean      @default(false)
-  /// The moderation status of the review.
+  /// The moderation status of the review
   status   ReviewStatus @default(PENDING)
 
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // =============================================================================
+  // REVIEW RELATIONS
+  // =============================================================================
+
+  /// The author of the review
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
 
+  /// The program being reviewed (optional - either program OR course)
   programId String?
   program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  /// The course being reviewed (optional - either program OR course)
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  // Performance indexes
   @@index([authorId])
   @@index([courseId])
   @@index([programId])
   @@index([createdAt])
+  @@index([status])
+  @@index([featured])
 }
 
+// =============================================================================
+// TIME TRACKING & ANALYTICS MODELS
+// =============================================================================
+
 /// Tracks the amount of time a user has spent on a specific lesson.
+/// Enables detailed learning analytics and progress insights.
+/// 
+/// Time Tracking Features:
+/// - Millisecond precision for accurate measurement
+/// - Last activity timestamp for session management
+/// - Aggregatable for higher-level analytics
+/// - Supports pause/resume functionality
+/// 
+/// Analytics Applications:
+/// - Learning velocity analysis
+/// - Content difficulty assessment
+/// - User engagement measurement
+/// - Personalized learning recommendations
 model TimeSpent {
   id         String   @id @default(ulid())
-  /// The total duration spent on the lesson in milliseconds.
+  /// The total duration spent on the lesson in milliseconds
   duration   Int      @default(0)
-  /// The timestamp of the user's last activity on the lesson.
+  /// The timestamp of the user's last activity on the lesson
   lastActive DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // =============================================================================
+  // TIME TRACKING RELATIONS
+  // =============================================================================
+
+  /// The user whose time is being tracked
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// The lesson being tracked (optional for flexibility)
   lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   lessonId String?
 
+  // Performance indexes for analytics queries
   @@index([userId])
   @@index([lessonId])
   @@index([lastActive])
+  @@index([userId, lastActive])
+  @@index([duration])
 }

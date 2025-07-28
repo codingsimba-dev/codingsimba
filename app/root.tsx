@@ -88,7 +88,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (sessionId && !user) {
     await signout({ request, redirectTo: "/" });
   }
-
   return data(
     {
       user,

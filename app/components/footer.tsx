@@ -57,8 +57,12 @@ export function Footer() {
                 <h3 className="text-foreground mb-3 font-medium">Learning</h3>
                 <ul className="space-y-2">
                   {learning.map((item) => (
-                    <li key={item.name} className="text-muted-foreground">
-                      <NavLink name={item.name} path={item.path} />
+                    <li key={item.name}>
+                      <NavLink
+                        name={item.name}
+                        path={item.path}
+                        className="text-muted-foreground text-sm"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -69,7 +73,11 @@ export function Footer() {
                 <ul className="space-y-2">
                   {[...content, ...platform].map((item) => (
                     <li key={item.name}>
-                      <NavLink name={item.name} path={item.path} />
+                      <NavLink
+                        name={item.name}
+                        path={item.path}
+                        className="text-muted-foreground text-sm"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -80,7 +88,11 @@ export function Footer() {
                 <ul className="space-y-2">
                   {legal.map((item) => (
                     <li key={item.name}>
-                      <NavLink name={item.name} path={item.path} />
+                      <NavLink
+                        name={item.name}
+                        path={item.path}
+                        className="text-muted-foreground text-sm"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -91,7 +103,11 @@ export function Footer() {
                 <ul className="space-y-2">
                   {social.map((item) => (
                     <li key={item.name}>
-                      <NavLink name={item.name} path={item.path} />
+                      <NavLink
+                        name={item.name}
+                        path={item.path}
+                        className="text-muted-foreground text-sm"
+                      />
                     </li>
                   ))}
                 </ul>
@@ -100,7 +116,7 @@ export function Footer() {
           </div>
 
           <div className="border-border text-muted-foreground mt-12 border-t pt-8 text-center text-sm">
-            © 2025 - present Coding Simba. All rights reserved.
+            © 2025 - present TekBreed. All rights reserved.
           </div>
         </div>
       </footer>

@@ -15,7 +15,7 @@ export function generateMetadata({
   title = "TekBreed",
   description = slogan,
   url = "https://tekbreed.com",
-  image = getImgSrc({ path: "assets", fileKey: "icon.png" }),
+  image = getImgSrc({ fileKey: "tekbreedlogo.png" }),
   imageAlt = "TekBreed",
   type = "website",
   keywords,

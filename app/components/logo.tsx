@@ -19,34 +19,8 @@ export function Logo() {
         to="/"
         className="relative z-10 flex items-center gap-1 text-xl font-bold md:text-2xl"
       >
-        <img
-          src={getImgSrc({ fileKey: "tekbreedlogo.png", path: "assets" })}
-          width={40}
-        />
-        <img
-          src={getImgSrc({ fileKey: "tekbreedtext.png", path: "assets" })}
-          width={100}
-          // height={100}
-        />
-        {/* <motion.span
-          className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text font-extrabold text-transparent dark:from-blue-400 dark:to-purple-400"
-          whileHover={{
-            scale: [1, 1.2, 1],
-            transition: { duration: 0.5 },
-          }}
-        >
-          Coding
-        </motion.span>
-
-        <motion.span
-          className="bg-gradient-to-r from-gray-800 via-gray-600 to-gray-800 bg-clip-text font-bold text-transparent dark:from-gray-200 dark:via-gray-400 dark:to-gray-200"
-          whileHover={{
-            scale: [1, 1.3, 1],
-            transition: { duration: 0.5 },
-          }}
-        >
-          Simba
-        </motion.span> */}
+        <img src={getImgSrc({ fileKey: "tekbreedlogo.png" })} width={40} />
+        <img src={getImgSrc({ fileKey: "tekbreedtext.png" })} width={100} />
       </Link>
 
       {/* Explosion particles */}

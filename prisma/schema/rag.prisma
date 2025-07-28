@@ -1,11 +1,57 @@
+// =============================================================================
+// RETRIEVAL-AUGMENTED GENERATION (RAG) SYSTEM
+// =============================================================================
+// This file contains all models related to document processing, vector embeddings,
+// and retrieval-augmented generation for AI-powered features and knowledge base.
+
+// =============================================================================
+// DOCUMENT PROCESSING & CHUNKING
+// =============================================================================
+
+/// Represents a processed chunk of a document for vector similarity search.
+/// Documents are split into chunks to enable efficient retrieval and context-aware AI responses.
+/// 
+/// Document Chunking Features:
+/// - Intelligent text segmentation with overlap for context preservation
+/// - Multi-modal support for text and image content
+/// - Vector embeddings for semantic similarity search
+/// - Hierarchical chunk organization with indexing
+/// - Metadata preservation for context and filtering
+/// - Efficient storage and retrieval optimization
+/// 
+/// Chunking Strategy:
+/// - Text chunks: 500-1000 tokens with 100-200 token overlap
+/// - Image chunks: Visual embeddings with OCR text extraction
+/// - Code chunks: Function/class-level segmentation
+/// - Table chunks: Row/column-based structured data
+/// - Mixed content: Intelligent boundary detection
+/// 
+/// Vector Embeddings:
+/// - High-dimensional vector representations (768-1536 dimensions)
+/// - Generated using state-of-the-art embedding models
+/// - Optimized for semantic similarity and retrieval accuracy
+/// - Stored as binary data for efficient storage and computation
+/// - Regular recomputation for model updates and improvements
+/// 
+/// Retrieval Optimization:
+/// - Indexed by document and chunk position for fast access
+/// - Metadata filtering for context-aware search
+/// - Chunk type classification for specialized handling
+/// - Content deduplication to reduce storage overhead
 model DocumentChunk {
   id         String    @id @default(ulid())
+  /// The type of content in this chunk (text, image, etc.)
   chunkType  ChunkType @default(TEXT)
+  /// The sequential position of this chunk within the document
   chunkIndex Int
+  /// The vector embedding representation of the chunk content
   embedding  Bytes
+  /// Additional metadata about the chunk (source location, formatting, etc.)
   metadata   Json?
+  /// The parent document this chunk belongs to
   document   Document  @relation(fields: [documentId], references: [id])
   documentId String
+  /// The actual text or processed content of the chunk
   content    String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -14,17 +60,61 @@ model DocumentChunk {
   @@index([documentId, chunkIndex])
 }
 
+/// The type of content contained in a document chunk.
+/// Determines processing strategy and retrieval behavior.
 enum ChunkType {
+  /// Plain text content with semantic embeddings
   TEXT
+  /// Image content with visual embeddings and OCR text
   IMAGE
 }
 
+// =============================================================================
+// DOCUMENT MANAGEMENT
+// =============================================================================
+
+/// Represents a source document in the knowledge base.
+/// Documents are processed into chunks for efficient retrieval and AI integration.
+/// 
+/// Document Features:
+/// - Multi-format support (PDF, Word, Markdown, HTML, plain text)
+/// - Automatic content extraction and preprocessing
+/// - Source tracking for attribution and updates
+/// - Full-text search combined with vector similarity
+/// - Version control and change detection
+/// - Access control and permission management
+/// 
+/// Document Processing Pipeline:
+/// 1. Content extraction from various file formats
+/// 2. Text cleaning and normalization
+/// 3. Intelligent chunking with overlap
+/// 4. Vector embedding generation
+/// 5. Metadata extraction and enrichment
+/// 6. Index creation for fast retrieval
+/// 
+/// Content Sources:
+/// - User-uploaded documents and files
+/// - Website content and documentation
+/// - Course materials and learning resources
+/// - API documentation and technical guides
+/// - Community-generated content and wikis
+/// 
+/// Search and Retrieval:
+/// - Hybrid search combining keyword and semantic matching
+/// - Context-aware chunk selection for AI responses
+/// - Source attribution and citation generation
+/// - Real-time content updates and reprocessing
+/// - Analytics and usage tracking for optimization
 model Document {
   id        String          @id @default(ulid())
+  /// The title or name of the document
   title     String
+  /// The source URL, file path, or origin of the document
   source    String?
+  /// The full text content of the document
   content   String
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+  /// All chunks created from this document
   chunks    DocumentChunk[]
 }

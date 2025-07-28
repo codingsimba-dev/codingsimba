@@ -122,7 +122,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
               <CardDescription>Please enter your credentials</CardDescription>
             </CardHeader>
 
-            <CardContent className="my-8 space-y-6">
+            <CardContent className="space-y-6">
               <Form {...getFormProps(form)} method="post" className="space-y-4">
                 <HoneypotInputs />
                 <div className="space-y-2">

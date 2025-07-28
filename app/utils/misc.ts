@@ -9,8 +9,7 @@ import { useSpinDelay } from "spin-delay";
 import { twMerge } from "tailwind-merge";
 import type { useUser } from "~/hooks/user";
 import { intervalToDuration } from "date-fns";
-
-export type FilePath = "users" | "content" | "assets";
+import { StatusCodes } from "http-status-codes";
 
 /**
  * Generates a random bot avatar URL using the DiceBear API.
@@ -50,27 +49,20 @@ export function getSeed(name: string) {
 /**
  * Gets an image URL either from CDN or generates a random bot avatar
  * @param {string | null | undefined} fileKey - CDN file key
- * @param {"user" | "content"} type - Image type (affects CDN path)
  * @returns {string} Image URL
  */
 export function getImgSrc({
-  seed,
+  seed = "Kent",
   fileKey,
-  path = "users",
 }: {
   seed?: string;
   fileKey?: string;
-  path?: FilePath;
 }): string {
   const storageZone = "https://cdn.codingsimba.com";
   if (fileKey) {
-    if (path) {
-      return `${storageZone}/${encodeURIComponent(path)}/${encodeURIComponent(fileKey)}`;
-    } else {
-      return `${storageZone}/${encodeURIComponent(fileKey)}`;
-    }
+    return `${storageZone}/images/${encodeURIComponent(fileKey)}`;
   }
-  return getRandomBotAvatar(seed!);
+  return getRandomBotAvatar(getSeed(seed!));
 }
 
 /**
@@ -155,7 +147,7 @@ export function invariantResponse(
         ? message()
         : message ||
           "An invariant failed, please provide a message to explain why.",
-      { status: 400, ...responseInit },
+      { status: StatusCodes.BAD_REQUEST, ...responseInit },
     );
   }
 }

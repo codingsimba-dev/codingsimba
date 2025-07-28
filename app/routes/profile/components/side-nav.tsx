@@ -3,7 +3,7 @@ import { Camera, LogOut, type LucideIcon } from "lucide-react";
 import { Form, Link, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 
-import { cn, getSeed } from "~/utils/misc";
+import { cn } from "~/utils/misc";
 
 import type { TabValue } from "..";
 
@@ -34,8 +34,7 @@ export function SideNav({ tabs, activeTab, setActiveTab }: SideNavProps) {
           <Avatar className="border-border -z-20 size-24 border">
             <AvatarImage
               src={getImgSrc({
-                seed: getSeed(user.name),
-                path: "users",
+                seed: user.name,
                 fileKey: user.image?.fileKey,
               })}
               alt={user.name}

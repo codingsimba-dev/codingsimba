@@ -13,8 +13,9 @@ async function seed() {
 
   const entities: Entity[] = [
     "USER",
+    "CONTENT_REPORT",
+    "BOOKMARK",
     "COMMENT",
-    "REPLY",
     "REVIEW",
     "SETTINGS",
     "TEAM",

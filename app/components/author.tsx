@@ -1,14 +1,27 @@
 import type { Author } from "~/utils/content.server/authors/types";
-import { ArrowBigRight, Twitter, Globe, Github, Linkedin } from "lucide-react";
+import {
+  ArrowBigRight,
+  Twitter,
+  Globe,
+  Github,
+  Linkedin,
+  User,
+} from "lucide-react";
 import { Link } from "react-router";
 import { SupportMeButton } from "~/components/ui/support-me-button";
 import { Button } from "~/components/ui/button";
 import { Badge } from "./ui/badge";
-import { getImgSrc, getSeed } from "~/utils/misc";
+import { EmptyState } from "./empty-state";
 
 export function Author({ author }: { author: Author }) {
   if (!author) {
-    return <div>No Author</div>;
+    return (
+      <EmptyState
+        icon={<User className="size-8" />}
+        title="No Author"
+        description="No author found"
+      />
+    );
   }
   return (
     <div className="bg-muted/50 mb-8 rounded-xl p-6">
@@ -16,14 +29,7 @@ export function Author({ author }: { author: Author }) {
         <div className="hidden flex-col sm:flex">
           <div className="flex h-24 w-24 items-center justify-center">
             <img
-              src={
-                env.MODE === "development"
-                  ? getImgSrc({
-                      path: "users",
-                      seed: getSeed(author.name),
-                    })
-                  : author.image
-              }
+              src={author.image}
               alt={author.name}
               width={96}
               className="min-h-24 min-w-24 rounded-full"

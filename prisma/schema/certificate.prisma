@@ -1,0 +1,153 @@
+// =============================================================================
+// CERTIFICATE & ACHIEVEMENT SYSTEM
+// =============================================================================
+// This file contains all models related to digital certificates, completion
+// tracking, and achievement recognition for courses and programs.
+
+// =============================================================================
+// DIGITAL CERTIFICATE MANAGEMENT
+// =============================================================================
+
+/// Represents a certificate of completion earned by a user.
+/// Digital certificates provide verifiable proof of learning achievements and skill acquisition.
+/// 
+/// Certificate Features:
+/// - Verifiable digital certificates with unique identification
+/// - Support for both course and program completions
+/// - Customizable certificate templates and branding
+/// - Digital signature verification for authenticity
+/// - Integration with professional networks and portfolios
+/// - Automatic generation upon completion criteria fulfillment
+/// 
+/// Verification System:
+/// - Unique certificate numbers for external verification
+/// - Cryptographic signatures for tamper-proof authenticity
+/// - Public verification portal for employers and institutions
+/// - Blockchain integration for immutable record keeping
+/// - QR codes for instant mobile verification
+/// 
+/// Template System:
+/// - Professional certificate designs and layouts
+/// - Customizable branding for organizations and teams
+/// - Multi-language support for international recognition
+/// - PDF generation with high-quality graphics
+/// - Print-ready formats for physical certificates
+/// 
+/// Integration Features:
+/// - LinkedIn and professional network sharing
+/// - Portfolio and resume integration
+/// - Team certificate management and tracking
+/// - Bulk certificate generation for organizations
+/// - Analytics and completion rate tracking
+model Certificate {
+  id String @id @default(ulid())
+
+  // Certificate details
+  /// The formal title displayed on the certificate
+  title       String // "Certificate of Completion"
+  /// Detailed description of the achievement or course content
+  description String? // Course/program description
+
+  // Completion info
+  /// The actual date when the user completed the requirements
+  completedAt DateTime // When they actually finished
+  /// The date when the certificate was officially issued
+  issuedAt    DateTime @default(now()) // When certificate was issued
+
+  // Verification
+  /// Unique identifier for certificate verification and authenticity
+  certificateNumber String  @unique // For verification purposes
+  /// Whether the certificate is currently valid and recognized
+  isValid           Boolean @default(true)
+
+  // What was completed (you'll need these models)
+  /// The course that was completed (mutually exclusive with program)
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id])
+
+  /// The program that was completed (mutually exclusive with course)
+  programId String?
+  program   Program? @relation(fields: [programId], references: [id])
+
+  // Recipient
+  /// The user who earned this certificate
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // Optional: Certificate template/design
+  /// The template used to generate this certificate's design
+  templateId String?
+  template   CertificateTemplate? @relation(fields: [templateId], references: [id])
+
+  // Optional: Digital signature/issuer info
+  /// The name of the instructor or organization that issued the certificate
+  issuedBy  String? // Instructor/organization name
+  /// Digital signature or cryptographic hash for verification
+  signature String? // Digital signature or hash
+
+  /// Team-based certificate awards and recognition
+  teamCertificates TeamMemberCertificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensure one certificate per user per course/program
+  @@unique([userId, courseId])
+  @@unique([userId, programId])
+  @@index([userId])
+  @@index([certificateNumber])
+  @@index([courseId])
+  @@index([programId])
+}
+
+// =============================================================================
+// CERTIFICATE TEMPLATE SYSTEM
+// =============================================================================
+
+/// Represents a reusable template for generating certificates.
+/// Templates define the visual design, layout, and branding for certificates.
+/// 
+/// Template Features:
+/// - Professional certificate designs and layouts
+/// - Customizable branding elements (logos, colors, fonts)
+/// - Multi-format support (PDF, PNG, SVG)
+/// - Responsive design for various display sizes
+/// - Template versioning and update management
+/// - A/B testing for design optimization
+/// 
+/// Design Elements:
+/// - Background images and patterns
+/// - Logo placement and sizing
+/// - Text positioning and typography
+/// - Border and decorative elements
+/// - Color schemes and branding
+/// - Signature and seal placement
+/// 
+/// Customization Options:
+/// - Organization-specific branding
+/// - Course or program-specific designs
+/// - Language and localization support
+/// - Accessibility compliance features
+/// - Print and digital optimization
+/// 
+/// Template Management:
+/// - Version control for design updates
+/// - Preview and testing capabilities
+/// - Usage analytics and performance tracking
+/// - Template sharing across organizations
+/// - Backup and recovery systems
+model CertificateTemplate {
+  id       String  @id @default(ulid())
+  /// The display name of the certificate template
+  name     String
+  /// JSON configuration containing design elements, layout, and styling
+  design   Json // Template design data
+  /// Whether this template is currently available for use
+  isActive Boolean @default(true)
+
+  /// All certificates generated using this template
+  certificates Certificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

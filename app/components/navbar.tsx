@@ -114,9 +114,8 @@ export function Navbar() {
                 <Avatar className="border-border size-8 cursor-pointer border">
                   <AvatarImage
                     src={getImgSrc({
-                      path: "users",
                       fileKey: image?.fileKey,
-                      seed: user.name.split(" ")[0],
+                      seed: user.name,
                     })}
                     alt={user.name}
                   />

@@ -3,7 +3,7 @@ import { Send, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { useOptionalUser } from "~/hooks/user";
 import { MDXEditor } from "../mdx/editor";
-import { getImgSrc, getInitials, getSeed } from "~/utils/misc";
+import { getImgSrc, getInitials } from "~/utils/misc";
 
 type CommentFormProps = {
   isForUpdate?: boolean;
@@ -24,10 +24,10 @@ export function CommentForm({
   const hideSubmitButton = !comment.trim();
   const user = useOptionalUser();
 
-  const onSubmit = () => {
+  function onSubmit() {
     if (hideSubmitButton || !comment.trim()) return;
     handleFormSubmit();
-  };
+  }
 
   return (
     <div className="mb-4 mt-2">
@@ -36,9 +36,8 @@ export function CommentForm({
           <Avatar className="border-border flex items-center justify-center border">
             <AvatarImage
               src={getImgSrc({
-                path: "users",
                 fileKey: user?.image?.fileKey,
-                seed: getSeed(user?.name ?? ""),
+                seed: user?.name ?? "",
               })}
               alt={user!.name}
             />

@@ -3,6 +3,7 @@ import { useActionData, useFetcher, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+
 import { z } from "zod";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
@@ -36,37 +37,45 @@ export function AccountInformation() {
     shouldValidate: "onBlur",
     defaultValue: {
       email: user.email,
+      name: user.name,
     },
   });
+
   return (
     <Container title="Account Information" className="mb-8">
       <fetcher.Form {...getFormProps(form)} method="post" className="space-y-6">
         <input type="hidden" name="intent" value={ACCOUNT_INFORMATION_INTENT} />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor={fields.name.id}>Name</Label>
-            <Input
-              {...getInputProps(fields.name, { type: "text" })}
-              defaultValue={user.name}
-              className="border-border bg-background h-12 !text-lg"
-            />
-            <FormError errors={fields.name.errors} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={fields.email.id}>Email</Label>
-            <Input
-              {...getInputProps(fields.email, { type: "email" })}
-              defaultValue={user.email}
-              className="border-border bg-background h-12 !text-lg"
-              readOnly
-            />
-            <FormError errors={fields.email.errors} />
+
+        {/* Basic Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Basic Information</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={fields.name.id}>Name</Label>
+              <Input
+                {...getInputProps(fields.name, { type: "text" })}
+                defaultValue={user.name}
+                className="border-border bg-background h-12 !text-lg"
+              />
+              <FormError errors={fields.name.errors} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={fields.email.id}>Email</Label>
+              <Input
+                {...getInputProps(fields.email, { type: "email" })}
+                defaultValue={user.email}
+                className="border-border bg-background h-12 !text-lg"
+                readOnly
+              />
+              <FormError errors={fields.email.errors} />
+            </div>
           </div>
         </div>
+
         <FormError errors={form.errors} />
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving}>
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </fetcher.Form>

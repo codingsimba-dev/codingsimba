@@ -4,14 +4,13 @@ import { useFetcher, useSearchParams } from "react-router";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { MessageSquareQuote, ChevronDown, Loader } from "lucide-react";
+import { MessageSquareQuote, ChevronDown } from "lucide-react";
 import { Reply } from "./reply";
 import { CommentForm } from "./form";
 import { Markdown } from "../mdx";
 import { useOptionalUser } from "~/hooks/user";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { getSeed } from "~/utils/misc";
 import { Report } from "~/components/report";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import { Upvote } from "../upvote";
@@ -50,8 +49,6 @@ export function Comment({ comment }: { comment: CommentData }) {
     (total, like) => total + like.count,
     0,
   );
-
-  const isCreating = false;
 
   function createReply() {
     if (!reply.trim()) return;
@@ -108,9 +105,8 @@ export function Comment({ comment }: { comment: CommentData }) {
         <Avatar className="border-border -mt-0.5 size-8 border">
           <AvatarImage
             src={getImgSrc({
-              path: "users",
               fileKey: author?.image?.fileKey,
-              seed: getSeed(author?.name ?? anonymous),
+              seed: author?.name ?? anonymous,
             })}
             alt={author?.name ?? anonymous}
           />
@@ -163,13 +159,9 @@ export function Comment({ comment }: { comment: CommentData }) {
               <button
                 onClick={() => setShowReplyForm(!showReplyForm)}
                 className={buttonClasses}
-                aria-label={isCreating ? "replying comment" : "reply comment"}
+                aria-label="reply comment"
               >
-                {isCreating ? (
-                  <Loader className="mr-1 size-4 animate-spin" />
-                ) : (
-                  <MessageSquareQuote className="mr-1 size-4" />
-                )}
+                <MessageSquareQuote className="mr-1 size-4" />
                 Reply
               </button>
             ) : null}

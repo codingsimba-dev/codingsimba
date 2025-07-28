@@ -1,29 +1,78 @@
+// =============================================================================
+// SUBSCRIPTION & BILLING SYSTEM
+// =============================================================================
+// This file contains all models related to subscription management, billing,
+// and access control for courses and programs.
+
+// =============================================================================
+// SUBSCRIPTION MODELS
+// =============================================================================
+
 /// Represents a subscription to the platform's services.
 /// A subscription can be associated with either an individual user or a team, but not both.
+/// 
+/// Subscription Features:
+/// - Individual and team subscription types
+/// - Multiple plan tiers with different access levels
+/// - Integration with external payment providers (Stripe, Polar)
+/// - Automatic enrollment management
+/// - Billing period tracking for renewals
+/// 
+/// Business Logic:
+/// - One subscription per user OR team (mutually exclusive)
+/// - Subscription status synced with payment provider
+/// - Enrollments are automatically granted/revoked based on status
+/// - Teams can share subscriptions among members
+/// 
+/// Integration Notes:
+/// - subscriptionId links to external payment provider
+/// - Status values match payment provider conventions
+/// - Billing periods determine access duration
 model Subscription {
   id String @id @default(ulid())
 
-  /// The unique identifier for the subscription from the payment provider (e.g., Stripe, Polar).
-  subscriptionId String             @unique
-  /// The current status of the subscription.
-  status         SubscriptionStatus @default(active)
-  /// The type of the subscription.
-  type           SubscriptionType   @default(individual)
-  /// The plan of the subscription.
-  plan           Plan               @default(basic)
+  // =============================================================================
+  // PAYMENT PROVIDER INTEGRATION
+  // =============================================================================
 
-  /// The timestamp when the current subscription period starts.
+  /// The unique identifier for the subscription from the payment provider (e.g., Stripe, Polar)
+  subscriptionId String             @unique
+  /// The current status of the subscription (synced from payment provider)
+  status         SubscriptionStatus @default(active)
+
+  // =============================================================================
+  // SUBSCRIPTION CONFIGURATION
+  // =============================================================================
+
+  /// The type of the subscription (individual vs team)
+  type SubscriptionType @default(individual)
+  /// The plan tier determining access level and features
+  plan Plan             @default(basic)
+
+  // =============================================================================
+  // BILLING PERIOD TRACKING
+  // =============================================================================
+
+  /// The timestamp when the current subscription period starts
   currentPeriodStart DateTime?
-  /// The timestamp when the current subscription period ends.
+  /// The timestamp when the current subscription period ends
   currentPeriodEnd   DateTime?
 
-  /// A list of all enrollments granted by this subscription.
+  // =============================================================================
+  // ACCESS CONTROL
+  // =============================================================================
+
+  /// A list of all enrollments granted by this subscription
   enrollments Enrollment[]
 
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // A subscription can belong to a single user or a single team
+  // =============================================================================
+  // SUBSCRIPTION OWNERSHIP (MUTUALLY EXCLUSIVE)
+  // =============================================================================
+
   /// The user account associated with this subscription. Null if it's a team subscription.
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String? @unique
@@ -32,68 +81,151 @@ model Subscription {
   team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId String? @unique
 
+  // Performance indexes
   @@index([userId])
   @@index([teamId])
   @@index([currentPeriodEnd])
+  @@index([status])
+  @@index([subscriptionId])
 }
 
 /// The status of a subscription, typically synced from the payment provider.
+/// These values should match the payment provider's status conventions.
 enum SubscriptionStatus {
+  /// Subscription is active and in good standing
   active
+  /// Subscription is in trial period
   trialing
+  /// Subscription has been canceled (may still be active until period end)
   canceled
+  /// Payment failed and subscription is suspended
   unpaid
+  /// Payment is overdue but subscription may still be active
   past_due
+  /// Subscription setup is incomplete
   incomplete
+  /// Subscription setup failed and expired
   incomplete_expired
 }
 
-/// The type of subscription.
+/// The type of subscription, determining billing and access patterns.
 enum SubscriptionType {
+  /// Individual user subscription
   individual
+  /// Team/organization subscription with shared access
   team
 }
 
-/// Defines the subscription plans available for temas and users.
+/// Defines the subscription plans available for teams and users.
+/// Plans determine feature access, content availability, and pricing.
+/// 
+/// Plan Hierarchy:
+/// User Plans:
+/// - basic: Free tier with limited content
+/// - premium: Individual paid plan with full content access
+/// - pro: Advanced individual plan with additional features
+/// 
+/// Team Plans:
+/// - team_starter: Small team plan (up to 10 members)
+/// - team_pro: Medium team plan (up to 50 members)
+/// - team_enterprise: Large team plan (unlimited members + advanced features)
 enum Plan {
-  // User plans
+  // =============================================================================
+  // INDIVIDUAL USER PLANS
+  // =============================================================================
+
+  /// Free tier with limited content access
   basic
+  /// Individual paid plan with full content access
   premium
+  /// Advanced individual plan with additional features
   pro
 
-  // Team plans
+  // =============================================================================
+  // TEAM PLANS
+  // =============================================================================
+
+  /// Small team plan (up to 10 members)
   team_starter
+  /// Medium team plan (up to 50 members)
   team_pro
+  /// Large team plan (unlimited members + enterprise features)
   team_enterprise
 }
 
+// =============================================================================
+// ENROLLMENT & ACCESS CONTROL
+// =============================================================================
+
 /// Represents a user's enrollment in a course or program, granting them access.
 /// This can be linked to a subscription or a team purchase.
+/// 
+/// Enrollment Features:
+/// - Links users to specific courses or programs
+/// - Can be granted via individual subscription or team membership
+/// - Automatic enrollment/revocation based on subscription status
+/// - Supports both individual and team-based access
+/// 
+/// Access Control Logic:
+/// - Individual enrollments: User must have active subscription
+/// - Team enrollments: User must be team member + team must have active subscription
+/// - Enrollments are automatically created when subscription becomes active
+/// - Enrollments are revoked when subscription expires/cancels
+/// 
+/// Business Rules:
+/// - One enrollment per user per course/program
+/// - Team enrollments override individual enrollments
+/// - Enrollment date tracks when access was first granted
 model Enrollment {
   id String @id @default(ulid())
 
-  /// The subscription that grants this enrollment.
+  // =============================================================================
+  // SUBSCRIPTION LINKAGE
+  // =============================================================================
+
+  /// The subscription that grants this enrollment (can be individual or team)
   subscription   Subscription? @relation(fields: [subscriptionId], references: [subscriptionId])
   subscriptionId String?
 
+  // =============================================================================
+  // ENROLLMENT TRACKING
+  // =============================================================================
+
+  /// When the user was first enrolled (for analytics and billing)
   enrolledAt DateTime @default(now())
+
+  // =============================================================================
+  // ENROLLMENT RELATIONS
+  // =============================================================================
 
   /// The user who is enrolled. This is always required.
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  /// The team through which the user is enrolled (if applicable).
+  /// The team through which the user is enrolled (if applicable)
   team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId String?
 
+  // =============================================================================
+  // CONTENT ACCESS (MUTUALLY EXCLUSIVE)
+  // =============================================================================
+
+  /// The program this enrollment grants access to (either program OR course)
   programId String?
   program   Program? @relation(fields: [programId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  /// The course this enrollment grants access to (either program OR course)
   courseId String?
   course   Course? @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  // Unique constraints: one enrollment per user per content
   @@unique([userId, courseId])
   @@unique([userId, programId])
+  // Performance indexes
   @@index([subscriptionId])
   @@index([teamId])
+  @@index([userId])
+  @@index([enrolledAt])
+  @@index([courseId])
+  @@index([programId])
 }

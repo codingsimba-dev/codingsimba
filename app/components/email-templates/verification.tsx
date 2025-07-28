@@ -30,12 +30,12 @@ export function Verification({
           <Container className="mx-auto max-w-[600px] rounded-[8px] border border-gray-800 bg-[#151516] p-[40px] shadow-lg">
             <Section className="mb-4 text-center">
               <Img
-                src={getImgSrc({ path: "assets", fileKey: "icon.png" })}
-                alt="Coding Simba Logo"
+                src={getImgSrc({ fileKey: "tekbreedlogo.png" })}
+                alt="TekBreed Logo"
                 className="mx-auto mb-4 size-12 object-cover"
               />
               <Heading as="h1" className="text-xl font-bold text-white">
-                Coding Simba
+                TekBreed
               </Heading>
               <Text className="mt-1 text-sm text-gray-400">
                 Secure Authentication
@@ -85,18 +85,18 @@ export function Verification({
 
             <Section className="border-t border-gray-700 pt-2">
               <Text className="text-xs text-gray-500">
-                © 2025 CodingSimba. All rights reserved.
+                © 2025 TekBreed. All rights reserved.
               </Text>
               <Text className="mt-4 text-xs text-gray-500">
                 <Link
-                  href="https://codingsimba.com/privacy"
+                  href="https://tekbreed.com/privacy"
                   className="ml-2 text-blue-400 hover:text-blue-300 hover:underline"
                 >
                   Privacy Policy
                 </Link>{" "}
                 •
                 <Link
-                  href="https://codingsimba.com/terms"
+                  href="https://tekbreed.com/terms"
                   className="ml-2 text-blue-400 hover:text-blue-300 hover:underline"
                 >
                   Terms of Use
