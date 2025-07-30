@@ -13,7 +13,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Tooltip, TooltipContent } from "~/components/ui/tooltip";
 import { TooltipTrigger } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher } from "react-router";
 import { FormError } from "./form-errors";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { VisuallyHidden } from "./ui/visually-hidden";
@@ -24,14 +24,14 @@ type ChatBotProps = {
   documentTitle: string;
 };
 
-export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
+export function ChatBot({ documentId }: ChatBotProps) {
   const [question, setQuestion] = React.useState("");
   const fetcher = useFetcher<Route.ComponentProps["actionData"]>();
   const answer = fetcher.data?.answer;
   const isLoading = fetcher.state !== "idle";
   const isError = !!fetcher.data?.error;
   const errors = fetcher.data?.error ? fetcher.data.error.split(",") : [];
-  const { conversation } = useLoaderData<Route.ComponentProps["loaderData"]>();
+  // const { conversation } = useLoaderData<Route.ComponentProps["loaderData"]>();
   return (
     <Sheet>
       <Tooltip>
@@ -65,9 +65,9 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
             <ErrorUI errors={errors} />
           ) : (
             <>
-              {conversation ? (
+              {/* {conversation ? (
                 <ChatHistory conversation={conversation} />
-              ) : null}
+              ) : null} */}
               {isLoading && question ? (
                 <div className="mt-4">
                   <div className="flex items-start justify-end gap-2">
@@ -100,7 +100,7 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
                   </div>
                 </div>
               ) : null}
-              {!conversation && !answer && (
+              {/* {!conversation && !answer && (
                 <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center gap-6">
                   <Bot className="size-20" />
                   <p className="text-foreground text-center text-lg font-medium">
@@ -121,7 +121,7 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
                     </ul>
                   </p>
                 </div>
-              )}
+              )} */}
             </>
           )}
         </div>
@@ -173,6 +173,7 @@ export function ChatBot({ documentId, documentTitle }: ChatBotProps) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ChatHistory({ conversation }: { conversation: LessonConversation }) {
   return (
     <ul className="flex flex-col gap-4">

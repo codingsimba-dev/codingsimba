@@ -14,6 +14,7 @@ export const features = {
   ],
   premium: [
     "Everything in Basic",
+    "Access to Tekbreed chat",
     "Access to all premium tutorials and workshops",
     "Priority community support",
     "Access to premium monthly coding challenges",
@@ -21,6 +22,7 @@ export const features = {
   ],
   pro: [
     "Everything in Premium",
+    "Skills assessment tools",
     "Access to all courses and programs",
     "AI Learning Assistant (Unlimited credits)",
     "Advanced certificates and badges",

@@ -38,7 +38,12 @@ export async function handleAddComment({
   fetcher.submit(
     {
       intent: CommentIntent.ADD_COMMENT,
-      data: JSON.stringify({ userId, itemId, body, parentId }),
+      data: JSON.stringify({
+        userId,
+        itemId,
+        body,
+        parentId,
+      }),
     },
     { method: "post" },
   );

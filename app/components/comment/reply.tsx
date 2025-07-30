@@ -12,6 +12,7 @@ import { CommentActions } from "./comment-actions";
 import { Upvote } from "../upvote";
 import { handleDeleteComment, handleUpdateComment } from "./utils";
 import { useFetcher } from "react-router";
+import { anonymous, anonymousSeed } from ".";
 
 export type ReplyData = NonNullable<CommentData["replies"]>[0];
 
@@ -56,8 +57,6 @@ export function Reply({ reply }: { reply: ReplyData }) {
     });
   }
 
-  const anonymous = "Anonymous";
-
   const buttonClasses =
     "space-x-1 text-sm text-muted-foreground hover:text-foreground";
 
@@ -70,12 +69,12 @@ export function Reply({ reply }: { reply: ReplyData }) {
               <AvatarImage
                 src={getImgSrc({
                   fileKey: author?.image?.fileKey,
-                  seed: author?.name ?? anonymous,
+                  seed: author?.name ?? anonymousSeed,
                 })}
                 alt={author?.name ?? anonymous}
               />
               <AvatarFallback>
-                {getInitials(author?.name ?? anonymous)}
+                {getInitials(author?.name ?? anonymousSeed)}
               </AvatarFallback>
             </Avatar>
             <h5 className="text-sm font-medium">{author?.name ?? anonymous}</h5>

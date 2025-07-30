@@ -229,9 +229,7 @@ export function Upvote({
           {optimisticState.totalLikes.toLocaleString()}
         </span>
         {showMaxLabel && isDisabled ? (
-          <sub className={cn("text-muted-foreground text-xs", textSizes[size])}>
-            max
-          </sub>
+          <sub className={cn("text-muted-foreground !text-xs")}>max</sub>
         ) : null}
       </button>
       <AnimatePresence>

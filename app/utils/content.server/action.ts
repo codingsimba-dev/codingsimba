@@ -1,6 +1,10 @@
 import { invariant, invariantResponse } from "~/utils/misc";
 import { prisma } from "../db.server";
-import type { ContentType, FlagReason } from "~/generated/prisma/client";
+import type {
+  Content,
+  ContentType,
+  FlagReason,
+} from "~/generated/prisma/client";
 import { MarkdownConverter } from "../misc.server";
 import { StatusCodes } from "http-status-codes";
 import { requireUserWithPermission } from "~/utils/permissions.server";
@@ -8,33 +12,40 @@ import { z } from "zod";
 
 export const ActionSchema = z.object({
   intent: z.string(),
-  data: z.record(z.string()),
+  data: z.record(z.union([z.string(), z.null()])),
 });
 
 export type ActionPayload = z.infer<typeof ActionSchema>;
 
 /**
- * Adds a new comment to an article
- * @param itemId - The Sanity.io document ID of the article
+ * Adds a new comment or reply to an article or tutorial
+ * @param sanityId - The Sanity.io document ID of the article or tutorial (if it's a comment)
+ * @param contentId - The ID of the content to add the reply to (if it's a reply)
  * @param body - The comment content in HTML format
  * @param userId - The ID of the user creating the comment
- * @returns The created comment with its ID
+ * @param parentId - The ID of the parent comment (if it's a reply)
+ * @returns The created comment or reply  ID
  * @throws {Error} If comment body is missing
  */
 export async function addComment(data: ActionPayload["data"]) {
-  const { itemId, body, userId, parentId } = data;
+  const { itemId, body, userId, parentId, type } = data;
+  invariant(itemId, "Item ID is required");
   invariant(body, "Comment body is required to add  a comment");
-  const article = await prisma.content.upsert({
-    where: { sanityId: itemId },
-    create: { sanityId: itemId, type: "ARTICLE" },
-    update: {},
-    select: { id: true },
-  });
-
+  invariant(type, "Type is required");
+  const contentType = type as ContentType;
+  let content: Pick<Content, "id"> | undefined = undefined;
+  if (!parentId) {
+    content = await prisma.content.upsert({
+      where: { sanityId_type: { sanityId: itemId, type: contentType } },
+      create: { sanityId: itemId, type: contentType },
+      update: {},
+      select: { id: true },
+    });
+  }
   const comment = await prisma.comment.create({
     data: {
       authorId: userId,
-      contentId: article.id,
+      contentId: parentId ? itemId : content!.id,
       parentId: parentId ?? null,
       body: MarkdownConverter.toMarkdown(body),
     },
@@ -56,6 +67,7 @@ export async function updateComment(
   { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Comment body is required");
+  invariant(itemId, "Item ID is required");
   const comment = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { id: true },
@@ -87,6 +99,7 @@ export async function deleteComment(
   { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
+  invariant(itemId, "Item ID is required");
   const comment = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { id: true },
@@ -117,6 +130,7 @@ export async function deleteComment(
 export async function upvoteContent(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
   const upsertLike = await prisma.like.upsert({
     where: { contentId_userId: { contentId: itemId, userId } },
     update: { count: { increment: 1 } },
@@ -178,10 +192,10 @@ export async function trackPageView(data: ActionPayload["data"]) {
  */
 export async function reportContent(data: ActionPayload["data"]) {
   const { itemId: pageId, userId, reason, details } = data;
-  const reportReason = reason.toUpperCase() as FlagReason;
   invariant(pageId, "Page ID is required");
   invariant(userId, "User ID is required");
   invariant(reason, "Reason is required");
+  const reportReason = reason.toUpperCase() as FlagReason;
   const content = await prisma.content.findUniqueOrThrow({
     where: { sanityId: pageId },
     select: { id: true },
@@ -204,10 +218,10 @@ export async function reportContent(data: ActionPayload["data"]) {
  */
 export async function reportComment(data: ActionPayload["data"]) {
   const { itemId, userId, reason, details } = data;
-  const reportReason = reason.toUpperCase() as FlagReason;
   invariant(itemId, "Item ID is required");
   invariant(userId, "User ID is required");
   invariant(reason, "Reason is required");
+  const reportReason = reason.toUpperCase() as FlagReason;
   const report = await prisma.contentReport.create({
     data: { commentId: itemId, userId, reason: reportReason, details },
     select: { id: true },

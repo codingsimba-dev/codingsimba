@@ -16,7 +16,7 @@ import {
   ArrowLeft,
   ExternalLink,
 } from "lucide-react";
-import { getImgSrc, getSeed, invariant, invariantResponse } from "~/utils/misc";
+import { invariant, invariantResponse } from "~/utils/misc";
 import { StatusCodes } from "http-status-codes";
 import { generateMetadata } from "~/utils/meta";
 import { ArticleCard } from "~/routes/articles/components/article-card";
@@ -72,13 +72,7 @@ export default function AuthorDetailsRoute({
         <div className="mb-8 rounded-xl bg-gray-50 p-8 dark:bg-gray-900">
           <div className="flex flex-col items-center text-center md:flex-row md:items-start md:text-left">
             <img
-              src={
-                env.MODE === "development"
-                  ? getImgSrc({
-                      seed: getSeed(author.name),
-                    })
-                  : author.image
-              }
+              src={author.image}
               alt={author.name}
               className="mb-6 size-32 rounded-full object-cover md:mb-0 md:mr-8"
             />

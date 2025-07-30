@@ -43,7 +43,6 @@ export async function getBookmarks(userId: string) {
       content: {
         select: {
           id: true,
-          sanityId: true,
           type: true,
           views: true,
         },
@@ -76,7 +75,6 @@ export async function getReports(userId: string) {
       content: {
         select: {
           id: true,
-          sanityId: true,
           type: true,
         },
       },

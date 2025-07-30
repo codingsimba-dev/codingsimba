@@ -19,6 +19,9 @@ import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { handleAddComment } from "./utils";
 
+export const anonymous = "Anonymous";
+export const anonymousSeed = "Doe";
+
 export enum CommentIntent {
   ADD_COMMENT = "ADD_COMMENT",
   UPDATE_COMMENT = "UPDATE_COMMENT",
@@ -38,8 +41,9 @@ export function Comments() {
   const fetcher = useFetcher();
   const user = useOptionalUser();
 
-  const itemId =
-    "article" in loaderData ? loaderData.article.id : loaderData.tutorial.id;
+  const item =
+    "article" in loaderData ? loaderData.article : loaderData.tutorial;
+  const itemId = item.id;
 
   function handleSubmit() {
     if (!comment.trim()) return;
@@ -47,8 +51,8 @@ export function Comments() {
       itemId,
       fetcher,
       parentId: null,
-      userId: user!.id,
       body: comment,
+      userId: user!.id,
     });
     setComment("");
   }
@@ -124,8 +128,72 @@ export function Comments() {
 
 function CommentSkeleton() {
   return (
-    <div className="flex items-center justify-between">
-      <div className="bg-muted h-4 w-24" />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="bg-muted h-6 w-32 animate-pulse rounded" />
+        <div className="bg-muted h-4 w-16 animate-pulse rounded" />
+      </div>
+      {/* Render multiple comment skeletons */}
+      {Array.from({ length: 3 }).map((_, index) => (
+        <IndividualCommentSkeleton key={index} />
+      ))}
     </div>
+  );
+}
+
+/**
+ * Skeleton component for individual Comment loading states.
+ *
+ * Provides a placeholder representation of a comment while data is loading.
+ * Matches the typical structure of a comment with user info, content, and actions.
+ *
+ * @returns {JSX.Element} A skeleton placeholder for a comment
+ */
+function IndividualCommentSkeleton() {
+  return (
+    <li className="space-y-3">
+      <div className="flex items-start space-x-3">
+        {/* Avatar skeleton */}
+        <div className="bg-muted h-8 w-8 flex-shrink-0 animate-pulse rounded-full" />
+
+        <div className="flex-1 space-y-2">
+          {/* User info and timestamp */}
+          <div className="flex items-center space-x-2">
+            <div className="bg-muted h-4 w-20 animate-pulse rounded" />
+            <div className="bg-muted h-3 w-16 animate-pulse rounded" />
+          </div>
+
+          {/* Comment content */}
+          <div className="space-y-2">
+            <div className="bg-muted h-4 w-full animate-pulse rounded" />
+            <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
+          </div>
+
+          {/* Action buttons skeleton */}
+          <div className="flex items-center space-x-4 pt-2">
+            <div className="bg-muted h-6 w-12 animate-pulse rounded" />
+            <div className="bg-muted h-6 w-12 animate-pulse rounded" />
+            <div className="bg-muted h-6 w-16 animate-pulse rounded" />
+          </div>
+        </div>
+      </div>
+
+      {/* Nested replies skeleton (optional - shows for some comments) */}
+      {Math.random() > 0.7 && (
+        <div className="ml-11 space-y-2">
+          <div className="flex items-start space-x-3">
+            <div className="bg-muted h-6 w-6 flex-shrink-0 animate-pulse rounded-full" />
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center space-x-2">
+                <div className="bg-muted h-3 w-16 animate-pulse rounded" />
+                <div className="bg-muted h-3 w-12 animate-pulse rounded" />
+              </div>
+              <div className="bg-muted h-3 w-2/3 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }

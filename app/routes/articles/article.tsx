@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+import { useFetcher } from "react-router";
 import type { Route } from "./+types/article";
 import { DetailsHeader } from "../../components/page-details-header";
 import { Tags } from "./components/tags";
@@ -45,8 +47,6 @@ import {
   upvoteComment,
   upvoteContent,
 } from "~/utils/content.server/action";
-import { useFetcher } from "react-router";
-import { useCallback } from "react";
 
 const SearchParamsSchema = z.object({
   commentTake: z.coerce.number().default(5),
@@ -102,10 +102,6 @@ export async function action({ request }: Route.ActionArgs) {
     status: StatusCodes.BAD_REQUEST,
   });
 
-  enum MiscTypes {
-    TRACK_PAGE_VIEW = "TRACK_PAGE_VIEW",
-  }
-
   const { data, intent } = result.data;
 
   switch (
@@ -117,7 +113,10 @@ export async function action({ request }: Route.ActionArgs) {
       | BookmarkIntent
   ) {
     case CommentIntent.ADD_COMMENT:
-      return await addComment(data);
+      return await addComment({
+        ...data,
+        type: "ARTICLE",
+      });
     case CommentIntent.UPDATE_COMMENT:
       return await updateComment(request, data);
     case CommentIntent.DELETE_COMMENT:
@@ -126,7 +125,7 @@ export async function action({ request }: Route.ActionArgs) {
       return await upvoteComment(data);
     case MiscTypes.TRACK_PAGE_VIEW:
       return await trackPageView({
-        pageId: data.pageId as string,
+        ...data,
         type: "ARTICLE",
       });
     case UpvoteIntent.UPVOTE_CONTENT:
@@ -150,6 +149,10 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
+enum MiscTypes {
+  TRACK_PAGE_VIEW = "TRACK_PAGE_VIEW",
+}
+
 export default function ArticleDetailsRoute({
   loaderData,
 }: Route.ComponentProps) {
@@ -171,10 +174,13 @@ export default function ArticleDetailsRoute({
   const fetcher = useFetcher();
 
   const trackPageView = useCallback(() => {
-    fetcher.submit({
-      intent: "TRACK_PAGE_VIEW",
-      data: { pageId: article.id },
-    });
+    fetcher.submit(
+      {
+        intent: MiscTypes.TRACK_PAGE_VIEW,
+        data: JSON.stringify({ pageId: article.id, slug: article.slug }),
+      },
+      { method: "post" },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -204,19 +210,18 @@ export default function ArticleDetailsRoute({
               </div>
 
               {/* Article excerpt */}
-              <div className="bg-muted rounded-lg p-6">
+              <div className="bg-muted mb-6 rounded-lg p-6 lg:mb-0">
                 <p className="text-muted-foreground text-lg leading-relaxed">
                   {article.excerpt}
                 </p>
               </div>
-
               <TableOfContent className="block lg:hidden" />
+              <Metrics className="mb-0 lg:hidden" />
               <Markdown
                 source={article.content}
                 sandpackTemplates={article.sandpackTemplates}
               />
             </article>
-            <Metrics className="md:hidden" />
             <p>
               Share the topics you&apos;d like to see covered in future
               articles.
@@ -237,7 +242,7 @@ export default function ArticleDetailsRoute({
           <aside className="lg:col-span-4">
             <div className="sticky top-20">
               <TableOfContent className="hidden lg:block" />
-              <Metrics className="hidden md:block" />
+              <Metrics className="hidden lg:block" />
               {!user?.isSubscribed ? <ContentEmailSubscriptionForm /> : null}
               <PopularTags />
             </div>

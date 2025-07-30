@@ -90,7 +90,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const { data, intent } = result.data;
 
-  switch (intent as CommentIntent | "track-page-view") {
+  switch (intent as CommentIntent | MiscTypes) {
     case CommentIntent.ADD_COMMENT:
       return await addComment(data);
     case CommentIntent.UPDATE_COMMENT:
@@ -99,14 +99,20 @@ export async function action({ request }: Route.ActionArgs) {
       return await deleteComment(request, data);
     case CommentIntent.UPVOTE_COMMENT:
       return await upvoteComment(data);
-    case "track-page-view":
-      return await trackPageView({ itemId: data.itemId as string });
-
+    case MiscTypes.TRACK_PAGE_VIEW:
+      return await trackPageView({
+        pageId: data.pageId as string,
+        type: "TUTORIAL",
+      });
     default:
       return new Response("Invalid intent", {
         status: StatusCodes.BAD_REQUEST,
       });
   }
+}
+
+enum MiscTypes {
+  TRACK_PAGE_VIEW = "TRACK_PAGE_VIEW",
 }
 
 export default function TutorialPage({ loaderData }: Route.ComponentProps) {
@@ -126,10 +132,13 @@ export default function TutorialPage({ loaderData }: Route.ComponentProps) {
 
   const fetcher = useFetcher();
   const trackPageView = useCallback(() => {
-    fetcher.submit({
-      intent: "TRACK_PAGE_VIEW",
-      data: { pageId: tutorial.id },
-    });
+    fetcher.submit(
+      {
+        intent: MiscTypes.TRACK_PAGE_VIEW,
+        data: JSON.stringify({ pageId: tutorial.id }),
+      },
+      { method: "post" },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

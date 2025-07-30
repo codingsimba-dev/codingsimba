@@ -3,7 +3,7 @@ import { createPassword } from "tests/db-utils";
 import { prisma } from "~/utils/db.server";
 
 const { ADMIN_PASSWORD } = process.env;
-const ADMIN_EMAIL = "me@codingsimba.com";
+const ADMIN_EMAIL = "me@tekbreed.com";
 const ADMIN_NAME = "Christopher S. Aondona";
 
 async function seed() {

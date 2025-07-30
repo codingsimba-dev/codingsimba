@@ -77,11 +77,7 @@ export default [
     route(":articleSlug", "routes/articles/article.tsx"),
   ]),
 
-  ...prefix("challenges", [
-    index("routes/challenges/index.tsx"),
-    // route(":challengeId", "routes/challenges/challenge.tsx"),
-    // route(":leaderboardId", "routes/challenges/leaderboard.tsx"),
-  ]),
+  ...prefix("challenges", [index("routes/challenges/index.tsx")]),
 
   ...prefix("tutorials", [
     index("routes/tutorials/index.tsx"),
@@ -109,10 +105,7 @@ export default [
 
   ...prefix("teams", [index("routes/teams/index.tsx")]),
 
-  ...prefix("chat", [
-    index("routes/chat/index.tsx"),
-    // route("chatbot", "routes/chat/chatbot.ts"),
-  ]),
+  ...prefix("chat", [index("routes/chat/index.tsx")]),
 
   ...prefix("store", [index("routes/store/index.tsx")]),
 

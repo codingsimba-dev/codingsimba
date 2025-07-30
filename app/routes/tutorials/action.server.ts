@@ -14,6 +14,7 @@ import type { ActionPayload } from "~/utils/content.server/action";
 export async function addComment(data: ActionPayload["data"]) {
   const { itemId, body, userId } = data;
   invariant(body, "Comment body is required to add  a comment");
+  invariant(itemId, "Item ID is required");
   const tutorial = await prisma.content.upsert({
     where: { sanityId: itemId },
     create: { sanityId: itemId, type: "TUTORIAL" },
@@ -81,6 +82,7 @@ export async function updateComment(
   { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Comment body is required");
+  invariant(itemId, "Item ID is required");
   const comment = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { id: true },
@@ -112,6 +114,7 @@ export async function deleteComment(
   { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
+  invariant(itemId, "Item ID is required");
   const comment = await prisma.comment.findUnique({
     where: { id: itemId },
   });
@@ -164,7 +167,7 @@ export async function updateReply(
   { itemId, body }: ActionPayload["data"],
 ) {
   invariant(body, "Reply body is required");
-
+  invariant(itemId, "Item ID is required");
   const reply = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { parentId: true },
@@ -201,7 +204,7 @@ export async function deleteReply(
   { itemId, userId }: ActionPayload["data"],
 ) {
   invariant(userId, "User ID is required");
-
+  invariant(itemId, "Item ID is required");
   const reply = await prisma.comment.findUnique({
     where: { id: itemId },
     select: { parentId: true },
@@ -259,6 +262,7 @@ export async function upvoteReply(data: ActionPayload["data"]) {
 export async function upvoteArticle(data: ActionPayload["data"]) {
   const { itemId, userId } = data;
   invariant(itemId, "Item ID is required");
+  invariant(userId, "User ID is required");
   const upsertLike = await prisma.like.upsert({
     where: { contentId_userId: { contentId: itemId, userId } },
     update: { count: { increment: 1 } },
@@ -276,6 +280,7 @@ export async function upvoteArticle(data: ActionPayload["data"]) {
  */
 export async function trackPageView(data: ActionPayload["data"]) {
   const { itemId } = data;
+  invariant(itemId, "Item ID is required");
   const content = await prisma.content.upsert({
     where: { sanityId: itemId },
     create: { sanityId: itemId, type: "TUTORIAL", views: 1 },

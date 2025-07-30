@@ -20,6 +20,7 @@ import {
   handleDeleteComment,
   handleUpdateComment,
 } from "./utils";
+import { anonymous, anonymousSeed } from ".";
 
 export type CommentData = NonNullable<
   Awaited<Route.ComponentProps["loaderData"]["comments"]>
@@ -56,8 +57,8 @@ export function Comment({ comment }: { comment: CommentData }) {
       fetcher,
       body: reply,
       userId: user!.id,
-      itemId: comment.id,
       parentId: comment.id,
+      itemId: comment.contentId,
     });
     setShowReplyForm(false);
     setReply("");
@@ -95,8 +96,6 @@ export function Comment({ comment }: { comment: CommentData }) {
     );
   }
 
-  const anonymous = "Anonymous";
-
   const buttonClasses =
     "flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground";
   return (
@@ -106,7 +105,7 @@ export function Comment({ comment }: { comment: CommentData }) {
           <AvatarImage
             src={getImgSrc({
               fileKey: author?.image?.fileKey,
-              seed: author?.name ?? anonymous,
+              seed: author?.name ?? anonymousSeed,
             })}
             alt={author?.name ?? anonymous}
           />
@@ -141,7 +140,7 @@ export function Comment({ comment }: { comment: CommentData }) {
               onCancel={() => setEditComment(false)}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-auto">
               <Markdown source={comment.body} className="py-0 text-sm" />
             </div>
           )}

@@ -43,8 +43,6 @@ export type ReportStatus =
 export interface ReportContent {
   /** Unique identifier for the content */
   id: string;
-  /** Sanity CMS identifier for the content */
-  sanityId: string;
   /** Type of content being reported */
   type: "ARTICLE" | "TUTORIAL";
 }
@@ -798,7 +796,7 @@ function ReportViewContentButton({ content }: { content: Report["content"] }) {
 
   return (
     <Button asChild size="sm" variant="outline">
-      <Link to={`/${contentPath}/${content.sanityId}`}>View Content</Link>
+      <Link to={`/${contentPath}/${content.id}`}>View Content</Link>
     </Button>
   );
 }

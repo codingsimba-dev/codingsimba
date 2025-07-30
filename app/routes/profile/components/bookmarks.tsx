@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { format } from "date-fns";
 
 /**
  * Tag information associated with a bookmark
@@ -43,8 +44,6 @@ export interface BookmarkTag {
 export interface BookmarkContent {
   /** Unique identifier for the content */
   id: string;
-  /** Sanity CMS identifier for the content */
-  sanityId: string;
   /** Type of bookmarked content */
   type: "ARTICLE" | "TUTORIAL";
   /** Number of views the content has received */
@@ -467,7 +466,7 @@ function BookmarkCardHeader({ bookmark }: { bookmark: Bookmark }) {
         </div>
         <div className="text-muted-foreground flex items-center gap-1 text-xs">
           <Calendar className="size-3" />
-          {new Date(bookmark.createdAt).toLocaleDateString()}
+          {format(bookmark.createdAt, "MMM d, yyyy")}
         </div>
       </div>
     </CardHeader>
@@ -505,7 +504,7 @@ function BookmarkCardContent({
 }: BookmarkCardContentProps) {
   return (
     <CardContent className="pt-0">
-      {bookmark.notes && <BookmarkNotes notes={bookmark.notes} />}
+      {bookmark.notes ? <BookmarkNotes notes={bookmark.notes} /> : null}
 
       {bookmark.bookmarkTags.length > 0 && (
         <BookmarkTags tags={bookmark.bookmarkTags} />
@@ -515,7 +514,7 @@ function BookmarkCardContent({
         views={bookmark.content.views}
         contentType={contentType}
         contentTypePath={contentTypePath}
-        sanityId={bookmark.content.sanityId}
+        itemId={bookmark.content.id}
       />
     </CardContent>
   );
@@ -578,8 +577,8 @@ interface BookmarkFooterProps {
   contentType: string;
   /** URL path for the content type */
   contentTypePath: string;
-  /** Sanity CMS identifier for the content */
-  sanityId: string;
+  /** Unique identifier for the content */
+  itemId: string;
 }
 
 /**
@@ -592,14 +591,14 @@ interface BookmarkFooterProps {
  * @param {number} props.views - Number of views for the content
  * @param {string} props.contentType - Content type for the button label
  * @param {string} props.contentTypePath - URL path for the content type
- * @param {string} props.sanityId - Sanity CMS identifier for the content
+ * @param {string} props.itemId - Unique identifier for the content
  * @returns {JSX.Element} Footer with view count and action button
  */
 function BookmarkFooter({
   views,
   contentType,
   contentTypePath,
-  sanityId,
+  itemId,
 }: BookmarkFooterProps) {
   return (
     <div className="flex items-center justify-between">
@@ -607,7 +606,7 @@ function BookmarkFooter({
         {views.toLocaleString()} views
       </div>
       <Button asChild size="sm" variant="outline">
-        <Link to={`/${contentTypePath}/${sanityId}`}>View {contentType}</Link>
+        <Link to={`/${contentTypePath}/${itemId}`}>View {contentType}</Link>
       </Button>
     </div>
   );

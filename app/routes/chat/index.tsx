@@ -3,7 +3,7 @@ import { ArrowDownAZ } from "lucide-react";
 import { EmptyState } from "~/components/empty-state";
 import { Header } from "~/components/page-header";
 import json2md from "json2md";
-import { redirect } from "react-router";
+// import { redirect } from "react-router";
 import { askQuestion } from "~/utils/openai.server";
 import { StatusCodes } from "http-status-codes";
 import { bundleMDX } from "~/utils/mdx.server";
@@ -29,7 +29,7 @@ export const ChatSchema = z.object({
     .max(1000, { message: "Question is too long" }),
 });
 
-export const loader = () => redirect("/");
+// export const loader = () => redirect("/");
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
