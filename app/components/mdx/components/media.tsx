@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router";
+import { EmptyState } from "~/components/empty-state";
 import { cn } from "~/utils/misc";
 
 export function Img({
@@ -22,15 +24,30 @@ interface MDXIframeProps {
 }
 
 export function Iframe({ videoId, type = "youtube" }: MDXIframeProps) {
+  const navigate = useNavigate();
+  const libraryId = window.env.LIBRARY_ID;
+
   const srcUrls = {
     youtube: `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&modestbranding=1&iv_load_policy=3`,
-    bunny: `https://iframe.mediadelivery.net/embed/${parseInt(window.env.LIBRARY_ID)}/${videoId}?autoplay=0`,
+    bunny: `https://iframe.mediadelivery.net/embed/${parseInt(libraryId)}/${videoId}?autoplay=0`,
   } as const;
 
   const srcTitle = {
     youtube: `YouTube video player`,
-    bunny: `Bunny CDN video player`,
+    bunny: `Bunny video player`,
   };
+
+  if (!videoId || !libraryId)
+    return (
+      <EmptyState
+        title="Video not found"
+        description="Please contact support if you believe this is an error."
+        action={{
+          label: "Contact support",
+          onClick: () => navigate("/support"),
+        }}
+      />
+    );
 
   return (
     <div
@@ -47,6 +64,8 @@ export function Iframe({ videoId, type = "youtube" }: MDXIframeProps) {
           "aspect-video w-full border-0": type === "youtube",
           "absolute top-0 h-full w-full border-none": type === "bunny",
         })}
+        sandbox="allow-scripts allow-same-origin allow-presentation"
+        referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
       />
     </div>

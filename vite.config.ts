@@ -3,7 +3,6 @@ import { reactRouter } from "@react-router/dev/vite";
 import { reactRouterDevTools } from "react-router-devtools";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
-import { remixPWA } from "@remix-pwa/dev";
 
 const MODE = process.env.NODE_ENV;
 
@@ -23,9 +22,6 @@ export default defineConfig({
     reactRouterDevTools({}),
     tailwindcss(),
     process.env.VITEST ? null : reactRouter(),
-    remixPWA({
-      workerName: "notificationServiceWorker.js",
-    }),
     tsconfigPaths(),
   ],
   test: {

@@ -2,6 +2,7 @@
 .env
 /node_modules/
 /app/generated/
+/todo/
 
 # React Router
 /.react-router/
