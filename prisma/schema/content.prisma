@@ -1,25 +1,5 @@
-// =============================================================================
-// CONTENT MANAGEMENT & LEARNING SYSTEM
-// =============================================================================
-// This file contains all models related to content management, learning paths,
-// user engagement, and educational progress tracking.
 
-// =============================================================================
-// CORE CONTENT MODELS
-// =============================================================================
 
-/// Represents a generic piece of content that can be liked or commented on.
-/// This is used to abstract content types like articles and tutorials for engagement features.
-/// 
-/// Design Pattern: Content Abstraction Layer
-/// - Separates content metadata from actual content (stored in CMS)
-/// - Enables unified engagement features across different content types
-/// - Tracks engagement metrics (views, likes, comments)
-/// 
-/// Integration Notes:
-/// - sanityId links to headless CMS (Sanity)
-/// - Views are tracked for analytics and recommendations
-/// - Type determines how content is displayed and categorized
 model Content {
   id       String      @id @default(ulid())
   /// The unique identifier from the headless CMS (e.g., Sanity)
@@ -53,8 +33,6 @@ model Content {
   @@index([views])
 }
 
-/// The type of content supported by the system.
-/// Add new types here as content offerings expand.
 enum ContentType {
   /// Blog articles and written content
   ARTICLE
@@ -62,8 +40,6 @@ enum ContentType {
   TUTORIAL
 }
 
-/// The user's progress status on a piece of content.
-/// Used throughout the learning system for progress tracking.
 enum ContentStatus {
   /// Content is not yet accessible to the user
   LOCKED
@@ -73,26 +49,7 @@ enum ContentStatus {
   COMPLETED
 }
 
-// =============================================================================
-// LEARNING HIERARCHY MODELS
-// =============================================================================
-// The learning system follows a hierarchical structure:
-// Programs > Courses > Modules > SubModules > Lessons
-// Each level tracks user progress and completion status.
 
-/// Represents a learning program, which is a collection of courses.
-/// Programs are the highest level in the learning hierarchy.
-/// 
-/// Program Features:
-/// - Collection of related courses forming a complete learning path
-/// - User-specific progress tracking and completion status
-/// - Time spent is calculated from constituent courses
-/// - Can have reviews and ratings from users
-/// 
-/// Business Logic:
-/// - Progress is calculated as average of course progress
-/// - Completion requires all courses to be completed
-/// - Unlocking follows prerequisite chains
 model Program {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -134,20 +91,6 @@ model Program {
   @@index([completedAt])
 }
 
-/// Represents a course, which is a collection of modules.
-/// Courses are the main learning units that users enroll in.
-/// 
-/// Course Features:
-/// - Can be standalone or part of a program
-/// - Modular structure with modules and lessons
-/// - Individual progress tracking per user
-/// - Team learning path integration
-/// - Review and rating system
-/// 
-/// Business Logic:
-/// - Progress calculated from module completion
-/// - Time spent aggregated from lessons
-/// - Can be assigned to team learning paths
 model Course {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -196,19 +139,6 @@ model Course {
   @@index([completedAt])
 }
 
-/// Represents a module within a course, which is a collection of sub-modules.
-/// Modules group related lessons and can include assessments.
-/// 
-/// Module Features:
-/// - Contains sub-modules and lessons
-/// - Each module has an associated test/assessment
-/// - Can be content modules or exercise modules
-/// - Individual progress tracking per user
-/// 
-/// Business Logic:
-/// - Progress calculated from sub-module completion
-/// - Must complete associated test to finish module
-/// - Exercise modules may have different completion criteria
 model Module {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -255,7 +185,6 @@ model Module {
   @@index([testId])
 }
 
-/// The type of module, determining its behavior and completion criteria.
 enum ModuleType {
   /// Standard content module with lessons and materials
   CONTENT
@@ -263,19 +192,6 @@ enum ModuleType {
   EXERCISE
 }
 
-/// Represents a sub-module within a module, which is a collection of lessons.
-/// Sub-modules are the smallest grouping unit above individual lessons.
-/// 
-/// Sub-Module Features:
-/// - Contains individual lessons
-/// - Granular progress tracking
-/// - Sequential or flexible lesson ordering
-/// - Time spent aggregation from lessons
-/// 
-/// Business Logic:
-/// - Progress calculated from lesson completion
-/// - May have prerequisites within the module
-/// - Completion unlocks next sub-module or module test
 model SubModule {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -315,19 +231,6 @@ model SubModule {
   @@index([userId, status])
 }
 
-/// Represents a lesson, the smallest unit of educational content.
-/// Lessons contain the actual learning materials and track detailed progress.
-/// 
-/// Lesson Features:
-/// - Atomic unit of learning content
-/// - Detailed time tracking
-/// - Binary completion status (complete/incomplete)
-/// - Links to actual content in CMS
-/// 
-/// Business Logic:
-/// - Completion is binary (not percentage-based)
-/// - Time spent is tracked in detail for analytics
-/// - May have prerequisites within sub-module
 model Lesson {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -366,23 +269,7 @@ model Lesson {
   @@index([completedAt])
 }
 
-// =============================================================================
-// ASSESSMENT & TESTING MODELS
-// =============================================================================
 
-/// Represents a test tied to a module.
-/// Tests are assessments that users must complete to finish a module.
-/// 
-/// Test Features:
-/// - Multiple question types supported
-/// - Linked to specific modules
-/// - Questions can be randomized
-/// - Supports various assessment formats
-/// 
-/// Business Logic:
-/// - One test per module (required relationship)
-/// - Tests must be passed to complete module
-/// - Question order can be randomized for security
 model Test {
   id       String @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -404,18 +291,6 @@ model Test {
   @@index([sanityId])
 }
 
-/// Represents a question in a test.
-/// Supports multiple question types with flexible answer formats.
-/// 
-/// Question Features:
-/// - Multiple question types (multiple choice, true/false, short answer)
-/// - Flexible options and answer storage using JSON
-/// - Support for complex answer validation
-/// - Randomizable for test security
-/// 
-/// Data Structure:
-/// - options: JSON array for multiple choice options
-/// - answer: JSON for flexible answer formats (single, multiple, text)
 model TestQuestion {
   id       String           @id @default(ulid())
   /// The unique identifier from the headless CMS
@@ -439,7 +314,6 @@ model TestQuestion {
   @@index([type])
 }
 
-/// The type of test question, determining UI and validation behavior.
 enum TestQuestionType {
   /// Multiple choice with single correct answer
   MULTIPLE_CHOICE
@@ -449,23 +323,7 @@ enum TestQuestionType {
   SHORT_ANSWER
 }
 
-// =============================================================================
-// USER ENGAGEMENT MODELS
-// =============================================================================
 
-/// Represents a "like" action from a user on a piece of content or a comment.
-/// Supports both content and comment likes with flexible counting.
-/// 
-/// Like Features:
-/// - Supports content and comment likes
-/// - Flexible count system (typically 1, but allows for future features)
-/// - Prevents duplicate likes with unique constraints
-/// - Tracks engagement for analytics
-/// 
-/// Business Logic:
-/// - Users can like content OR comments (not both in same record)
-/// - Unique constraints prevent duplicate likes
-/// - Count allows for future "super likes" or weighted likes
 model Like {
   id    String @id @default(ulid())
   /// The number of likes (typically 1, allows for future flexibility)
@@ -495,20 +353,6 @@ model Like {
   @@index([commentId])
 }
 
-/// Represents a bookmark action from a user on a piece of content.
-/// Bookmarks allow users to save content for later reference with optional notes and tags.
-/// 
-/// Bookmark Features:
-/// - Save articles and tutorials for later
-/// - Optional personal notes
-/// - Tag-based organization system
-/// - Full-text search on notes (future)
-/// 
-/// Business Logic:
-/// - One bookmark per user per content item
-/// - Tags enable personal organization
-/// - Notes are private to the user
-/// - Supports bulk operations and exports
 model Bookmark {
   id    String  @id @default(ulid())
   /// Optional personal notes the user can add to their bookmark
@@ -540,20 +384,6 @@ model Bookmark {
   @@index([createdAt])
 }
 
-/// Represents a tag that can be used to organize bookmarks.
-/// Tags can be user-created or system-provided for content organization.
-/// 
-/// Tag Features:
-/// - User-created personal tags
-/// - System-provided standard tags
-/// - Color coding for visual organization
-/// - Hierarchical organization (future)
-/// 
-/// Business Logic:
-/// - System tags are shared across all users
-/// - User tags are private to the creator
-/// - Colors help with visual organization
-/// - Names must be unique per user (or system-wide for system tags)
 model Tag {
   id          String  @id @default(ulid())
   /// The name of the tag (e.g., "react", "tutorial", "frontend")
@@ -587,8 +417,6 @@ model Tag {
   @@index([isSystem])
 }
 
-/// Junction table for the many-to-many relationship between bookmarks and tags.
-/// Enables flexible tagging system for bookmark organization.
 model BookmarkTag {
   id        String   @id @default(ulid())
   createdAt DateTime @default(now())
@@ -607,25 +435,7 @@ model BookmarkTag {
   @@index([tagId])
 }
 
-// =============================================================================
-// CONTENT MODERATION MODELS
-// =============================================================================
 
-/// Represents a flag/report submitted by a user on content or comments.
-/// Enables community moderation and content quality control.
-/// 
-/// Report Features:
-/// - Multiple report reasons (spam, inappropriate, etc.)
-/// - Detailed reporting with user comments
-/// - Admin workflow for review and resolution
-/// - Audit trail for moderation decisions
-/// 
-/// Moderation Workflow:
-/// 1. User submits report with reason and details
-/// 2. Report enters PENDING status
-/// 3. Moderator reviews and changes to UNDER_REVIEW
-/// 4. Final resolution: RESOLVED or DISMISSED
-/// 5. Admin notes document the decision
 model ContentReport {
   id         String     @id @default(ulid())
   /// The reason for flagging the content
@@ -674,8 +484,6 @@ model ContentReport {
   @@index([resolvedById])
 }
 
-/// The reason for flagging content.
-/// Covers common moderation scenarios and community guidelines violations.
 enum FlagReason {
   /// Unsolicited promotional content or repetitive posts
   SPAM
@@ -699,7 +507,6 @@ enum FlagReason {
   OTHER
 }
 
-/// The status of a content flag in the moderation workflow.
 enum FlagStatus {
   /// Newly submitted, awaiting moderator attention
   PENDING
@@ -711,25 +518,7 @@ enum FlagStatus {
   DISMISSED
 }
 
-// =============================================================================
-// DISCUSSION & COMMUNITY MODELS
-// =============================================================================
 
-/// Represents a comment made by a user on a piece of content.
-/// Supports nested replies for threaded discussions.
-/// 
-/// Comment Features:
-/// - Threaded replies with unlimited nesting
-/// - Rich text content support
-/// - Like system for comment engagement
-/// - Moderation and reporting system
-/// - Anonymous posting (when author is deleted)
-/// 
-/// Threading Logic:
-/// - parentId creates the reply relationship
-/// - Root comments have parentId = null
-/// - Replies can be nested infinitely
-/// - Deletion cascades to all child replies
 model Comment {
   id   String @id @default(ulid())
   /// The body of the comment (supports rich text/markdown)
@@ -773,12 +562,7 @@ model Comment {
   @@index([contentId, createdAt])
 }
 
-// =============================================================================
-// REVIEW & RATING MODELS
-// =============================================================================
 
-/// The moderation status of a user-submitted review.
-/// Ensures review quality and prevents abuse.
 enum ReviewStatus {
   /// Newly submitted, awaiting moderation
   PENDING
@@ -788,21 +572,6 @@ enum ReviewStatus {
   REJECTED
 }
 
-/// Represents a review submitted by a user for a course or program.
-/// Enables community feedback and quality assessment.
-/// 
-/// Review Features:
-/// - Numerical rating system (1-5 stars)
-/// - Written review content
-/// - Moderation workflow
-/// - Featured review highlighting
-/// - Applies to both courses and programs
-/// 
-/// Business Logic:
-/// - Users can review courses OR programs (not both in same record)
-/// - Reviews require moderation before public display
-/// - Featured reviews are highlighted in UI
-/// - Ratings contribute to overall course/program scores
 model Review {
   id       String       @id @default(ulid())
   /// The numerical rating given by the user (e.g., 1-5)
@@ -843,24 +612,7 @@ model Review {
   @@index([featured])
 }
 
-// =============================================================================
-// TIME TRACKING & ANALYTICS MODELS
-// =============================================================================
 
-/// Tracks the amount of time a user has spent on a specific lesson.
-/// Enables detailed learning analytics and progress insights.
-/// 
-/// Time Tracking Features:
-/// - Millisecond precision for accurate measurement
-/// - Last activity timestamp for session management
-/// - Aggregatable for higher-level analytics
-/// - Supports pause/resume functionality
-/// 
-/// Analytics Applications:
-/// - Learning velocity analysis
-/// - Content difficulty assessment
-/// - User engagement measurement
-/// - Personalized learning recommendations
 model TimeSpent {
   id         String   @id @default(ulid())
   /// The total duration spent on the lesson in milliseconds

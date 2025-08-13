@@ -157,8 +157,8 @@ export class MarkdownConverter {
  * Execute an operation with retry logic
  * @param operation - The operation to retry
  * @param operationName - Name of the operation for logging
- * @param maxRetries - Maximum number of retry attempts (default: 3)
- * @param retryDelays - Array of delay times in milliseconds between retries (default: [1000, 5000, 15000])
+ * @param options.maxRetries - Maximum number of retry attempts (default: 3)
+ * @param options.retryDelays - Array of delay times in milliseconds between retries (default: [1000, 5000, 15000])
  * @returns Promise<T> - Result of the operation
  *
  * @example
@@ -166,39 +166,26 @@ export class MarkdownConverter {
  * const result = await withRetry(
  *   () => fetchData(),
  *   "fetch_data",
- *   3,
- *   [1000, 5000, 15000, 30000, 60000]
+ *   {
+ *     maxRetries: 3,
+ *     retryDelays: [1000, 5000, 15000, 30000, 60000]
+ *   }
  * );
  * ```
  */
-const ONE_SECOND = 1000;
-const ONE_MINUTE = 60 * ONE_SECOND;
-const TEN_MINUTES = 10 * ONE_MINUTE;
-const THIRTY_MINUTES = 30 * ONE_MINUTE;
-const ONE_HOUR = 60 * ONE_MINUTE;
-const SIX_HOURS = 6 * ONE_HOUR;
-const TWELVE_HOURS = 12 * ONE_HOUR;
-const ONE_DAY = 24 * ONE_HOUR;
 
-export async function withRetry<T>({
-  operation,
-  operationName,
-  maxRetries = 3,
-  retryDelays = [
-    ONE_SECOND,
-    ONE_MINUTE,
-    TEN_MINUTES,
-    THIRTY_MINUTES,
-    SIX_HOURS,
-    TWELVE_HOURS,
-    ONE_DAY,
-  ],
-}: {
-  operation: () => Promise<T>;
-  operationName: string;
-  maxRetries?: number;
-  retryDelays?: number[];
-}): Promise<T> {
+export async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  options: {
+    maxRetries?: number;
+    retryDelays?: number[];
+  } = {},
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    retryDelays = [6e4, 6e5, 18e5, 36e5, 43e5, 864e5, 1728e5], // [one minute, ten minutes, thirty minutes, one hour, twelve hours, one day, two days]
+  } = options;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -210,7 +197,6 @@ export async function withRetry<T>({
       if (attempt === maxRetries) {
         lastError = error;
       }
-
       await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
       console.warn(
         `Retrying ${operationName}, attempt ${attempt + 1}/${maxRetries + 1}`,
@@ -218,5 +204,4 @@ export async function withRetry<T>({
     }
   }
   throw lastError;
-  // await sendEmail({})
 }

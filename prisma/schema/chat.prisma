@@ -1,160 +1,37 @@
-// =============================================================================
-// AI CHAT & CONVERSATION SYSTEM
-// =============================================================================
-// This file contains all models related to AI-powered chat functionality,
-// conversation management, and AI usage tracking for cost and analytics.
-
-// =============================================================================
-// CONVERSATION MESSAGING
-// =============================================================================
-
-/// Represents a single message within a conversation between a user and AI.
-/// Tracks both user inputs and AI responses with detailed usage metrics.
-/// 
-/// Message Features:
-/// - Multi-role conversation support (user, assistant, system)
-/// - Document-context awareness for RAG-powered responses
-/// - Comprehensive AI usage tracking for billing and analytics
-/// - Conversation threading and message history
-/// - Real-time streaming support for AI responses
-/// - Message editing and regeneration capabilities
-/// 
-/// AI Usage Tracking:
-/// - Token consumption monitoring for cost management
-/// - Cost calculation in cents for precise billing
-/// - Usage type classification for different AI services
-/// - Performance metrics and response quality tracking
-/// - Rate limiting and quota management
-/// 
-/// Context Management:
-/// - Document-specific conversations for focused assistance
-/// - Conversation history preservation and retrieval
-/// - Context window management for long conversations
-/// - Intelligent context pruning for token efficiency
-/// - Cross-conversation knowledge retention
-/// 
-/// Security and Privacy:
-/// - User data protection and anonymization
-/// - Conversation access control and permissions
-/// - Audit logging for compliance and monitoring
-/// - Data retention policies and automatic cleanup
-model ConversationMessage {
-  id String @id @default(ulid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  /// Optional document ID for context-aware conversations
-  documentId String?
-
-  /// The role of the message sender (user or AI assistant)
-  role    MessageRole
-  /// The actual message content or response text
-  content String
-
-  // AI usage tracking
-  /// The type of AI usage for categorization and billing
-  aiUsageType AIUsageType @default(learning_assistant)
-  /// The number of tokens consumed by this message
-  tokensUsed  Int         @default(0)
-  /// The cost of this message in cents for billing
-  costInCents Int         @default(0)
-
-  // Optional conversation grouping
-  /// Optional conversation ID for message threading
-  conversationId String?
-  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([documentId])
-  @@index([conversationId])
-  @@index([createdAt])
-  @@index([role])
-  @@index([aiUsageType])
-  @@index([userId, documentId])
-  @@index([conversationId, createdAt])
-}
-
-// =============================================================================
-// CONVERSATION MANAGEMENT
-// =============================================================================
-
-/// Represents a conversation thread between a user and AI assistant.
-/// Provides organization and context for related messages and interactions.
-/// 
-/// Conversation Features:
-/// - Persistent conversation threads for context continuity
-/// - Document-specific conversations for focused assistance
-/// - Automatic title generation from conversation content
-/// - Conversation search and filtering capabilities
-/// - Export and sharing functionality for collaboration
-/// - Archive and deletion with data retention policies
-/// 
-/// Context Preservation:
-/// - Message history maintenance for coherent responses
-/// - Document context binding for specialized assistance
-/// - User preference and interaction pattern learning
-/// - Conversation summarization for long threads
-/// - Smart context window management
-/// 
-/// Organization Features:
-/// - Automatic conversation titling based on content
-/// - Tagging and categorization for easy retrieval
-/// - Favorite and bookmark functionality
-/// - Search across conversation history
-/// - Bulk operations for conversation management
-/// 
-/// Analytics and Insights:
-/// - Conversation duration and engagement metrics
-/// - User satisfaction and feedback collection
-/// - AI performance and response quality tracking
-/// - Usage patterns and optimization opportunities
 model Conversation {
-  id String @id @default(ulid())
+  id         String    @id @default(cuid())
+  title      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  messages   Message[]
+  documentId String?
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// Optional document ID for document-specific conversations
-  documentId String?
-  /// Auto-generated or user-defined conversation title
-  title      String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  /// All messages within this conversation thread
-  messages ConversationMessage[]
-
-  @@index([userId])
-  @@index([documentId])
-  @@index([createdAt])
-  @@index([userId, documentId])
+  totalInputTokens  Int   @default(0)
+  totalOutputTokens Int   @default(0)
+  totalTokens       Int   @default(0)
+  metadata          Json?
 }
 
-// =============================================================================
-// AI SERVICE CLASSIFICATION
-// =============================================================================
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole  @default(user)
+  content        String
+  timestamp      DateTime     @default(now())
 
-/// Defines the type of AI usage for categorization and billing purposes.
-/// Enables different pricing models and usage analytics for various AI services.
-enum AIUsageType {
-  /// General learning assistance and educational support
-  learning_assistant
-  /// Public chatbot interactions and general queries
-  chatbot
-  /// Code review and programming assistance
-  code_review
+  inputTokens  Int?
+  outputTokens Int?
+  totalTokens  Int?
+
+  metadata Json?
 }
 
-/// Defines the role of a message sender in the conversation.
-/// Determines message handling, display, and processing behavior.
 enum MessageRole {
-  /// Message sent by the human user
   user
-  /// Response generated by the AI assistant
   assistant
+  system
 }

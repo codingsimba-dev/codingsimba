@@ -48,42 +48,42 @@ export const action = Webhooks({
       }),
     };
 
-    await withRetry({
-      operation: () =>
+    await withRetry(
+      () =>
         prisma.subscription.upsert({
           where: { subscriptionId: data.id },
           create: subscriptionData,
           update: subscriptionData,
         }),
-      operationName: `subscription upsert for ${data.id}`,
-    });
+      `subscription upsert for ${data.id}`,
+    );
   },
 
   onCustomerCreated: async (customer) => {
     const data = customer.data;
     invariant(data.id, "Customer ID is required");
     invariant(data.externalId, "Customer external ID is required");
-    await withRetry({
-      operation: () =>
+    await withRetry(
+      () =>
         prisma.user.update({
           where: { id: data.externalId as string },
           data: { polarCustomerId: data.id },
         }),
-      operationName: `customer created for ${data.id}`,
-    });
+      `customer created for ${data.id}`,
+    );
   },
 
   onCustomerDeleted: async (customer) => {
     const data = customer.data;
     invariant(data.id, "Customer ID is required");
 
-    await withRetry({
-      operation: () =>
+    await withRetry(
+      () =>
         prisma.user.delete({
           where: { polarCustomerId: data.id },
         }),
-      operationName: `customer deleted for ${data.id}`,
-    });
+      `customer deleted for ${data.id}`,
+    );
   },
 
   onPayload: async (payload) => {

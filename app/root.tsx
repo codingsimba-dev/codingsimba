@@ -21,7 +21,6 @@ import type { Route } from "./+types/root";
 import appStyles from "~/styles/app.css?url";
 import fontStyles from "~/styles/fonts.css?url";
 import { Navbar } from "./components/navbar";
-import { Footer } from "./components/footer";
 import { themeSessionResolver } from "~/utils/theme.server";
 import { GeneralErrorBoundary } from "./components/error-boundary";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
@@ -128,7 +127,7 @@ function Document({
         )}
         <Links />
       </head>
-      <body className="bg-background text-foreground min-h-screen antialiased">
+      <body>
         {children}
         <script
           nonce={nonce}
@@ -155,7 +154,6 @@ function App() {
       <OptionalNavbar />
       <MobileNav />
       <Outlet />
-      <Footer />
       <BottomContainer />
       <Toaster position="top-right" richColors />
     </Document>

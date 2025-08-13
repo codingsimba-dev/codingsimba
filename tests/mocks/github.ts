@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import { faker } from "@faker-js/faker";
 import fsExtra from "fs-extra";
 import { HttpResponse, passthrough, http, type HttpHandler } from "msw";
-import { StatusCodes } from "http-status-codes";
 
 const { json } = HttpResponse;
 
@@ -19,14 +18,9 @@ const githubUserFixturePath = path.join(
   ),
 );
 
-(async () => {
-  await fsExtra.ensureDir(path.dirname(githubUserFixturePath));
-})();
+await fsExtra.ensureDir(path.dirname(githubUserFixturePath));
 
-function createGitHubUser(
-  code?: string | null,
-  { primaryEmailAddress }: { primaryEmailAddress?: string } = {},
-) {
+function createGitHubUser(code?: string | null) {
   const createEmail = () => ({
     email: faker.internet.email(),
     verified: faker.datatype.boolean(),
@@ -37,7 +31,6 @@ function createGitHubUser(
     ...createEmail(),
     verified: true,
     primary: true,
-    email: primaryEmailAddress ?? faker.internet.email(),
   };
 
   const emails = [
@@ -61,8 +54,8 @@ function createGitHubUser(
     code,
     accessToken: `${code}_mock_access_token`,
     profile: {
-      login: faker.internet.username(),
-      id: `${code}_profile_id`,
+      login: faker.internet.username().slice(0, 39),
+      id: faker.number.int(),
       name: faker.person.fullName(),
       avatar_url: "https://github.com/ghost.png",
       emails: emails.map((e) => e.email),
@@ -72,7 +65,7 @@ function createGitHubUser(
   };
 }
 
-type GitHubUser = ReturnType<typeof createGitHubUser>;
+export type GitHubUser = ReturnType<typeof createGitHubUser>;
 
 async function getGitHubUsers() {
   try {
@@ -87,6 +80,14 @@ async function getGitHubUsers() {
   }
 }
 
+export async function deleteGitHubUser(primaryEmail: string) {
+  const users = await getGitHubUsers();
+  const user = users.find((u) => u.primaryEmail === primaryEmail);
+  if (!user) return null;
+  await setGitHubUsers(users.filter((u) => u.primaryEmail !== primaryEmail));
+  return user;
+}
+
 export async function deleteGitHubUsers() {
   await fsExtra.remove(githubUserFixturePath);
 }
@@ -95,14 +96,11 @@ async function setGitHubUsers(users: Array<GitHubUser>) {
   await fsExtra.writeJson(githubUserFixturePath, users, { spaces: 2 });
 }
 
-export async function insertGitHubUser(
-  code?: string | null,
-  { primaryEmailAddress }: { primaryEmailAddress?: string } = {},
-) {
+export async function insertGitHubUser(code?: string | null) {
   const githubUsers = await getGitHubUsers();
   let user = githubUsers.find((u) => u.code === code);
   if (user) {
-    Object.assign(user, createGitHubUser(code, { primaryEmailAddress }));
+    Object.assign(user, createGitHubUser(code));
   } else {
     user = createGitHubUser(code);
     githubUsers.push(user);
@@ -114,24 +112,25 @@ export async function insertGitHubUser(
 async function getUser(request: Request) {
   const accessToken = request.headers
     .get("authorization")
-    ?.slice("token ".length);
+    ?.slice("Bearer ".length);
 
   if (!accessToken) {
-    return new Response("Unauthorized", { status: StatusCodes.UNAUTHORIZED });
+    return new Response("Unauthorized", { status: 401 });
   }
   const user = (await getGitHubUsers()).find(
     (u) => u.accessToken === accessToken,
   );
 
   if (!user) {
-    return new Response("Not Found", { status: StatusCodes.NOT_FOUND });
+    return new Response("Not Found", { status: 404 });
   }
   return user;
 }
 
 const passthroughGitHub =
-  !process.env.GITHUB_CLIENT_ID.startsWith("MOCK_") &&
-  process.env.MOCKS !== "true";
+  !process.env.GITHUB_CLIENT_ID?.startsWith("MOCK_") &&
+  process.env.NODE_ENV !== "test";
+
 export const handlers: Array<HttpHandler> = [
   http.post(
     "https://github.com/login/oauth/access_token",
@@ -146,16 +145,15 @@ export const handlers: Array<HttpHandler> = [
         user = await insertGitHubUser(code);
       }
 
-      return new Response(
-        new URLSearchParams({
+      return json(
+        {
           access_token: user.accessToken,
-          token_type: "bearer",
-        }).toString(),
+          token_type: "__MOCK_TOKEN_TYPE__",
+        },
         { headers: { "content-type": "application/x-www-form-urlencoded" } },
       );
     },
   ),
-
   http.get("https://api.github.com/user/emails", async ({ request }) => {
     if (passthroughGitHub) return passthrough();
 
@@ -168,11 +166,11 @@ export const handlers: Array<HttpHandler> = [
     if (passthroughGitHub) return passthrough();
 
     const mockUser = (await getGitHubUsers()).find(
-      (u) => u.profile.id === params.id,
+      (u) => u.profile.id === Number(params.id),
     );
     if (mockUser) return json(mockUser.profile);
 
-    return new Response("Not Found", { status: StatusCodes.NOT_FOUND });
+    return new Response("Not Found", { status: 404 });
   }),
   http.get("https://api.github.com/user", async ({ request }) => {
     if (passthroughGitHub) return passthrough();

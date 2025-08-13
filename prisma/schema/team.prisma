@@ -1,4 +1,3 @@
-/// Represents a team account, which acts as a container for members, settings, and shared resources.
 model Team {
   id          String  @id @default(ulid())
   /// The display name of the team.
@@ -58,7 +57,6 @@ model Team {
   @@index([isActive])
 }
 
-/// Represents the membership of a user within a team, including their role and progress.
 model TeamMember {
   id       String   @id @default(ulid())
   /// The timestamp when the user joined the team.
@@ -95,7 +93,6 @@ model TeamMember {
   @@index([userId])
 }
 
-/// Represents a pending invitation for a user to join a team.
 model TeamInvite {
   id        String       @id @default(ulid())
   /// The email address of the user being invited.
@@ -121,7 +118,6 @@ model TeamInvite {
   @@index([status, expiresAt])
 }
 
-/// The status of a team invitation.
 enum InviteStatus {
   PENDING
   ACCEPTED
@@ -129,7 +125,6 @@ enum InviteStatus {
   EXPIRED
 }
 
-/// Represents a custom learning path created by a team.
 model TeamLearningPath {
   id          String  @id @default(ulid())
   /// The name of the learning path.
@@ -151,7 +146,6 @@ model TeamLearningPath {
   @@index([order])
 }
 
-/// A join table that associates courses with a team's custom learning path.
 model TeamLearningPathCourse {
   id         String  @id @default(ulid())
   /// The order of the course within the learning path.
@@ -171,7 +165,6 @@ model TeamLearningPathCourse {
   @@index([order])
 }
 
-/// Represents an instance of a team certificate that has been awarded to a team member.
 model TeamMemberCertificate {
   id        String    @id @default(ulid())
   earnedAt  DateTime  @default(now())
@@ -193,7 +186,6 @@ model TeamMemberCertificate {
   @@index([certificateId])
 }
 
-/// Stores aggregated analytics data for a team.
 model TeamAnalytics {
   id       String   @id @default(ulid())
   /// The date for which the analytics data is recorded.
@@ -214,7 +206,6 @@ model TeamAnalytics {
   @@index([metric])
 }
 
-/// Stores analytics data for an individual team member.
 model TeamMemberAnalytics {
   id       String   @id @default(ulid())
   /// The date for which the analytics data is recorded.
@@ -235,7 +226,6 @@ model TeamMemberAnalytics {
   @@index([metric])
 }
 
-/// Represents a third-party integration (e.g., Slack, Google Workspace) for a team.
 model TeamIntegration {
   id         String          @id @default(ulid())
   /// The type of integration.
@@ -257,7 +247,6 @@ model TeamIntegration {
   @@index([type])
 }
 
-/// Defines the types of third-party integrations available.
 enum IntegrationType {
   SLACK
   DISCORD
@@ -269,7 +258,6 @@ enum IntegrationType {
   API
 }
 
-/// Stores various settings and preferences for a team.
 model TeamSettings {
   id String @id @default(ulid())
 

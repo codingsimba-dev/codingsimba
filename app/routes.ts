@@ -17,7 +17,7 @@ export default [
   route("signout", "routes/auth/signout.ts"),
   route("forgot-password", "routes/auth/forgot-password.tsx"),
   route("authors/:authorSlug", "routes/author.tsx"),
-  route("roadmap", "routes/roadmap/index.tsx"),
+  route("changelog", "routes/changelog/index.tsx"),
   route("color-scheme", "routes/color-scheme.tsx"),
   route("*", "routes/not-found.tsx"),
 
@@ -27,6 +27,7 @@ export default [
 
   // Resource routes
   route("set-theme", "routes/resources/set-theme.ts"),
+  route("subscribe", "routes/resources/subscribe.ts"),
   route("unsubscribe", "routes/resources/unsubscribe.ts"),
   route("content/webhook", "routes/resources/sanity-webhook.ts"),
   route("download-user-data", "routes/resources/download-user-data.ts"),

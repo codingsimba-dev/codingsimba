@@ -16,6 +16,7 @@ export const authorDetailsQuery = groq`*[_type == "author" && slug.current == $s
   "image": image.asset->url,
   bio,
   skills,
+  supportUrl,
   socialLinks,
   isActive,
   createdAt,

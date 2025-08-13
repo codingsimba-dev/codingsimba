@@ -47,6 +47,11 @@
     @apply border-border scroll-smooth antialiased;
   }
 
+  html,
+  body {
+    @apply bg-background text-foreground min-h-screen;
+  }
+
   ::-webkit-scrollbar {
     width: 5px;
   }

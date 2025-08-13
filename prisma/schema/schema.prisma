@@ -10,19 +10,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// The central model representing a user of the application.
 model User {
-  id              String    @id @default(ulid())
-  email           String    @unique
+  id              String  @id @default(ulid())
+  email           String  @unique
   name            String
-  /// The user's Polar customer ID.
-  polarCustomerId String?   @unique
-  /// Whether the user is subscribed to marketing emails.
-  isSubscribed    Boolean   @default(false)
-  /// The timestamp of the user's last seen activity.
-  lastSeenAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  polarCustomerId String? @unique
+  isSubscribed    Boolean @default(false)
+
+  totalTokensUsed Int       @default(0)
+  monthlyTokens   Int       @default(0)
+  lastTokenReset  DateTime?
+
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   image                Image?
   password             Password?
@@ -61,14 +62,12 @@ model User {
   userChallenges       UserChallenge[]
 
   // Conversation relations
-  conversations       Conversation[]
-  ConversationMessage ConversationMessage[]
+  conversations Conversation[]
 
   @@index([lastSeenAt])
   @@index([createdAt])
 }
 
-/// Stores the hashed password for a user who signs up with email and password.
 model Password {
   hash String
 
@@ -76,7 +75,6 @@ model Password {
   userId String @unique
 }
 
-/// Represents  an image.
 model Image {
   id      String  @id @default(ulid())
   fileKey String
@@ -96,7 +94,6 @@ model Image {
   updatedAt DateTime @updatedAt
 }
 
-/// Represents a user's login session.
 model Session {
   id String @id @default(ulid())
 
@@ -111,7 +108,6 @@ model Session {
   @@index([userId])
 }
 
-/// Used for handling one-time-password (OTP) verifications, such as email confirmation or password resets.
 model Verification {
   id        String   @id @default(ulid())
   createdAt DateTime @default(now())
@@ -136,7 +132,6 @@ model Verification {
   @@unique([target, type])
 }
 
-/// The type of action requiring OTP verification.
 enum VerificationType {
   onboarding
   reset_password
@@ -144,7 +139,6 @@ enum VerificationType {
   two_fa
 }
 
-/// Represents a connection to a third-party OAuth provider (e.g., GitHub, Google).
 model Connection {
   id           String @id @default(ulid())
   /// The name of the OAuth provider (e.g., "github").
@@ -163,7 +157,6 @@ model Connection {
   @@index([userId])
 }
 
-/// Defines a specific permission in the system, combining an action, entity, and access level.
 model Permission {
   id          String @id @default(ulid())
   /// The action being permitted (e.g., CREATE, READ, UPDATE, DELETE).
@@ -182,7 +175,6 @@ model Permission {
   @@unique([action, entity, access])
 }
 
-/// The type of action that can be performed on an entity.
 enum Action {
   CREATE
   READ
@@ -190,7 +182,6 @@ enum Action {
   DELETE
 }
 
-/// The entities within the system that can have permissions.
 enum Entity {
   USER
   COMMENT
@@ -208,7 +199,6 @@ enum Entity {
   TEAM_SETTINGS
 }
 
-/// Represents a role that can be assigned to users, granting them a set of permissions.
 model Role {
   id          String   @id @default(ulid())
   name        RoleName @unique
@@ -223,7 +213,6 @@ model Role {
   @@index([name])
 }
 
-/// The names of the roles available in the system.
 enum RoleName {
   ADMIN
   MODERATOR
@@ -233,7 +222,6 @@ enum RoleName {
   TEAM_MEMBER
 }
 
-/// Stores a user's notification preferences.
 model NotificationSetting {
   id               String  @id @default(ulid())
   /// Notifications about new content (articles, tutorials, etc.).

@@ -10,7 +10,11 @@ export const schema = z.object({
   TURSO_DATABASE_URL: z.string(),
   TURSO_AUTH_TOKEN: z.string(),
   DATABASE_URL: z.string().default("file:./dev.db"),
-  DEEPSEEK_API_KEY: z.string(),
+  ANTHROPIC_API_KEY: z.string(),
+  VOYAGE_API_KEY: z.string(),
+  BRAVE_SEARCH_API_KEY: z.string(),
+  UPSTASH_VECTOR_REST_URL: z.string(),
+  UPSTASH_VECTOR_REST_TOKEN: z.string(),
   BUNNY_STORAGE_ZONE: z.string(),
   BUNNY_ACCESS_KEY: z.string(),
   BUNNY_LIBRARY_ID: z.string(),
@@ -34,7 +38,6 @@ declare global {
 
 export function init() {
   const parsed = schema.safeParse(process.env);
-
   if (parsed.success === false) {
     console.error(
       "❌ Invalid environment variables:",

@@ -100,7 +100,10 @@ export function Markdown({
   );
   return (
     <div
-      className={cn("prose dark:prose-invert mx-auto min-w-full", className)}
+      className={cn(
+        "prose dark:prose-invert mx-auto min-w-full max-w-3xl",
+        className,
+      )}
       id="markdown-content"
     >
       <Component

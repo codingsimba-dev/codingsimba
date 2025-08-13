@@ -9,6 +9,7 @@ import { getFAQs } from "~/utils/content.server/system/utils";
 import { getUserId } from "~/utils/auth.server";
 import { prisma } from "~/utils/db.server";
 import { SubscriptionSection } from "~/routes/subscription/components/subscription-section";
+import { Footer } from "~/components/footer";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const articlesCount = countArticles();
@@ -36,6 +37,7 @@ export default function HomeRoute() {
       {/* <CoursesSection /> */}
       <FAQSection />
       <SubscriptionSection />
+      <Footer />
     </>
   );
 }

@@ -1,19 +1,17 @@
 import groq from "groq";
 
 /**
- * GROQ query to fetch all roadmap items from Sanity CMS.
- * Returns roadmap entries with their planning and progress information.
+ * GROQ query to fetch all changelog items from Sanity CMS.
+ * Returns changelog entries with their title and content, sorted by order (most recent first)
  *
- * @returns Array of roadmap objects with title, description, category, dates, status, progress, and content
+ * @returns Array of changelog objects with title and content
  */
-export const roadmapQuery = groq`
-  *[_type == "roadmap"] {
+export const changelogQuery = groq`
+  *[_type == "changelog" && published == true] | order(order asc) {
     title,
-    description,
-    category,
-    startDate,
-    status,
-    progress,
+    version,
+    date,
+    order,
     content,
   }
 `;

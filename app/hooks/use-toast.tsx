@@ -1,5 +1,5 @@
-import type { Toast } from "~/utils/toast.server";
 import React from "react";
+import type { Toast } from "~/utils/toast.server";
 import { toast } from "sonner";
 
 export function useToast(toastSession?: Toast | null) {

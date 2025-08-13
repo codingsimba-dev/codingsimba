@@ -2,6 +2,7 @@ import { FileText, Play, GraduationCap, Target, Trophy } from "lucide-react";
 
 export const slogan = "Breeding the next generation of software developers";
 export const domain = "tekbreed.com";
+export const nameInputPlaceholder = "Tony Max";
 
 export const learningIcons = {
   articles: FileText,
@@ -24,7 +25,7 @@ export const content = [
   { name: "job board", path: "job-board" },
   { name: "store", path: "store" },
   { name: "support", path: "support" },
-  { name: "roadmap", path: "roadmap" },
+  { name: "changelog", path: "changelog" },
 ];
 
 export const platform = [
@@ -40,13 +41,14 @@ export const legal = [
 ];
 
 export const social = [
-  { name: "X (formerly twitter)", path: "https://x.com/tekbreed" },
+  { name: "X", path: "https://x.com/tekbreed" },
   {
     name: "LinkedIn",
     path: "https://www.linkedin.com/in/christopher-sesugh-265332176/",
   },
-  { name: "Github", path: "https://github.com/tekbreed" },
   { name: "YouTube", path: "https://www.youtube.com/@tekbreed" },
+  { name: "Discord", path: "https://discord.gg/7uZ6PWf4Xv" },
+  { name: "Github", path: "https://github.com/tekbreed" },
 ];
 
 export const navLinks = [

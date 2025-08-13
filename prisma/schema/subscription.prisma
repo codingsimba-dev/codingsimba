@@ -1,33 +1,5 @@
-// =============================================================================
-// SUBSCRIPTION & BILLING SYSTEM
-// =============================================================================
-// This file contains all models related to subscription management, billing,
-// and access control for courses and programs.
 
-// =============================================================================
-// SUBSCRIPTION MODELS
-// =============================================================================
 
-/// Represents a subscription to the platform's services.
-/// A subscription can be associated with either an individual user or a team, but not both.
-/// 
-/// Subscription Features:
-/// - Individual and team subscription types
-/// - Multiple plan tiers with different access levels
-/// - Integration with external payment providers (Stripe, Polar)
-/// - Automatic enrollment management
-/// - Billing period tracking for renewals
-/// 
-/// Business Logic:
-/// - One subscription per user OR team (mutually exclusive)
-/// - Subscription status synced with payment provider
-/// - Enrollments are automatically granted/revoked based on status
-/// - Teams can share subscriptions among members
-/// 
-/// Integration Notes:
-/// - subscriptionId links to external payment provider
-/// - Status values match payment provider conventions
-/// - Billing periods determine access duration
 model Subscription {
   id String @id @default(ulid())
 
@@ -89,8 +61,6 @@ model Subscription {
   @@index([subscriptionId])
 }
 
-/// The status of a subscription, typically synced from the payment provider.
-/// These values should match the payment provider's status conventions.
 enum SubscriptionStatus {
   /// Subscription is active and in good standing
   active
@@ -108,7 +78,6 @@ enum SubscriptionStatus {
   incomplete_expired
 }
 
-/// The type of subscription, determining billing and access patterns.
 enum SubscriptionType {
   /// Individual user subscription
   individual
@@ -116,19 +85,6 @@ enum SubscriptionType {
   team
 }
 
-/// Defines the subscription plans available for teams and users.
-/// Plans determine feature access, content availability, and pricing.
-/// 
-/// Plan Hierarchy:
-/// User Plans:
-/// - basic: Free tier with limited content
-/// - premium: Individual paid plan with full content access
-/// - pro: Advanced individual plan with additional features
-/// 
-/// Team Plans:
-/// - team_starter: Small team plan (up to 10 members)
-/// - team_pro: Medium team plan (up to 50 members)
-/// - team_enterprise: Large team plan (unlimited members + advanced features)
 enum Plan {
   // =============================================================================
   // INDIVIDUAL USER PLANS
@@ -153,29 +109,7 @@ enum Plan {
   team_enterprise
 }
 
-// =============================================================================
-// ENROLLMENT & ACCESS CONTROL
-// =============================================================================
 
-/// Represents a user's enrollment in a course or program, granting them access.
-/// This can be linked to a subscription or a team purchase.
-/// 
-/// Enrollment Features:
-/// - Links users to specific courses or programs
-/// - Can be granted via individual subscription or team membership
-/// - Automatic enrollment/revocation based on subscription status
-/// - Supports both individual and team-based access
-/// 
-/// Access Control Logic:
-/// - Individual enrollments: User must have active subscription
-/// - Team enrollments: User must be team member + team must have active subscription
-/// - Enrollments are automatically created when subscription becomes active
-/// - Enrollments are revoked when subscription expires/cancels
-/// 
-/// Business Rules:
-/// - One enrollment per user per course/program
-/// - Team enrollments override individual enrollments
-/// - Enrollment date tracks when access was first granted
 model Enrollment {
   id String @id @default(ulid())
 

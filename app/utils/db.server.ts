@@ -23,12 +23,12 @@ if (isDev) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-const LOCAL_DB_URL = "file:/app/data/local.db";
+const EMBEDDED_DB_URL = path.join(process.cwd(), "app/data/local.db");
 
 const databaseConfig = isDev
   ? { url: DEV_DB_URL }
   : {
-      url: LOCAL_DB_URL,
+      url: EMBEDDED_DB_URL,
       syncUrl: TURSO_DATABASE_URL,
       authToken: TURSO_AUTH_TOKEN,
       syncInterval: 60,

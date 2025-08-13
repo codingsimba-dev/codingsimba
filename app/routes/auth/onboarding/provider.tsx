@@ -25,7 +25,6 @@ import { Button } from "~/components/ui/button";
 import { parseWithZod } from "@conform-to/zod";
 import { StatusCodes } from "http-status-codes";
 import {
-  // authenticator,
   requireAnonymous,
   sessionKey,
   signupWithConnection,
@@ -41,6 +40,9 @@ import { generateMetadata } from "~/utils/meta";
 import { GradientContainer } from "~/components/gradient-container";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "~/utils/honeypot.server";
+import { nameInputPlaceholder } from "~/utils/constants";
+import { redirectWithToast } from "~/utils/toast.server";
+import { prisma } from "~/utils/db.server";
 
 export const providerIdKey = "providerId";
 export const prefilledProfileKey = "prefilledProfile";
@@ -83,25 +85,17 @@ async function requireData({
 export async function loader({ request, params }: Route.LoaderArgs) {
   await requireAnonymous(request);
   const { email } = await requireData({ request, params });
-  // const authSession = await authSessionStorage.getSession(
-  //   request.headers.get("cookie"),
-  // );
+
   const verifySession = await verifySessionStorage.getSession(
     request.headers.get("cookie"),
   );
   const prefilledProfile = verifySession.get(prefilledProfileKey);
 
-  // const formError = authSession.get(authenticator.sessionErrorKey);
-
   return data({
     email,
+    status: "idle",
     submission: {
-      intent: "",
-      payload: (prefilledProfile ?? {}) as Record<string, unknown>,
-      error: {
-        // "": typeof formError === "string" ? [formError] : [],
-        "": ["Error"],
-      },
+      initialValue: (prefilledProfile ?? {}) as Record<string, unknown>,
     },
   });
 }
@@ -119,11 +113,24 @@ export async function action({ request, params }: Route.ActionArgs) {
   );
 
   const submission = await parseWithZod(formData, {
-    schema: OnboardingSchema.transform(async (data) => {
+    schema: OnboardingSchema.superRefine(async (data, ctx) => {
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (existingUser) {
+        ctx.addIssue({
+          path: ["email"],
+          code: z.ZodIssueCode.custom,
+          message: "A user already exists with this email address.",
+        });
+        return;
+      }
+    }).transform(async (data) => {
       const session = await signupWithConnection({
         ...data,
         email,
-        providerId,
+        providerId: String(providerId),
         providerName,
       });
       return { ...data, session };
@@ -155,7 +162,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const headers = new Headers();
   headers.append(
     "set-cookie",
-    await sessionStorage.commitSession(authSession, {
+    await authSessionStorage.commitSession(authSession, {
       expires: rememberMe ? session.expirationDate : undefined,
     }),
   );
@@ -163,7 +170,15 @@ export async function action({ request, params }: Route.ActionArgs) {
     "set-cookie",
     await verifySessionStorage.destroySession(verifySession),
   );
-  return redirect(safeRedirect(redirectTo), { headers });
+  return redirectWithToast(
+    safeRedirect(redirectTo),
+    {
+      title: "Welcome aboard!",
+      description: "Signup successful.",
+      type: "success",
+    },
+    { headers },
+  );
 }
 
 export default function OnboardingProvider({
@@ -213,7 +228,7 @@ export default function OnboardingProvider({
                   <Label htmlFor={fields.name.id}>Name</Label>
                   <Input
                     {...getInputProps(fields.name, { type: "text" })}
-                    placeholder="Kent C. Dodds"
+                    placeholder={nameInputPlaceholder}
                   />
                   <FormError errors={fields.name.errors} />
                 </div>

@@ -118,9 +118,9 @@ export async function handleActions(request: Request, userId: string) {
         case DELETE_USER_INTENT: {
           const { userId } = data;
           await prisma.user.delete({ where: { id: userId } });
-          throw redirectWithToast("/", {
-            title: "Delete success",
-            description: "Account delete success",
+          throw await redirectWithToast("/", {
+            title: "Account deleted",
+            description: "Your account has been successfully deleted.",
             type: "success",
           });
         }

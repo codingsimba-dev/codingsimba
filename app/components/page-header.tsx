@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { Input } from "./ui/input";
 import { useSearchParams } from "react-router";
-import { useDebounce } from "~/utils/misc";
+import { cn, useDebounce } from "~/utils/misc";
 
 type HeaderProps = {
   title?: string;
   description?: string;
   placeholder?: string;
   enableSearch?: boolean;
+  className?: string;
 };
 
 export function Header({
@@ -17,6 +18,7 @@ export function Header({
   description,
   placeholder,
   enableSearch = false,
+  className,
 }: HeaderProps) {
   const SEARCH = "search";
   const DB_DELAY = 300;
@@ -62,7 +64,12 @@ export function Header({
   }, [searchParams, setSearch]);
 
   return (
-    <header className="mt-13 border-border relative isolate overflow-hidden border-b py-6">
+    <header
+      className={cn(
+        "mt-13 border-border relative isolate overflow-hidden border-b py-6",
+        className,
+      )}
+    >
       {/* Background container with higher stacking context */}
       <div className="absolute inset-0 -z-10">
         {/* Base gradient background */}

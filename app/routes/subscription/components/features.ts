@@ -1,10 +1,12 @@
 /**
- * Feature definitions for each subscription plan
+ * Enhanced feature definitions for each subscription plan with AI assistant options
  *
- * Maps plan names to their feature lists. Used to display features
- * in the pricing cards based on the plan type.
+ * Maps plan names to their feature lists. Includes base features and AI assistant features
+ * that can be toggled on/off for flexible pricing.
  */
-export const features = {
+
+// Base features without AI assistant
+export const baseFeatures = {
   basic: [
     "Access to free courses and tutorials",
     "Basic articles and workshops",
@@ -18,13 +20,11 @@ export const features = {
     "Access to all premium tutorials and workshops",
     "Priority community support",
     "Access to premium monthly coding challenges",
-    "AI Learning Assistant (Limited credits/month)",
   ],
   pro: [
     "Everything in Premium",
     "Skills assessment tools",
     "Access to all courses and programs",
-    "AI Learning Assistant (Unlimited credits)",
     "Advanced certificates and badges",
     "1-on-1 mentorship sessions (2/month)",
   ],
@@ -51,3 +51,61 @@ export const features = {
     "Custom branding",
   ],
 };
+
+// AI Assistant features by tier
+export const aiFeatures = {
+  basic: "AI Learning Assistant (50 credits/month)",
+  premium: "AI Learning Assistant (200 credits/month)",
+  pro: "AI Learning Assistant (Unlimited credits)",
+  "team starter": "AI Learning Assistant (Unlimited credits per member)",
+  "team pro": "AI Learning Assistant (Unlimited credits per member)",
+  enterprise: "AI Learning Assistant (Unlimited credits per member)",
+  "ai-only": [
+    "AI Learning Assistant (Unlimited credits)",
+    "Code review and suggestions",
+    "Personalized learning recommendations",
+    "24/7 AI-powered support",
+    "Integration with popular IDEs",
+    "Custom AI model fine-tuning",
+  ],
+};
+
+// AI Assistant pricing (monthly)
+export const aiPricing = {
+  basic: 9,
+  premium: 15,
+  pro: 25,
+  "team starter": 20,
+  "team pro": 30,
+  enterprise: 40,
+  "ai-only": 19,
+};
+
+/**
+ * Combines base features with AI features when AI assistant is enabled
+ */
+export function getFeaturesWithAI(planName: string, includeAI = false) {
+  const basePlanFeatures =
+    baseFeatures[planName.toLowerCase() as keyof typeof baseFeatures] || [];
+  if (!includeAI) {
+    return basePlanFeatures;
+  }
+
+  const aiFeature =
+    aiFeatures[planName.toLowerCase() as keyof typeof aiFeatures];
+
+  if (Array.isArray(aiFeature)) {
+    return [...basePlanFeatures, ...aiFeature];
+  } else if (typeof aiFeature === "string") {
+    return [...basePlanFeatures, aiFeature];
+  }
+
+  return basePlanFeatures;
+}
+
+/**
+ * Gets the AI assistant pricing for a specific plan
+ */
+export function getAIPricing(planName: string): number {
+  return aiPricing[planName.toLowerCase() as keyof typeof aiPricing] || 0;
+}

@@ -1,27 +1,5 @@
-// =============================================================================
-// CODING CHALLENGE & GAMIFICATION SYSTEM
-// =============================================================================
-// This file contains all models related to coding challenges, submissions,
-// leaderboards, badges, and gamification features for the platform.
 
-// =============================================================================
-// CHALLENGE ORGANIZATION MODELS
-// =============================================================================
 
-/// Represents a container for a month's worth of coding challenges.
-/// Provides thematic organization and temporal grouping of challenges.
-/// 
-/// Monthly Challenge Features:
-/// - Seasonal or thematic challenge collections
-/// - Time-bound challenge sets with activation control
-/// - Unique month/year combinations prevent duplicates
-/// - Centralized management of challenge availability
-/// 
-/// Business Logic:
-/// - Only one monthly challenge set per month/year combination
-/// - isActive controls whether challenges accept submissions
-/// - Theme provides optional thematic context for the month
-/// - All challenges within a month share the same activation status
 model MonthlyChallenge {
   id       String  @id @default(ulid())
   /// The title of the monthly challenge set (e.g., "June 2024 Code Challenge").
@@ -43,31 +21,7 @@ model MonthlyChallenge {
   @@unique([month, year])
 }
 
-// =============================================================================
-// CORE CHALLENGE MODELS
-// =============================================================================
 
-/// Represents an individual coding challenge.
-/// Contains problem description, test cases, and solution templates.
-/// 
-/// Challenge Features:
-/// - Multi-language support with boilerplate templates
-/// - Difficulty-based point system for scoring
-/// - Comprehensive test case validation
-/// - Progressive hint system for learning
-/// - Detailed solution explanations
-/// - SEO-friendly slug for URL routing
-/// 
-/// Content Structure:
-/// - description: Markdown-formatted problem statement
-/// - template: JSON object with language-specific boilerplate code
-/// - hints: JSON array of progressive hints for users
-/// - solution: Detailed explanation of optimal approach
-/// 
-/// Scoring System:
-/// - Points awarded based on difficulty level
-/// - Additional points for optimization and style
-/// - Bonus points for first submissions or creative solutions
 model Challenge {
   id          String              @id @default(ulid())
   /// The title of the challenge.
@@ -100,8 +54,6 @@ model Challenge {
   @@index([monthlyChallengeId])
 }
 
-/// The difficulty level of a challenge.
-/// Determines point values, complexity expectations, and user targeting.
 enum ChallengeDifficulty {
   /// Beginner-friendly challenges focusing on basic concepts
   EASY
@@ -111,26 +63,7 @@ enum ChallengeDifficulty {
   HARD
 }
 
-// =============================================================================
-// CHALLENGE TESTING SYSTEM
-// =============================================================================
 
-/// Represents a test case for a challenge, used to validate user submissions.
-/// Supports both visible examples and hidden validation cases.
-/// 
-/// Test Case Features:
-/// - Public example cases for user understanding
-/// - Hidden test cases for comprehensive validation
-/// - Edge case coverage for robust testing
-/// - Performance testing with large inputs
-/// - Security validation for malicious code prevention
-/// 
-/// Test Case Types:
-/// - Example cases: Shown in problem description
-/// - Basic cases: Standard validation scenarios
-/// - Edge cases: Boundary conditions and special inputs
-/// - Performance cases: Large inputs for optimization testing
-/// - Hidden cases: Final validation not visible to users
 model ChallengeTestCase {
   id             String  @id @default(ulid())
   /// The input data for the test case.
@@ -148,32 +81,7 @@ model ChallengeTestCase {
   @@index([challengeId])
 }
 
-// =============================================================================
-// SUBMISSION & EXECUTION MODELS
-// =============================================================================
 
-/// Represents a user's attempt to solve a challenge.
-/// Tracks code submissions, execution results, and scoring metrics.
-/// 
-/// Submission Features:
-/// - Multi-language code execution support
-/// - Comprehensive result tracking and debugging
-/// - Performance metrics (time/memory usage)
-/// - Detailed error reporting and feedback
-/// - Anti-cheat measures and code similarity detection
-/// - Badge eligibility tracking
-/// 
-/// Execution Pipeline:
-/// 1. Code submission and language validation
-/// 2. Security scanning and sandboxed execution
-/// 3. Test case validation and scoring
-/// 4. Performance metrics collection
-/// 5. Badge evaluation and leaderboard updates
-/// 
-/// Result Structure:
-/// - result JSON contains: stdout, stderr, test results, debug info
-/// - Execution metrics for performance analysis
-/// - Detailed feedback for learning purposes
 model ChallengeSubmission {
   id            String           @id @default(ulid())
   /// The code submitted by the user.
@@ -205,8 +113,6 @@ model ChallengeSubmission {
   @@index([status])
 }
 
-/// The status of a code submission.
-/// Represents the outcome of code execution and validation.
 enum SubmissionStatus {
   /// Submission received, queued for processing
   PENDING
@@ -226,32 +132,7 @@ enum SubmissionStatus {
   COMPILE_ERROR
 }
 
-// =============================================================================
-// USER PROGRESS TRACKING
-// =============================================================================
 
-/// Represents a user's state and progress for a specific challenge.
-/// Tracks learning journey, code iterations, and completion status.
-/// 
-/// Progress Features:
-/// - Persistent code saving across sessions
-/// - Language preference tracking
-/// - Solution viewing restrictions and tracking
-/// - Learning analytics and engagement metrics
-/// - Completion timestamps for achievement tracking
-/// 
-/// Learning Analytics:
-/// - Time to completion tracking
-/// - Code iteration patterns
-/// - Hint usage analysis
-/// - Solution viewing behavior
-/// - Language preference trends
-/// 
-/// Business Logic:
-/// - One progress record per user per challenge
-/// - Code autosave prevents work loss
-/// - Solution viewing affects scoring/badges
-/// - Completion unlocks advanced challenges
 model UserChallenge {
   id               String              @id @default(ulid())
   /// The user's current status for this challenge (e.g., NOT_STARTED, IN_PROGRESS).
@@ -280,8 +161,6 @@ model UserChallenge {
   @@index([challengeId])
 }
 
-/// The user's progress status on a specific challenge.
-/// Represents the learning journey through challenge completion.
 enum UserChallengeStatus {
   /// Challenge has not been attempted yet
   NOT_STARTED
@@ -291,32 +170,7 @@ enum UserChallengeStatus {
   COMPLETED
 }
 
-// =============================================================================
-// GAMIFICATION & ACHIEVEMENT SYSTEM
-// =============================================================================
 
-/// Represents an unlockable badge that can be earned by users.
-/// Provides recognition and motivation through achievement systems.
-/// 
-/// Badge Features:
-/// - Flexible criteria system using JSON configuration
-/// - Visual recognition with custom images
-/// - Tiered achievement levels (bronze, silver, gold)
-/// - Special event and milestone badges
-/// - Social sharing and profile display
-/// 
-/// Badge Categories:
-/// - Completion badges: For finishing challenges/streaks
-/// - Performance badges: For optimization and speed
-/// - Learning badges: For consistent practice
-/// - Community badges: For helping others
-/// - Special badges: For events and milestones
-/// 
-/// Criteria Examples:
-/// - {"challenges_completed": 10, "difficulty": "EASY"}
-/// - {"streak_days": 7, "consecutive": true}
-/// - {"languages_used": 3, "timeframe": "month"}
-/// - {"rank": 1, "leaderboard": "monthly"}
 model Badge {
   id          String @id @default(ulid())
   /// The name of the badge.
@@ -334,21 +188,6 @@ model Badge {
   updatedAt DateTime @updatedAt
 }
 
-/// Represents an instance of a badge that has been awarded to a user.
-/// Tracks when achievements were earned and links to triggering submissions.
-/// 
-/// Badge Award Features:
-/// - Timestamped achievement tracking
-/// - Optional link to triggering submission
-/// - Unique awards prevent duplicates
-/// - Achievement analytics and insights
-/// - Social recognition and sharing
-/// 
-/// Business Logic:
-/// - One badge award per user per badge type
-/// - Awards are permanent and cannot be revoked
-/// - Submission link provides achievement context
-/// - Awards contribute to user reputation and ranking
 model UserChallengeBadge {
   id       String   @id @default(ulid())
   /// The timestamp when the badge was earned.
@@ -369,32 +208,7 @@ model UserChallengeBadge {
   @@index([badgeId])
 }
 
-// =============================================================================
-// LEADERBOARD & RANKING SYSTEM
-// =============================================================================
 
-/// Represents a leaderboard for ranking users.
-/// Supports multiple ranking contexts and time periods.
-/// 
-/// Leaderboard Features:
-/// - Global and time-based ranking systems
-/// - Language-specific competitions
-/// - Seasonal and monthly competitions
-/// - Real-time score updates
-/// - Historical ranking preservation
-/// 
-/// Leaderboard Types:
-/// - Global: All-time user rankings
-/// - Monthly: Month-specific competitions
-/// - Language: Programming language specialization
-/// - Seasonal: Special event rankings
-/// - Team: Organization-based competitions
-/// 
-/// Ranking Algorithm:
-/// - Primary: Total points from challenge completions
-/// - Secondary: Speed of completion (tiebreaker)
-/// - Tertiary: Code quality and optimization
-/// - Bonus: Consistency and streak multipliers
 model Leaderboard {
   id       String           @id @default(ulid())
   /// The scope of the leaderboard (e.g., GLOBAL, MONTHLY).
@@ -414,8 +228,6 @@ model Leaderboard {
   @@unique([scope, language, month, year])
 }
 
-/// The scope of a leaderboard.
-/// Defines the temporal and contextual boundaries for rankings.
 enum LeaderboardScope {
   /// All-time rankings across all users and challenges
   GLOBAL
@@ -423,28 +235,6 @@ enum LeaderboardScope {
   MONTHLY
 }
 
-/// Represents a user's entry on a leaderboard.
-/// Tracks individual performance within specific ranking contexts.
-/// 
-/// Leaderboard Entry Features:
-/// - Real-time rank calculation and updates
-/// - Score aggregation from multiple sources
-/// - Historical rank tracking for trends
-/// - Tie-breaking using secondary metrics
-/// - Achievement milestone notifications
-/// 
-/// Ranking Factors:
-/// - Challenge completion points
-/// - Submission speed and efficiency
-/// - Code quality metrics
-/// - Consistency bonuses
-/// - Community contribution scores
-/// 
-/// Business Logic:
-/// - One entry per user per leaderboard
-/// - Ranks are recalculated on score changes
-/// - Entries are immutable for historical accuracy
-/// - Scores reflect cumulative achievements
 model LeaderboardEntry {
   id    String @id @default(ulid())
   /// The user's rank on the leaderboard.

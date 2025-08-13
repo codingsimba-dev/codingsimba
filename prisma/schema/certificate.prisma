@@ -1,44 +1,5 @@
-// =============================================================================
-// CERTIFICATE & ACHIEVEMENT SYSTEM
-// =============================================================================
-// This file contains all models related to digital certificates, completion
-// tracking, and achievement recognition for courses and programs.
 
-// =============================================================================
-// DIGITAL CERTIFICATE MANAGEMENT
-// =============================================================================
 
-/// Represents a certificate of completion earned by a user.
-/// Digital certificates provide verifiable proof of learning achievements and skill acquisition.
-/// 
-/// Certificate Features:
-/// - Verifiable digital certificates with unique identification
-/// - Support for both course and program completions
-/// - Customizable certificate templates and branding
-/// - Digital signature verification for authenticity
-/// - Integration with professional networks and portfolios
-/// - Automatic generation upon completion criteria fulfillment
-/// 
-/// Verification System:
-/// - Unique certificate numbers for external verification
-/// - Cryptographic signatures for tamper-proof authenticity
-/// - Public verification portal for employers and institutions
-/// - Blockchain integration for immutable record keeping
-/// - QR codes for instant mobile verification
-/// 
-/// Template System:
-/// - Professional certificate designs and layouts
-/// - Customizable branding for organizations and teams
-/// - Multi-language support for international recognition
-/// - PDF generation with high-quality graphics
-/// - Print-ready formats for physical certificates
-/// 
-/// Integration Features:
-/// - LinkedIn and professional network sharing
-/// - Portfolio and resume integration
-/// - Team certificate management and tracking
-/// - Bulk certificate generation for organizations
-/// - Analytics and completion rate tracking
 model Certificate {
   id String @id @default(ulid())
 
@@ -100,42 +61,7 @@ model Certificate {
   @@index([programId])
 }
 
-// =============================================================================
-// CERTIFICATE TEMPLATE SYSTEM
-// =============================================================================
 
-/// Represents a reusable template for generating certificates.
-/// Templates define the visual design, layout, and branding for certificates.
-/// 
-/// Template Features:
-/// - Professional certificate designs and layouts
-/// - Customizable branding elements (logos, colors, fonts)
-/// - Multi-format support (PDF, PNG, SVG)
-/// - Responsive design for various display sizes
-/// - Template versioning and update management
-/// - A/B testing for design optimization
-/// 
-/// Design Elements:
-/// - Background images and patterns
-/// - Logo placement and sizing
-/// - Text positioning and typography
-/// - Border and decorative elements
-/// - Color schemes and branding
-/// - Signature and seal placement
-/// 
-/// Customization Options:
-/// - Organization-specific branding
-/// - Course or program-specific designs
-/// - Language and localization support
-/// - Accessibility compliance features
-/// - Print and digital optimization
-/// 
-/// Template Management:
-/// - Version control for design updates
-/// - Preview and testing capabilities
-/// - Usage analytics and performance tracking
-/// - Template sharing across organizations
-/// - Backup and recovery systems
 model CertificateTemplate {
   id       String  @id @default(ulid())
   /// The display name of the certificate template

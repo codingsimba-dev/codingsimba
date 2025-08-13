@@ -1,16 +1,14 @@
 import { z } from "zod";
 
 /**
- * Zod schema for roadmap items.
- * Defines the structure for roadmap entries with planning and progress tracking.
+ * Zod schema for changelog items.
+ * Defines the structure for changelog entries with release information and updates.
  */
-export const RoadmapSchema = z.object({
+export const ChangelogSchema = z.object({
   title: z.string(),
-  description: z.string(),
-  category: z.string(),
-  startDate: z.string(),
-  status: z.enum(["planned", "in-progress", "completed"]),
-  progress: z.number().min(0).max(100),
+  version: z.string(),
+  date: z.string(),
+  order: z.number(),
   content: z.string(),
 });
 
@@ -75,7 +73,7 @@ export const PageSchema = z.object({
  * These provide type safety when working with content data.
  */
 export type TeamMember = z.infer<typeof TeamMemberSchema>;
-export type Roadmap = z.infer<typeof RoadmapSchema>;
+export type Changelog = z.infer<typeof ChangelogSchema>;
 export type Journey = z.infer<typeof JourneySchema>;
 export type FAQ = z.infer<typeof FAQSchema>;
 export type Page = z.infer<typeof PageSchema>;

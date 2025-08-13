@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import type { Route } from "../../routes/resources/+types/unsubscribe";
+import type { Route } from "../../routes/resources/+types/subscribe";
 
 export async function loader() {
   return redirect("/");

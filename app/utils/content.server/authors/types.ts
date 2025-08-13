@@ -26,6 +26,7 @@ const SocialLinksSchema = z.object({
  * @property {string} image - URL of the author's profile image
  * @property {string} bio - Author's biography
  * @property {string[]} skills - Array of skills/tags for the author
+ * @property {string} supportUrl - URL of the author's support page
  * @property {SocialLinksSchema} [socialLinks] - Social media links
  * @property {boolean} isActive - Whether the author is currently active
  * @property {string} createdAt - Creation timestamp
@@ -37,6 +38,7 @@ export const AuthorSchema = z.object({
   image: z.string(),
   bio: z.string(),
   skills: z.array(z.string()),
+  supportUrl: z.string().url().optional(),
   socialLinks: SocialLinksSchema.optional(),
   isActive: z.boolean(),
   createdAt: z.string().datetime({ offset: true }),

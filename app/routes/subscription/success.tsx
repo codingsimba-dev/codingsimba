@@ -14,8 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { getErrorMessage, invariant } from "~/utils/misc";
 import { getCheckoutSession } from "~/utils/subcription.server";
-import { features } from "./components/features";
 import { redirectWithToast } from "~/utils/toast.server";
+import { baseFeatures } from "./components/features";
 
 /**
  * Loader function for the subscription success page
@@ -187,7 +187,7 @@ interface FeaturesListProps {
  */
 function FeaturesList({ productName }: FeaturesListProps) {
   const productFeatures =
-    features[productName.toLowerCase() as keyof typeof features];
+    baseFeatures[productName.toLowerCase() as keyof typeof baseFeatures];
 
   return (
     <motion.div
