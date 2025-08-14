@@ -21,15 +21,13 @@ import {
   type LearningMode,
   type ModelType,
   type RAGContext,
+  type StreamingAIResponse,
 } from "./anthropic";
 
 import { SYSTEM_PROMPTS } from "./constants";
 
 /**
- * RAG-powered learning assistant - Simplified for direct user interaction
- * @example
- * const response = await askRAGAssistant("What is the capital of France?", [], { userLevel: "beginner" });
- * console.log(response);
+ * RAG-powered learning assistant with streaming support
  */
 export async function askRAGAssistant(
   userQuery: string,
@@ -37,8 +35,9 @@ export async function askRAGAssistant(
   options: {
     userLevel?: "beginner" | "intermediate" | "advanced";
     autoDetectLevel?: boolean;
+    streaming?: boolean; // Add streaming option
   } = {},
-): Promise<AIResponse> {
+): Promise<AIResponse | StreamingAIResponse> {
   try {
     // Auto-detect user level if enabled and not specified
     let userLevel = options.userLevel;
@@ -93,20 +92,34 @@ Please provide a comprehensive answer using the provided context. If the context
       systemPrompt: "RAG_ASSISTANT",
       model: "HAIKU",
       temperature: 0.3,
+      metadata: {
+        userLevel,
+        contextCount: contexts.length,
+        queryType: "rag",
+      },
     };
 
-    const response = await callClaudeAPI(conversationContext);
-    console.log(
-      `RAG Assistant response: ${response.usage.totalTokens} tokens in ${response.processingTime}ms`,
+    const response = await callClaudeAPI(
+      conversationContext,
+      options.streaming,
     );
 
-    response.metadata = {
-      userLevel,
-      contextCount: contexts.length,
-      queryType: "rag",
-    };
+    if (options.streaming) {
+      return response as StreamingAIResponse;
+    } else {
+      const nonStreamingResponse = response as AIResponse;
+      console.log(
+        `RAG Assistant response: ${nonStreamingResponse.usage.totalTokens} tokens in ${nonStreamingResponse.processingTime}ms`,
+      );
 
-    return response;
+      nonStreamingResponse.metadata = {
+        userLevel,
+        contextCount: contexts.length,
+        queryType: "rag",
+      };
+
+      return nonStreamingResponse;
+    }
   } catch (error) {
     console.error("RAG Assistant error:", error);
     throw new Error(`RAG Assistant failed: ${getErrorMessage(error)}`);
@@ -114,10 +127,7 @@ Please provide a comprehensive answer using the provided context. If the context
 }
 
 /**
- * Smart AI assistant that automatically detects learning mode and complexity with integrated search
- * @example
- * const response = await askAIAssistant("How do I implement a binary search tree?");
- * console.log(response);
+ * Smart AI assistant with streaming support
  */
 export async function askAIAssistant(
   userQuery: string,
@@ -126,7 +136,7 @@ export async function askAIAssistant(
     // Auto-detection options
     autoDetectMode?: boolean;
     autoDetectComplexity?: boolean;
-    autoDetectSearch?: boolean; // Auto-detect if search is needed
+    autoDetectSearch?: boolean;
 
     // Manual overrides
     learningMode?: LearningMode;
@@ -136,7 +146,7 @@ export async function askAIAssistant(
     // Search options
     enableSearch?: boolean;
     searchType?: "general" | "software" | "recent";
-    searchCount?: number; // Number of search results to include
+    searchCount?: number;
     webSearchResults?: Array<{
       title: string;
       url: string;
@@ -147,11 +157,15 @@ export async function askAIAssistant(
     urgency?: "low" | "medium" | "high";
 
     // Response preferences
-    includeReasoning?: boolean; // Include why certain decisions were made
-    includeSearchAnalytics?: boolean; // Include search analytics in response
+    includeReasoning?: boolean;
+    includeSearchAnalytics?: boolean;
+    streaming?: boolean; // Add streaming option
   } = {},
 ): Promise<
-  AIResponse & { reasoning?: string; searchAnalytics?: SearchAnalytics }
+  (AIResponse | StreamingAIResponse) & {
+    reasoning?: string;
+    searchAnalytics?: SearchAnalytics;
+  }
 > {
   try {
     // Auto-detect learning mode if not specified
@@ -186,7 +200,7 @@ export async function askAIAssistant(
       try {
         const searchType =
           options.searchType || getSearchType(userQuery, learningMode);
-        const searchCount = options.searchCount || 8; // Default to 8 results
+        const searchCount = options.searchCount || 8;
 
         console.log(
           `Performing ${searchType} search for query: "${userQuery}"`,
@@ -200,13 +214,13 @@ export async function askAIAssistant(
             });
             break;
           case "recent":
-            searchResponse = await searchRecentTech(userQuery, "pw"); // Past week
+            searchResponse = await searchRecentTech(userQuery, "pw");
             break;
           default:
             searchResponse = await searchWeb({
               query: userQuery,
               count: searchCount,
-              includeNews: learningMode === "career-advice", // Include news for career queries
+              includeNews: learningMode === "career-advice",
             });
         }
 
@@ -219,7 +233,6 @@ export async function askAIAssistant(
           "Search failed, continuing without search results:",
           searchError,
         );
-        // Continue without search results rather than failing entirely
       }
     }
 
@@ -238,7 +251,7 @@ export async function askAIAssistant(
 
     if (webResults?.length) {
       const webContext = webResults
-        .slice(0, 6) // Limit to top 6 results to avoid context overflow
+        .slice(0, 6)
         .map(
           (result) => `<web_source url="${result.url}" title="${result.title}">
 ${result.description}
@@ -296,21 +309,6 @@ Please incorporate relevant information from these sources in your response whil
       { role: "user" as const, content: enhancedQuery },
     ];
 
-    const conversationContext: ConversationContext = {
-      messages,
-      systemPrompt: systemPrompt,
-      model: selectedModel,
-      temperature,
-    };
-
-    const response = await callClaudeAPI(conversationContext);
-
-    console.log(
-      `AI Assistant [${learningMode}] response: ` +
-        `${response.usage.totalTokens} tokens in ${response.processingTime}ms ` +
-        `using ${selectedModel} model (temp: ${temperature})`,
-    );
-
     const metadata = {
       learningMode,
       detectedMode,
@@ -331,24 +329,67 @@ Please incorporate relevant information from these sources in your response whil
       },
     };
 
-    response.metadata = metadata;
+    const conversationContext: ConversationContext = {
+      messages,
+      systemPrompt: systemPrompt,
+      model: selectedModel,
+      temperature,
+      metadata,
+    };
 
-    // Generate reasoning if requested
-    let reasoning = "";
-    if (options.includeReasoning) {
-      reasoning = `Learning Mode: ${learningMode} (${options.learningMode ? "specified" : "auto-detected"})
+    const response = await callClaudeAPI(
+      conversationContext,
+      options.streaming,
+    );
+
+    if (options.streaming) {
+      const streamingResponse = response as StreamingAIResponse;
+      streamingResponse.metadata = metadata;
+
+      // Generate reasoning if requested
+      let reasoning = "";
+      if (options.includeReasoning) {
+        reasoning = `Learning Mode: ${learningMode} (${options.learningMode ? "specified" : "auto-detected"})
 Model: ${selectedModel} (optimized for ${learningMode})
 Complexity: ${complexity} (${options.complexity ? "specified" : "auto-detected"})
 Temperature: ${temperature} (optimized for task type)
 Search: ${enableSearch ? "enabled" : "disabled"} ${enableSearch ? `(${searchResults.length} results)` : ""}`;
-    }
+      }
 
-    return {
-      ...response,
-      ...(options.includeReasoning && { reasoning }),
-      ...(options.includeSearchAnalytics &&
-        searchAnalytics && { searchAnalytics }),
-    };
+      return {
+        ...streamingResponse,
+        ...(options.includeReasoning && { reasoning }),
+        ...(options.includeSearchAnalytics &&
+          searchAnalytics && { searchAnalytics }),
+      };
+    } else {
+      const nonStreamingResponse = response as AIResponse;
+
+      console.log(
+        `AI Assistant [${learningMode}] response: ` +
+          `${nonStreamingResponse.usage.totalTokens} tokens in ${nonStreamingResponse.processingTime}ms ` +
+          `using ${selectedModel} model (temp: ${temperature})`,
+      );
+
+      nonStreamingResponse.metadata = metadata;
+
+      // Generate reasoning if requested
+      let reasoning = "";
+      if (options.includeReasoning) {
+        reasoning = `Learning Mode: ${learningMode} (${options.learningMode ? "specified" : "auto-detected"})
+Model: ${selectedModel} (optimized for ${learningMode})
+Complexity: ${complexity} (${options.complexity ? "specified" : "auto-detected"})
+Temperature: ${temperature} (optimized for task type)
+Search: ${enableSearch ? "enabled" : "disabled"} ${enableSearch ? `(${searchResults.length} results)` : ""}`;
+      }
+
+      return {
+        ...nonStreamingResponse,
+        ...(options.includeReasoning && { reasoning }),
+        ...(options.includeSearchAnalytics &&
+          searchAnalytics && { searchAnalytics }),
+      };
+    }
   } catch (error) {
     console.error(`AI Assistant error:`, error);
     throw new Error(`AI Assistant failed: ${getErrorMessage(error)}`);

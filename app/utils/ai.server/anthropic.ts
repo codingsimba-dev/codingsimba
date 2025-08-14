@@ -31,10 +31,16 @@ export const CONFIG = {
   defaultModel: MODELS.HAIKU,
 };
 
+// Type definitions
+export type LearningMode = keyof typeof LEARNING_MODE_PROMPTS;
+export type ModelType = keyof typeof MODELS;
+
 export interface BaseMessage {
   role: "user" | "assistant" | "system";
   content: string;
 }
+
+type Metadata = Record<string, unknown>;
 
 export interface ConversationContext {
   messages: BaseMessage[];
@@ -42,6 +48,7 @@ export interface ConversationContext {
   temperature?: number;
   maxTokens?: number;
   systemPrompt: keyof typeof SYSTEM_PROMPTS | string;
+  metadata?: Metadata;
 }
 
 export interface RAGContext {
@@ -65,74 +72,171 @@ export interface AIResponse {
   };
   model: string;
   processingTime: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Metadata;
+}
+
+export interface StreamingAIResponse {
+  stream: ReadableStream<string>;
+  messageId: string;
+  model: string;
+  metadata?: Metadata;
 }
 
 /**
- * Core Claude API interaction with comprehensive error handling and retries
+ * Core Claude API interaction with streaming support
  */
 export async function callClaudeAPI(
   context: ConversationContext,
-): Promise<AIResponse> {
+  streaming: boolean = false,
+): Promise<AIResponse | StreamingAIResponse> {
   const startTime = Date.now();
 
   try {
     const model = MODELS[context.model ?? "HAIKU"];
-
     // Handle both system prompt keys and direct strings
-    const systemPrompt =
-      typeof context.systemPrompt === "string" &&
-      context.systemPrompt in SYSTEM_PROMPTS
-        ? SYSTEM_PROMPTS[context.systemPrompt as keyof typeof SYSTEM_PROMPTS]
-        : (context.systemPrompt as string);
-
+    const systemPrompt = determineSystemPrompt(context);
     const messages = [...context.messages];
-    let content = "";
-    const stream = anthropicClient.messages
-      .stream({
+
+    if (streaming) {
+      return handleStreamingResponse(systemPrompt, model, context, messages);
+    } else {
+      return handleNonStreamingResponse(
+        startTime,
+        systemPrompt,
         model,
-        max_tokens: context.maxTokens || CONFIG.maxTokens,
-        temperature: context.temperature || CONFIG.temperature,
-        system: [
-          {
-            type: "text",
-            text: systemPrompt,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: messages.map((msg) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        })),
-      })
-      .on("text", (text) => {
-        content += text;
-      });
-
-    const message = await stream.finalMessage();
-
-    return {
-      model,
-      messageId: message.id,
-      content: content.trim(),
-      usage: {
-        inputTokens: message.usage.input_tokens,
-        outputTokens: message.usage.output_tokens,
-        totalTokens: message.usage.input_tokens + message.usage.output_tokens,
-      },
-      processingTime: Date.now() - startTime,
-    };
+        context,
+        messages,
+      );
+    }
   } catch (error: unknown) {
     console.error("Claude API error:", error);
     throw new Error(`Failed to call Claude API: ${getErrorMessage(error)}`);
   }
 }
+/**
+ * Determines the system prompt to use for the API call.
+ * @param context The conversation context containing user messages and metadata.
+ * @returns The resolved system prompt string.
+ */
+function determineSystemPrompt(context: ConversationContext): string {
+  return typeof context.systemPrompt === "string" &&
+    context.systemPrompt in SYSTEM_PROMPTS
+    ? SYSTEM_PROMPTS[context.systemPrompt as keyof typeof SYSTEM_PROMPTS]
+    : (context.systemPrompt as string);
+}
 
-// Type definitions
-export type LearningMode = keyof typeof LEARNING_MODE_PROMPTS;
-export type ModelType = keyof typeof MODELS;
+/**
+ * Prepares the API call parameters.
+ * @param systemPrompt The system prompt to use for the API call.
+ * @param model The model to use for the API call.
+ * @param context The conversation context containing user messages and metadata.
+ * @param messages The list of messages to include in the API call.
+ * @returns The prepared API call parameters.
+ */
+async function handleStreamingResponse(
+  systemPrompt: string,
+  model: string,
+  context: ConversationContext,
+  messages: BaseMessage[],
+): Promise<StreamingAIResponse> {
+  // Return streaming response
+  const stream = anthropicClient.messages.stream({
+    model,
+    max_tokens: context.maxTokens || CONFIG.maxTokens,
+    temperature: context.temperature || CONFIG.temperature,
+    system: [
+      {
+        type: "text",
+        text: systemPrompt,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: messages.map((msg) => ({
+      role: msg.role as "user" | "assistant",
+      content: msg.content,
+    })),
+  });
 
-// Model selection mapping based on learning mode recommendations
+  // Create a ReadableStream for the response
+  const readableStream = new ReadableStream<string>({
+    start(controller) {
+      stream.on("text", (text) => {
+        controller.enqueue(text);
+      });
+
+      stream.on("end", () => {
+        controller.close();
+      });
+
+      stream.on("error", (error) => {
+        controller.error(error);
+      });
+    },
+  });
+
+  return {
+    stream: readableStream,
+    messageId: `streaming-${Date.now()}`,
+    model,
+  };
+}
+
+/**
+ * Prepares the API call parameters.
+ * @param startTime The time when the API call started.
+ * @param systemPrompt The system prompt to use for the API call.
+ * @param model The model to use for the API call.
+ * @param context The conversation context containing user messages and metadata.
+ * @param messages The list of messages to include in the API call.
+ * @returns The prepared API call parameters.
+ */
+async function handleNonStreamingResponse(
+  startTime: number,
+  systemPrompt: string,
+  model: string,
+  context: ConversationContext,
+  messages: BaseMessage[],
+): Promise<AIResponse> {
+  let content = "";
+  const stream = anthropicClient.messages
+    .stream({
+      model,
+      max_tokens: context.maxTokens || CONFIG.maxTokens,
+      temperature: context.temperature || CONFIG.temperature,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: messages.map((msg) => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      })),
+    })
+    .on("text", (text) => {
+      content += text;
+    });
+
+  const message = await stream.finalMessage();
+
+  return {
+    model,
+    messageId: message.id,
+    content: content.trim(),
+    usage: {
+      inputTokens: message.usage.input_tokens,
+      outputTokens: message.usage.output_tokens,
+      totalTokens: message.usage.input_tokens + message.usage.output_tokens,
+    },
+    processingTime: Date.now() - startTime,
+  };
+}
+
+/**
+ * Model selection mapping based on learning mode recommendations
+ */
 const LEARNING_MODE_MODEL_MAP: Record<LearningMode, ModelType> = {
   "system-design": "SONNET",
   "explain-or-design-algorithm": "SONNET",
@@ -145,7 +249,9 @@ const LEARNING_MODE_MODEL_MAP: Record<LearningMode, ModelType> = {
   default: "HAIKU",
 };
 
-// Temperature settings optimized for each learning mode
+/**
+ * Temperature settings optimized for each learning mode
+ */
 export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
   "system-design": 0.4,
   "explain-or-design-algorithm": 0.3,
@@ -158,7 +264,11 @@ export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
   default: 0.2,
 };
 
-// Helper function to get the appropriate prompt based on learning mode
+/**
+ * Gets the appropriate prompt for a given learning mode.
+ * @param mode The learning mode to get the prompt for.
+ * @returns The prompt for the specified learning mode.
+ */
 export function getPromptForLearningMode(mode: LearningMode): string {
   return `${SYSTEM_PROMPTS.SUPERCHARGED_ASSISTANT}
 
@@ -170,6 +280,7 @@ ${LEARNING_MODE_PROMPTS[mode]}
 - Provide exhaustive detail with microscopic precision
 - Include multiple examples and edge cases
 - Use visual aids (mermaid diagrams) where helpful
+- Use mathematical notation for complex concepts where applicable
 - Explain underlying principles and theory
 - Offer practical implementation guidance
 - Address common pitfalls and advanced considerations
@@ -179,6 +290,8 @@ ${LEARNING_MODE_PROMPTS[mode]}
 
 /**
  * Smart learning mode detection based on user query
+ * @param query The user query to analyze.
+ * @returns The detected learning mode.
  */
 export function detectLearningMode(query: string): LearningMode {
   const queryLower = query.toLowerCase();
@@ -214,7 +327,9 @@ export function detectLearningMode(query: string): LearningMode {
 }
 
 /**
- * Detect query complexity based on content
+ * Detects the complexity of a user query.
+ * @param query The user query to analyze.
+ * @returns The detected complexity level.
  */
 export function detectComplexity(query: string): "simple" | "complex" {
   const queryLower = query.toLowerCase();
@@ -234,7 +349,10 @@ export function detectComplexity(query: string): "simple" | "complex" {
 }
 
 /**
- * Detect if a query would benefit from web search
+ * Determines if a query should trigger a web search.
+ * @param query The user query to analyze.
+ * @param learningMode The current learning mode.
+ * @returns True if a search should be performed, false otherwise.
  */
 export function shouldPerformSearch(
   query: string,
@@ -271,7 +389,10 @@ export function shouldPerformSearch(
 }
 
 /**
- * Determine the best search type based on query and learning mode
+ * Determines the best search type based on query and learning mode.
+ * @param query The user query to analyze.
+ * @param learningMode The current learning mode.
+ * @returns The recommended search type.
  */
 export function getSearchType(
   query: string,
@@ -295,7 +416,11 @@ export function getSearchType(
   return isSoftwareQuery ? "software" : "general";
 }
 
-// Context-dependent model selection for career advice
+/**
+ * Gets the appropriate model for a career advice query.
+ * @param query The user query to analyze.
+ * @returns The recommended model type.
+ */
 function getCareerAdviceModel(query: string): ModelType {
   const tacticalCareerKeywords = [
     "resume",
@@ -322,6 +447,13 @@ function getCareerAdviceModel(query: string): ModelType {
   return "HAIKU";
 }
 
+/**
+ * Selects the optimal model for a given query and learning mode.
+ * @param learningMode The current learning mode.
+ * @param query The user query to analyze.
+ * @param complexity The detected complexity level.
+ * @returns The selected model type.
+ */
 export function selectOptimalModel(
   learningMode: LearningMode,
   query: string,
@@ -358,7 +490,10 @@ export function selectOptimalModel(
 }
 
 /**
- * Helper function to get quick model recommendation without making API call
+ * Gets a model recommendation based on the query and options.
+ * @param query The user query to analyze.
+ * @param options The options for model selection.
+ * @returns The recommended model and its parameters.
  */
 export function getModelRecommendation(
   query: string,
