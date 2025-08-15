@@ -27,7 +27,7 @@ export default function LegalRoute({ loaderData }: Route.ComponentProps) {
     <>
       {metadata}
       <Header title={pageContent.title} description={pageContent.description} />
-      <section>
+      <section className="mx-auto max-w-3xl">
         <Markdown source={pageContent.content} className="pt-0" />
       </section>
     </>

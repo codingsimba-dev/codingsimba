@@ -14,23 +14,31 @@ import { SubscriptionForm } from "./email-subscription-form";
 import { useOptionalUser } from "~/hooks/user";
 
 export function Footer() {
-  const pathsToHideFooter = [
+  const pathsToHideSubForm = [
     "signup",
     "signin",
     "forgot-password",
     "verify",
     "reset-password",
   ];
+
   const location = useLocation();
   const user = useOptionalUser();
-  const hideFooter = pathsToHideFooter.some((path) =>
+  const hideSubForm = pathsToHideSubForm.some((path) =>
     location.pathname.includes(path),
   );
+
+  const hideFooter = location.pathname.includes("chat");
+
   return (
-    <>
+    <div
+      className={cn("pt-4", {
+        "p hidden": hideFooter,
+      })}
+    >
       <section
         className={cn("bg-background relative overflow-hidden py-24", {
-          "p hidden": user || hideFooter,
+          "p hidden": user || hideSubForm,
         })}
       >
         <div className="to-background absolute inset-0 bg-gradient-to-r from-blue-500/10" />
@@ -40,11 +48,7 @@ export function Footer() {
           </div>
         </div>
       </section>
-      <footer
-        className={cn("border-border border-t py-12", {
-          "p hidden": hideFooter,
-        })}
-      >
+      <footer className={cn("border-border border-t py-12")}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-start justify-between md:flex-row">
             <section className="mb-6 md:mb-0">
@@ -120,6 +124,6 @@ export function Footer() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }

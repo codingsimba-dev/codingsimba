@@ -1,14 +1,14 @@
 import {
   useFormAction,
+  useLocation,
+  useNavigate,
   useNavigation,
-  type NavigateFunction,
 } from "react-router";
 import { type ClassValue, clsx } from "clsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSpinDelay } from "spin-delay";
 import { twMerge } from "tailwind-merge";
-import type { useUser } from "~/hooks/user";
-import { intervalToDuration } from "date-fns";
+import { useOptionalUser } from "~/hooks/user";
 import { StatusCodes } from "http-status-codes";
 
 /**
@@ -521,22 +521,19 @@ export function getReferrerRoute(request: Request) {
 export function getInitials(name: string): string {
   if (!name || typeof name !== "string") return "";
 
-  const words = name
-    .split(/\s+/)
-    .filter(
-      (word) => word.length > 0 && !(word.length === 2 && word.endsWith(".")),
-    );
+  // Match words that are NOT 2-character abbreviations ending with a period
+  const validWords = name.match(/(?!\S{2}\.\s|\S{2}$)\S+/g);
+  if (!validWords || validWords.length === 0) return "";
 
-  if (words.length === 1) {
-    return words[0].charAt(0).toUpperCase();
+  if (validWords.length === 1) {
+    return validWords[0][0].toUpperCase();
   }
 
-  const firstInitial = words[0].charAt(0).toUpperCase();
-  const lastInitial = words[words.length - 1].charAt(0).toUpperCase();
+  const firstInitial = validWords[0][0].toUpperCase();
+  const lastInitial = validWords[validWords.length - 1][0].toUpperCase();
 
   return `${firstInitial}${lastInitial}`;
 }
-
 /**
  * Capitalizes each word in a name string.
  * Handles multiple spaces and preserves existing capitalization patterns.
@@ -550,78 +547,39 @@ export function getInitials(name: string): string {
  * const complex = capitalizeName("mary-jane O'connor"); // "Mary-Jane O'Connor"
  * ```
  */
-export function capitalizeName(name: string) {
-  return name
-    .trim()
-    .replace(
-      /\b\w+/g,
-      (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
-    );
+export function capitalizeName(name: string): string {
+  if (!name || typeof name !== "string") return "";
+
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+
+  return trimmed.replace(
+    /\b(\w)(\w*)/g,
+    (_, first, rest) => first.toUpperCase() + rest.toLowerCase(),
+  );
 }
 
 /**
- * Formats a number of seconds into a human-readable duration string.
- * Uses date-fns for accurate duration calculations and includes appropriate unit labels.
- * Only displays non-zero values and handles singular/plural forms correctly.
+ * Hook that returns a function to execute other functions only if user is authenticated.
+ * If user is not authenticated, redirects to signin page.
  *
- * @param seconds - The number of seconds to format
- * @returns A string with appropriate unit labels (e.g., "1 hr 30 mins 45 secs")
- *
- * @example
- * ```ts
- * formatTime(3661) // "1 hr 1 min 1 sec"
- * formatTime(65)   // "1 min 5 secs"
- * formatTime(45)   // "45 secs"
- * formatTime(3600) // "1 hr"
- * ```
+ * @returns A function that takes a callback and executes it only if authenticated
  */
-export function formatTime(seconds: number): string {
-  const duration = intervalToDuration({ start: 0, end: seconds * 1000 });
-  const parts = [];
-
-  if (duration.hours && duration.hours > 0) {
-    parts.push(`${duration.hours} hr${duration.hours === 1 ? "" : "s"}`);
-  }
-  if (duration.minutes && duration.minutes > 0) {
-    parts.push(`${duration.minutes} min${duration.minutes === 1 ? "" : "s"}`);
-  }
-  if (duration.seconds && duration.seconds > 0) {
-    parts.push(`${duration.seconds} sec${duration.seconds === 1 ? "" : "s"}`);
-  }
-
-  return parts.join(" ");
-}
-
-/**
- * Creates a wrapper function that requires authentication before execution.
- * If user is not authenticated, redirects to signin page instead of executing the function.
- * Useful for protecting actions that require user authentication.
- *
- * @param options - Configuration options
- * @param options.fn - The function to wrap with authentication check
- * @param options.user - The current user object (null if not authenticated)
- * @param options.navigate - Navigation function to redirect unauthenticated users
- * @returns A function that checks authentication before executing the original function
- *
- * @example
- * ```ts
- * const handleDelete = requireAuth({
- *   fn: deleteItem,
- *   user: currentUser,
- *   navigate: navigate
- * });
- *
- * // Usage: handleDelete(itemId) will either delete the item or redirect to signin
- * ```
- */
-export function requireAuth({
-  fn,
-  user,
-  navigate,
-}: {
-  fn: (...args: unknown[]) => void;
-  user: ReturnType<typeof useUser> | null;
-  navigate: NavigateFunction;
-}) {
-  return (...args: unknown[]) => (user ? fn(...args) : navigate("/signin"));
+export function useRequireAuth() {
+  const user = useOptionalUser();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async <T extends (...args: unknown[]) => any>(
+    fn: T,
+    ...args: Parameters<T>
+  ): Promise<Awaited<ReturnType<T>> | undefined> => {
+    if (!user) {
+      const params = new URLSearchParams();
+      params.set("redirectTo", `${location.pathname}${location.search}`);
+      navigate(`/signin?${params.toString()}`);
+      return undefined;
+    }
+    return await fn(...args);
+  };
 }

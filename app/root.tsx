@@ -38,6 +38,7 @@ import { honeypot } from "./utils/honeypot.server";
 import { DiscordBadge } from "./components/discord-badge";
 import { LiveChat } from "./components/live-chat";
 import { useNonce } from "./utils/nonce-provider";
+import { Footer } from "./components/footer";
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.png" },
@@ -155,6 +156,7 @@ function App() {
       <MobileNav />
       <Outlet />
       <BottomContainer />
+      <Footer />
       <Toaster position="top-right" richColors />
     </Document>
   );

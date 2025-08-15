@@ -81,6 +81,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const { rememberMe, redirectTo, session } = submission.value;
+  console.log(redirectTo);
 
   return await handleNewSession({
     request,
@@ -95,6 +96,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
   const isSubmitting = useIsPending();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
+  console.log(redirectTo);
 
   const [form, fields] = useForm({
     id: "signin",
@@ -125,11 +127,15 @@ export default function Signin({ actionData }: Route.ComponentProps) {
             <CardContent className="space-y-6">
               <Form {...getFormProps(form)} method="post" className="space-y-4">
                 <HoneypotInputs />
+                <input
+                  {...getInputProps(fields.redirectTo, { type: "hidden" })}
+                  value={redirectTo ?? ""}
+                />
                 <div className="space-y-2">
                   <Label htmlFor={fields.email.id}>Email</Label>
                   <Input
                     {...getInputProps(fields.email, { type: "email" })}
-                    placeholder="hello@example.com"
+                    placeholder="hello@tonymax.com"
                   />
                   <FormError errors={fields.email.errors} />
                 </div>
@@ -199,7 +205,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
                 <p className="text-muted-foreground text-sm">
                   Don&apos;t have an account?{" "}
                   <Link
-                    to="/signup"
+                    to={`/signup${redirectTo ? `?redirectTo=${redirectTo}` : ""}`}
                     className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                   >
                     Signup

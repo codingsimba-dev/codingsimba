@@ -1,10 +1,10 @@
 import React from "react";
 import type { Route } from "../../routes/articles/+types/article";
-import { useFetcher, useSearchParams } from "react-router";
+import { useFetcher, useNavigation, useSearchParams } from "react-router";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { MessageSquareQuote, ChevronDown } from "lucide-react";
+import { MessageSquareQuote, ChevronDown, Loader } from "lucide-react";
 import { Reply } from "./reply";
 import { CommentForm } from "./form";
 import { Markdown } from "../mdx";
@@ -12,28 +12,29 @@ import { useOptionalUser } from "~/hooks/user";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Report } from "~/components/report";
-import { getImgSrc, getInitials } from "~/utils/misc";
+import { getImgSrc, getInitials, useRequireAuth } from "~/utils/misc";
 import { Upvote } from "../upvote";
-import { CommentActions } from "./comment-actions";
-import {
-  handleAddComment,
-  handleDeleteComment,
-  handleUpdateComment,
-} from "./utils";
-import { anonymous, anonymousSeed } from ".";
+import { anonymous, anonymousSeed, CommentIntent } from ".";
+import { userHasPermission } from "~/utils/permissions";
+import { DeleteComment } from "./delete-comment";
+import { UpdateComment } from "./update-comment";
 
 export type CommentData = NonNullable<
   Awaited<Route.ComponentProps["loaderData"]["comments"]>
 >[0];
 
 export function Comment({ comment }: { comment: CommentData }) {
+  const [reply, setReply] = React.useState("");
   const [editComment, setEditComment] = React.useState(false);
   const [commentBody, setCommentBody] = React.useState(comment.html);
-  const [reply, setReply] = React.useState("");
   const [showReplyForm, setShowReplyForm] = React.useState(false);
 
-  const fetcher = useFetcher();
   const user = useOptionalUser();
+  const requireAuth = useRequireAuth();
+  const navigation = useNavigation();
+  const fetcher = useFetcher({
+    key: editComment ? CommentIntent.UPDATE_COMMENT : CommentIntent.ADD_COMMENT,
+  });
   const [searchParams, setSearchParams] = useSearchParams();
 
   const replyTake = Number(searchParams.get("replyTake") ?? 3);
@@ -51,17 +52,25 @@ export function Comment({ comment }: { comment: CommentData }) {
     0,
   );
 
-  function createReply() {
+  const canReportComment = userHasPermission(
+    user,
+    isOwner ? "CREATE:CONTENT_REPORT:ANY" : "CREATE:CONTENT_REPORT:OWN",
+  );
+
+  function addReply() {
     if (!reply.trim()) return;
-    handleAddComment({
-      fetcher,
-      body: reply,
-      userId: user!.id,
-      parentId: comment.id,
-      itemId: comment.contentId,
-    });
-    setShowReplyForm(false);
-    setReply("");
+    fetcher.submit(
+      {
+        intent: CommentIntent.ADD_COMMENT,
+        data: JSON.stringify({
+          body: reply,
+          userId: user!.id,
+          parentId: comment.id,
+          itemId: comment.contentId,
+        }),
+      },
+      { method: "post" },
+    );
   }
 
   function updateComment() {
@@ -69,21 +78,18 @@ export function Comment({ comment }: { comment: CommentData }) {
       setEditComment(true);
       return;
     }
-    handleUpdateComment({
-      fetcher,
-      userId: user!.id,
-      itemId: comment.id,
-      body: commentBody,
-    });
+    fetcher.submit(
+      {
+        intent: CommentIntent.UPDATE_COMMENT,
+        data: JSON.stringify({
+          userId,
+          itemId: comment.id,
+          body: commentBody,
+        }),
+      },
+      { method: "post" },
+    );
     setEditComment(false);
-  }
-
-  function deleteComment() {
-    handleDeleteComment({
-      fetcher,
-      userId: user!.id,
-      itemId: comment.id,
-    });
   }
 
   function handleLoadMoreReplies() {
@@ -96,11 +102,18 @@ export function Comment({ comment }: { comment: CommentData }) {
     );
   }
 
+  React.useEffect(() => {
+    if (fetcher.state === "idle") {
+      setShowReplyForm(false);
+      setReply("");
+    }
+  }, [fetcher.state]);
+
   const buttonClasses =
     "flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground";
   return (
     <li className="border-border border-b pb-6 last:border-0">
-      <div className="flex items-start space-x-2">
+      <div className="flex items-start gap-2">
         <Avatar className="border-border -mt-0.5 size-8 border">
           <AvatarImage
             src={getImgSrc({
@@ -141,7 +154,10 @@ export function Comment({ comment }: { comment: CommentData }) {
             />
           ) : (
             <div className="w-full overflow-x-auto">
-              <Markdown source={comment.body} className="py-0 text-sm" />
+              <Markdown
+                source={comment.body}
+                className="mx-auto max-w-3xl py-0 text-sm"
+              />
             </div>
           )}
           <div className="mt-2 flex items-center space-x-4">
@@ -154,39 +170,41 @@ export function Comment({ comment }: { comment: CommentData }) {
               userId={userId!}
               totalLikes={totalLikes}
             />
-            {user ? (
-              <button
-                onClick={() => setShowReplyForm(!showReplyForm)}
-                className={buttonClasses}
-                aria-label="reply comment"
-              >
-                <MessageSquareQuote className="mr-1 size-4" />
-                Reply
-              </button>
-            ) : null}
-            <CommentActions
+            <button
+              onClick={() =>
+                requireAuth(() => setShowReplyForm(!showReplyForm))
+              }
+              className={buttonClasses}
+              aria-label="reply comment"
+            >
+              <MessageSquareQuote className="mr-1 size-4" />
+              Reply
+            </button>
+            <UpdateComment
               item={comment}
               contentType="comment"
-              className={buttonClasses}
               onUpdate={updateComment}
-              onDelete={deleteComment}
             />
-            {!isOwner && user ? (
-              <Report
-                size="sm"
-                itemId={comment.id}
-                isReported={isReported}
-                contentType="comment"
-                showText={true}
-              />
-            ) : null}
+            <DeleteComment item={comment} contentType="comment" />
+            {
+              // !isOwner && user ?
+              canReportComment ? (
+                <Report
+                  size="sm"
+                  itemId={comment.id}
+                  isReported={isReported}
+                  contentType="comment"
+                  showText={true}
+                />
+              ) : null
+            }
           </div>
           {comment.replies?.length ? <Separator className="mb-6 mt-4" /> : null}
           {showReplyForm ? (
             <CommentForm
               comment={reply}
               setComment={setReply}
-              onSubmit={createReply}
+              onSubmit={addReply}
               onCancel={() => setShowReplyForm(false)}
             />
           ) : null}
@@ -202,16 +220,21 @@ export function Comment({ comment }: { comment: CommentData }) {
                   )}
                 </div>
               ))}
-              {comment.replies.length >= replyTake && (
+              {comment.replies.length >= replyTake ? (
                 <Button
                   variant="ghost"
                   className="mt-2 w-full"
                   onClick={handleLoadMoreReplies}
+                  disabled={navigation.state !== "idle"}
                 >
-                  <ChevronDown className="mr-2 size-4" />
+                  {navigation.state !== "idle" ? (
+                    <Loader className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <ChevronDown className="mr-2 size-4" />
+                  )}
                   Load More Replies
                 </Button>
-              )}
+              ) : null}
             </ul>
           ) : null}
         </div>

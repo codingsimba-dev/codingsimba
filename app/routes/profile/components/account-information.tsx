@@ -42,13 +42,12 @@ export function AccountInformation() {
   });
 
   return (
-    <Container title="Account Information" className="mb-8">
+    <Container title="Basic Information" className="mb-8">
       <fetcher.Form {...getFormProps(form)} method="post" className="space-y-6">
         <input type="hidden" name="intent" value={ACCOUNT_INFORMATION_INTENT} />
 
         {/* Basic Information */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Basic Information</h3>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={fields.name.id}>Name</Label>

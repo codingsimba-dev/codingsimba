@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import type { Route } from "./+types/article";
 import { DetailsHeader } from "../../components/page-details-header";
 import { Tags } from "./components/tags";
@@ -190,6 +190,9 @@ export default function ArticleDetailsRoute({
     trackOnceDelay: 30,
     onPageView: trackPageView,
   });
+
+  const location = useLocation();
+  console.log(location);
 
   return (
     <>

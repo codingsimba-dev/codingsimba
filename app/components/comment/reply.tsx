@@ -8,19 +8,20 @@ import { CommentForm } from "./form";
 import { getImgSrc, getInitials } from "~/utils/misc";
 import type { CommentData } from "./comment";
 import { Report } from "~/components/report";
-import { CommentActions } from "./comment-actions";
 import { Upvote } from "../upvote";
-import { handleDeleteComment, handleUpdateComment } from "./utils";
 import { useFetcher } from "react-router";
-import { anonymous, anonymousSeed } from ".";
+import { anonymous, anonymousSeed, CommentIntent } from ".";
+import { DeleteComment } from "./delete-comment";
+import { UpdateComment } from "./update-comment";
 
 export type ReplyData = NonNullable<CommentData["replies"]>[0];
 
 export function Reply({ reply }: { reply: ReplyData }) {
   const [replyBody, setReplyBody] = React.useState(reply.html);
   const [editReply, setEditReply] = React.useState(false);
+
   const user = useOptionalUser();
-  const fetcher = useFetcher();
+  const fetcher = useFetcher({ key: CommentIntent.UPDATE_COMMENT });
 
   const author = reply?.author;
   const userId = user?.id;
@@ -40,90 +41,82 @@ export function Reply({ reply }: { reply: ReplyData }) {
       setEditReply(true);
       return;
     }
-    handleUpdateComment({
-      fetcher,
-      userId: user!.id,
-      itemId: reply.id,
-      body: replyBody,
-    });
+    fetcher.submit(
+      {
+        intent: CommentIntent.UPDATE_COMMENT,
+        data: JSON.stringify({ userId, itemId: reply.id, body: replyBody }),
+      },
+      { method: "post" },
+    );
     setEditReply(false);
   }
 
-  function deleteReply() {
-    handleDeleteComment({
-      fetcher,
-      userId: user!.id,
-      itemId: reply.id,
-    });
-  }
-
-  const buttonClasses =
-    "space-x-1 text-sm text-muted-foreground hover:text-foreground";
-
   return (
-    <li>
-      <div className="overflow-hidden">
-        <div className="mb-1 flex items-center justify-between">
-          <div className="flex items-center gap-x-4">
-            <Avatar className="border-border size-6 border">
-              <AvatarImage
-                src={getImgSrc({
-                  fileKey: author?.image?.fileKey,
-                  seed: author?.name ?? anonymousSeed,
-                })}
-                alt={author?.name ?? anonymous}
-              />
-              <AvatarFallback>
-                {getInitials(author?.name ?? anonymousSeed)}
-              </AvatarFallback>
-            </Avatar>
-            <h5 className="text-sm font-medium">{author?.name ?? anonymous}</h5>
-          </div>
-          <span className="text-muted-foreground text-xs">
-            {formatDistanceToNowStrict(new Date(reply.createdAt), {
-              addSuffix: true,
+    <li className="overflow-hidden">
+      <div className="mb-1 flex items-start gap-2">
+        <Avatar className="border-border size-6 border">
+          <AvatarImage
+            src={getImgSrc({
+              fileKey: author?.image?.fileKey,
+              seed: author?.name ?? anonymousSeed,
             })}
-          </span>
-        </div>
-        {editReply ? (
-          <CommentForm
-            isForUpdate
-            comment={replyBody}
-            setComment={setReplyBody}
-            onSubmit={updateReply}
-            onCancel={() => setEditReply(false)}
+            alt={author?.name ?? anonymous}
           />
-        ) : (
-          <div className="overflow-x-auto">
-            <Markdown source={reply.body} className="py-1 !text-sm" />
+          <AvatarFallback>
+            {getInitials(author?.name ?? anonymousSeed)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="w-full">
+          <div className="flex w-full items-center justify-between">
+            <h5 className="text-sm font-medium">{author?.name ?? anonymous}</h5>
+            <span className="text-muted-foreground text-xs">
+              {formatDistanceToNowStrict(new Date(reply.createdAt), {
+                addSuffix: true,
+              })}
+            </span>
           </div>
-        )}
-        <div className="mt-2 flex items-center gap-4">
-          <Upvote
-            size="sm"
-            isLiked={isLiked}
-            userLikes={userLikes}
-            itemId={reply.id}
-            contentType="comment"
-            userId={userId!}
-            totalLikes={totalLikes}
-          />
-          <CommentActions
-            item={reply}
-            contentType="reply"
-            className={buttonClasses}
-            onUpdate={updateReply}
-            onDelete={deleteReply}
-          />
-          {!isOwner && user ? (
-            <Report
-              size="sm"
-              itemId={reply.id}
-              isReported={isReported}
-              contentType="comment"
-              showText={false}
+          {editReply ? (
+            <CommentForm
+              isForUpdate
+              comment={replyBody}
+              setComment={setReplyBody}
+              onSubmit={updateReply}
+              onCancel={() => setEditReply(false)}
             />
-          ) : null}
+          ) : (
+            <div className="overflow-x-auto">
+              <Markdown
+                source={reply.body}
+                className="mx-auto max-w-3xl py-1 !text-sm"
+              />
+            </div>
+          )}
+          <div className="mt-2 flex items-center gap-4">
+            <Upvote
+              size="sm"
+              isLiked={isLiked}
+              userLikes={userLikes}
+              itemId={reply.id}
+              contentType="comment"
+              userId={userId!}
+              totalLikes={totalLikes}
+            />
+            <DeleteComment item={reply} contentType="reply" />
+            <UpdateComment
+              item={reply}
+              contentType="reply"
+              onUpdate={updateReply}
+            />
+            {!isOwner && user ? (
+              <Report
+                size="sm"
+                itemId={reply.id}
+                isReported={isReported}
+                contentType="comment"
+                showText={false}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </li>

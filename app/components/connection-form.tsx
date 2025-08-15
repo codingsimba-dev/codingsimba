@@ -2,7 +2,7 @@ import { Form } from "react-router";
 import { z } from "zod";
 import { useIsPending } from "~/utils/misc";
 import { Button } from "~/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 
 const GITHUB_PROVIDER_NAME = "github";
 
@@ -17,6 +17,10 @@ export const providerLabels: Record<ProviderName, string> = {
 export const providerIcons: Record<ProviderName, React.ReactNode> = {
   [GITHUB_PROVIDER_NAME]: <>Github</>,
 } as const;
+
+export const icons = {
+  [GITHUB_PROVIDER_NAME]: <Github />,
+};
 
 export function ConnectionForm({
   redirectTo,
@@ -46,6 +50,7 @@ export function ConnectionForm({
         variant="secondary"
       >
         <span className="inline-flex items-center gap-1.5">
+          {icons[providerName]}
           {type} with {label}{" "}
           {isPending ? <Loader2 className="ml-2 animate-spin" /> : null}
         </span>

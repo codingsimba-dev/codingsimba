@@ -1,4 +1,3 @@
-// // utils/chat.server.ts
 // import { prisma } from "~/utils/db.server";
 
 // export async function updateTokenUsage(
@@ -76,3 +75,11 @@
 //     return json({ error: "Failed to process question" }, { status: 500 });
 //   }
 // }
+
+export async function loader() {
+  return {};
+}
+
+export async function action() {
+  return {};
+}

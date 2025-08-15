@@ -1,6 +1,6 @@
 import { FileText, Play, GraduationCap, Target, Trophy } from "lucide-react";
 
-export const slogan = "Breeding the next generation of software developers";
+export const slogan = "Breeding the next generation of software engineers";
 export const domain = "tekbreed.com";
 export const nameInputPlaceholder = "Tony Max";
 

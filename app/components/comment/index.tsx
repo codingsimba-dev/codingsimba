@@ -1,23 +1,21 @@
 import React from "react";
 import type { Route as ArticleRoute } from "../../routes/articles/+types/article";
 import type { Route as TutorialRoute } from "../../routes/tutorials/+types/tutorial";
-import { MessageSquareOff } from "lucide-react";
+import { Loader, MessageSquareOff } from "lucide-react";
 import { EmptyState } from "../empty-state";
 import { CommentForm } from "./form";
 import { Comment } from "./comment";
 import { useOptionalUser } from "~/hooks/user";
-import { Badge } from "../ui/badge";
 import {
   Await,
-  Link,
   useFetcher,
   useLoaderData,
+  useNavigation,
   useSearchParams,
 } from "react-router";
 import { Button } from "../ui/button";
 import { ChevronDown } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { handleAddComment } from "./utils";
 
 export const anonymous = "Anonymous";
 export const anonymousSeed = "Doe";
@@ -36,26 +34,36 @@ export function Comments() {
   >();
   const [comment, setComment] = React.useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const commentTake = Number(searchParams.get("commentTake")) || 5;
-
-  const fetcher = useFetcher();
+  const commentTake = Number(searchParams.get("commentTake") ?? 5);
   const user = useOptionalUser();
+  const navigation = useNavigation();
+  const fetcher = useFetcher({ key: CommentIntent.ADD_COMMENT });
 
   const item =
     "article" in loaderData ? loaderData.article : loaderData.tutorial;
   const itemId = item.id;
 
-  function handleSubmit() {
+  function addComment() {
     if (!comment.trim()) return;
-    handleAddComment({
-      itemId,
-      fetcher,
-      parentId: null,
-      body: comment,
-      userId: user!.id,
-    });
-    setComment("");
+    fetcher.submit(
+      {
+        intent: CommentIntent.ADD_COMMENT,
+        data: JSON.stringify({
+          itemId,
+          parentId: null,
+          body: comment,
+          userId: user!.id,
+        }),
+      },
+      { method: "post" },
+    );
   }
+
+  React.useEffect(() => {
+    if (fetcher.state === "idle") {
+      setComment("");
+    }
+  }, [fetcher.state]);
 
   function handleLoadMoreComments() {
     setSearchParams(
@@ -73,25 +81,15 @@ export function Comments() {
         <Await resolve={loaderData.comments}>
           {(comments) => (
             <>
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold">
-                  Comments ({comments.length})
-                </h3>
-                {!user ? (
-                  <Badge asChild>
-                    <Link to={"/signin"}>Signin to add a comment</Link>
-                  </Badge>
-                ) : null}
-              </div>
+              <h3 className="text-xl font-bold">
+                Comments ({comments.length})
+              </h3>
               <Separator className="my-4" />
-              {user ? (
-                <CommentForm
-                  comment={comment}
-                  setComment={setComment}
-                  onSubmit={handleSubmit}
-                />
-              ) : null}
-
+              <CommentForm
+                comment={comment}
+                setComment={setComment}
+                onSubmit={addComment}
+              />
               {comments?.length ? (
                 <>
                   <ul className="mt-4 space-y-4">
@@ -99,16 +97,21 @@ export function Comments() {
                       <Comment key={comment.id} comment={comment} />
                     ))}
                   </ul>
-                  {comments.length >= commentTake && (
+                  {comments.length >= commentTake ? (
                     <Button
                       variant="ghost"
                       className="mt-4 w-full"
                       onClick={handleLoadMoreComments}
+                      disabled={navigation.state !== "idle"}
                     >
-                      <ChevronDown className="mr-2 size-4" />
+                      {navigation.state !== "idle" ? (
+                        <Loader className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <ChevronDown className="mr-2 size-4" />
+                      )}
                       Load More Comments
                     </Button>
-                  )}
+                  ) : null}
                 </>
               ) : (
                 <EmptyState

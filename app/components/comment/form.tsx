@@ -1,9 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Send, X } from "lucide-react";
+import { Loader, Send, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { useOptionalUser } from "~/hooks/user";
 import { MDXEditor } from "../mdx/editor";
-import { getImgSrc, getInitials } from "~/utils/misc";
+import { getImgSrc, getInitials, useRequireAuth } from "~/utils/misc";
+import { useFetcher } from "react-router";
+import { anonymous, anonymousSeed, CommentIntent } from ".";
 
 type CommentFormProps = {
   isForUpdate?: boolean;
@@ -19,15 +21,21 @@ export function CommentForm({
   comment,
   setComment,
   onCancel,
-  onSubmit: handleFormSubmit,
+  onSubmit,
 }: CommentFormProps) {
-  const hideSubmitButton = !comment.trim();
   const user = useOptionalUser();
+  const requireAuth = useRequireAuth();
+  const fetcher = useFetcher({
+    key: isForUpdate ? CommentIntent.UPDATE_COMMENT : CommentIntent.ADD_COMMENT,
+  });
 
-  function onSubmit() {
-    if (hideSubmitButton || !comment.trim()) return;
-    handleFormSubmit();
-  }
+  const disableSubmitButton = !comment.trim() && !!user;
+
+  const intent =
+    fetcher.formData?.get("intent") ===
+    (isForUpdate ? CommentIntent.UPDATE_COMMENT : CommentIntent.ADD_COMMENT);
+
+  const isAdding = fetcher.state !== "idle" && intent;
 
   return (
     <div className="mb-4 mt-2">
@@ -37,38 +45,44 @@ export function CommentForm({
             <AvatarImage
               src={getImgSrc({
                 fileKey: user?.image?.fileKey,
-                seed: user?.name ?? "",
+                seed: user?.name ?? anonymousSeed,
               })}
-              alt={user!.name}
+              alt={user?.name}
             />
-            <AvatarFallback>{getInitials(user!.name)}</AvatarFallback>
+            <AvatarFallback>
+              {getInitials(user?.name ?? anonymous)}
+            </AvatarFallback>
           </Avatar>
         ) : null}
         <div className="flex w-full max-w-full flex-1 flex-col">
           <MDXEditor setValue={setComment} value={comment} />
-          {!hideSubmitButton ? (
-            <div className="mt-2 flex justify-end">
-              {isForUpdate ? (
-                <Button
-                  size={"icon"}
-                  onClick={onCancel}
-                  className="mr-4 flex items-center gap-2"
-                  variant={"destructive"}
-                >
-                  <X />
-                </Button>
-              ) : null}
+
+          <div className="mt-2 flex justify-end gap-4">
+            {isForUpdate ? (
               <Button
-                type="submit"
                 size={"icon"}
-                disabled={hideSubmitButton}
-                onClick={onSubmit}
-                className="flex items-center gap-2"
+                onClick={onCancel}
+                disabled={disableSubmitButton || isAdding}
+                variant={"destructive"}
               >
-                <Send />
+                <X />
               </Button>
-            </div>
-          ) : null}
+            ) : null}
+            <Button
+              type="submit"
+              size={user ? "icon" : "sm"}
+              disabled={disableSubmitButton || isAdding}
+              onClick={() => requireAuth(onSubmit)}
+            >
+              {isAdding ? (
+                <Loader className="animate-spin" />
+              ) : user ? (
+                <Send />
+              ) : (
+                "Sign In to add a comment"
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

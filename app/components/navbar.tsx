@@ -32,12 +32,8 @@ import { userHasRole } from "~/utils/permissions";
 
 export function Navbar() {
   const location = useLocation();
-  const { openMobileNav } = useMobileNav();
   const isHomePage = location.pathname === "/";
-
-  const user = useOptionalUser();
-  const image = user?.image;
-  const userIsAdmin = userHasRole(user, "ADMIN");
+  const isChatPage = location.pathname.includes("/chat");
 
   // Icon mapping for learning links
   const learningIcons = {
@@ -50,11 +46,17 @@ export function Navbar() {
 
   return (
     <nav
-      className={cn("pt-6", {
-        "bg-transparent": isHomePage,
-        "border-border bg-background/80 fixed left-0 right-0 top-0 z-50 w-full border-b pt-0 backdrop-blur-md":
-          !isHomePage,
-      })}
+      className={cn(
+        "pt-6",
+        {
+          "bg-transparent": isHomePage,
+          "border-border bg-background/80 fixed left-0 right-0 top-0 z-50 w-full border-b pt-0 backdrop-blur-md":
+            !isHomePage,
+        },
+        {
+          "p hidden": isChatPage,
+        },
+      )}
     >
       <div className="container mx-auto flex items-center justify-between px-4 py-2">
         <Logo />
@@ -94,58 +96,69 @@ export function Navbar() {
             />
           ))}
         </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-          {!user ? (
-            <Button className="hidden lg:flex" asChild>
-              <Link to={"/signin"}>Sign In</Link>
-            </Button>
-          ) : null}
-          {userIsAdmin ? (
-            <Button size={"icon"} variant={"outline"} asChild>
-              <Link to={"/admin"}>
-                <DoorClosed />
-              </Link>
-            </Button>
-          ) : null}
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="hidden lg:block" asChild>
-                <Avatar className="border-border size-8 cursor-pointer border">
-                  <AvatarImage
-                    src={getImgSrc({
-                      fileKey: image?.fileKey,
-                      seed: user.name,
-                    })}
-                    alt={user.name}
-                  />
-                  <AvatarFallback className="border-border border">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem asChild>
-                  <Link to={"/profile"} prefetch="intent" className="font-bold">
-                    <Icons.UserPen className="mr-2 size-4" /> Profile
-                  </Link>
-                </DropdownMenuItem>
-                <Separator className="my-1" />
-                <SignoutButton />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
-
-          <Button
-            size={"icon"}
-            variant={"ghost"}
-            className="block lg:hidden"
-            onClick={openMobileNav}
-          >
-            <Icons.Menu />
-          </Button>
-        </div>
+        <AuthButtons />
       </div>
     </nav>
+  );
+}
+
+export function AuthButtons() {
+  const user = useOptionalUser();
+  const { openMobileNav } = useMobileNav();
+
+  const image = user?.image;
+  const userIsAdmin = userHasRole(user, "ADMIN");
+  return (
+    <div className="flex items-center gap-4">
+      <ThemeToggle />
+      {!user ? (
+        <Button className="hidden lg:flex" asChild>
+          <Link to={"/signin"}>Sign In</Link>
+        </Button>
+      ) : null}
+      {userIsAdmin ? (
+        <Button size={"icon"} variant={"outline"} asChild>
+          <Link to={"/admin"}>
+            <DoorClosed />
+          </Link>
+        </Button>
+      ) : null}
+      {user ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="hidden lg:block" asChild>
+            <Avatar className="border-border size-8 cursor-pointer border">
+              <AvatarImage
+                src={getImgSrc({
+                  fileKey: image?.fileKey,
+                  seed: user.name,
+                })}
+                alt={user.name}
+              />
+              <AvatarFallback className="border-border border">
+                {getInitials(user.name)}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem asChild>
+              <Link to={"/profile"} prefetch="intent" className="font-bold">
+                <Icons.UserPen className="mr-2 size-4" /> Profile
+              </Link>
+            </DropdownMenuItem>
+            <Separator className="my-1" />
+            <SignoutButton />
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
+
+      <Button
+        size={"icon"}
+        variant={"ghost"}
+        className="block lg:hidden"
+        onClick={openMobileNav}
+      >
+        <Icons.Menu />
+      </Button>
+    </div>
   );
 }

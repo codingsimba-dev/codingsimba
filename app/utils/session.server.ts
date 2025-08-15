@@ -62,6 +62,7 @@ export async function handleNewSession(
     request.headers.get("cookie"),
   );
   authSession.set(sessionKey, session.id);
+  console.log("FINAL", redirectTo);
 
   return redirect(
     safeRedirect(redirectTo),

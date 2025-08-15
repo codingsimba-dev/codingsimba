@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart } from "lucide-react";
-import { cn } from "~/utils/misc";
+import { cn, useRequireAuth } from "~/utils/misc";
 import { AnimatePresence, motion } from "framer-motion";
 import { useFetcher } from "react-router";
 
@@ -129,6 +129,7 @@ export function Upvote({
     userLikes,
   });
   const fetcher = useFetcher();
+  const requireAuth = useRequireAuth();
 
   /**
    * Update optimistic state when props change
@@ -210,7 +211,7 @@ export function Upvote({
   return (
     <div className="relative flex items-center">
       <button
-        onClick={handleUpvote}
+        onClick={() => requireAuth(handleUpvote)}
         disabled={isDisabled}
         className={cn(
           "hover:text-foreground text-muted-foreground flex items-center gap-1 transition-colors",

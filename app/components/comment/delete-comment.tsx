@@ -1,5 +1,31 @@
-import React from "react";
-import { FilePenLine, Trash2, Loader } from "lucide-react";
+/**
+ * DeleteComment Component
+ *
+ * Renders a delete button for a comment or reply, with permission checks,
+ * loading state, and a confirmation dialog. Only users with the correct
+ * permissions (owner or admin) will see the delete option.
+ *
+ * Features:
+ * - Shows a delete icon/button if the user has permission.
+ * - Displays a confirmation dialog before deletion.
+ * - Shows a loading spinner while the delete action is in progress.
+ * - Submits the delete action using a fetcher.
+ *
+ * Props:
+ * - item: The comment or reply data object.
+ * - contentType: "comment" | "reply" (for dialog text).
+ * - className: Optional additional CSS classes.
+ *
+ * Usage:
+ * ```tsx
+ * <DeleteComment
+ *   item={comment}
+ *   contentType="comment"
+ * />
+ * ```
+ */
+
+import { Trash2, Loader } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,51 +44,19 @@ import type { ReplyData } from "./reply";
 import { useFetcher } from "react-router";
 import { CommentIntent } from ".";
 
-/**
- * Props for the CommentActions component
- */
 interface CommentActionsProps {
-  /** The item to display actions for */
   item: CommentData | ReplyData;
-  /** Type of content for display purposes */
   contentType: "comment" | "reply";
-  /** Additional CSS classes */
   className?: string;
-  /** Function to handle update */
-  onUpdate?: () => void;
-  /** Function to handle delete */
-  onDelete?: () => void;
 }
 
-/**
- * Reusable component for comment and reply edit/delete actions
- *
- * This component provides consistent edit and delete functionality
- * for both comments and replies, with proper loading states and
- * confirmation dialogs.
- *
- * @param {CommentActionsProps} props - Component configuration
- * @param {"comment" | "reply"} props.contentType - Type of content for display
- * @param {string} [props.className] - Additional CSS classes
- *
- * @example
- * ```tsx
- * <CommentActions
- *   contentType="comment"
- * />
- * ```
- *
- * @returns {JSX.Element} Edit and delete action buttons
- */
-export function CommentActions({
+export function DeleteComment({
   item,
-  onUpdate = () => {},
-  onDelete = () => {},
   contentType,
   className = "",
 }: CommentActionsProps) {
-  const fetcher = useFetcher();
   const user = useOptionalUser();
+  const fetcher = useFetcher();
 
   const userId = user?.id;
   const isOwner = userId === item.authorId;
@@ -70,14 +64,17 @@ export function CommentActions({
     user,
     isOwner ? "DELETE:COMMENT:OWN" : "DELETE:COMMENT:ANY",
   );
-  const canUpdate = userHasPermission(
-    user,
-    isOwner ? "UPDATE:COMMENT:OWN" : "UPDATE:COMMENT:ANY",
-  );
 
-  const isUpdating =
-    fetcher.state !== "idle" &&
-    fetcher.formData?.get("intent") === CommentIntent.UPDATE_COMMENT;
+  function deleteComment() {
+    fetcher.submit(
+      {
+        intent: CommentIntent.DELETE_COMMENT,
+        data: JSON.stringify({ userId, itemId: item.id }),
+      },
+      { method: "post" },
+    );
+  }
+
   const isDeleting =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === CommentIntent.DELETE_COMMENT;
@@ -89,23 +86,6 @@ export function CommentActions({
 
   return (
     <>
-      {canUpdate ? (
-        <button
-          onClick={onUpdate}
-          disabled={isUpdating || isDeleting}
-          className={buttonClasses}
-          aria-label={
-            isUpdating ? `updating ${contentType}` : `update ${contentType}`
-          }
-        >
-          {isUpdating ? (
-            <Loader className="mr-1 size-4 animate-spin" />
-          ) : (
-            <FilePenLine className="text-primary mr-1 size-4" />
-          )}
-          Edit
-        </button>
-      ) : null}
       {canDelete ? (
         <AlertDialog>
           <AlertDialogTrigger disabled={isDeleting} className={buttonClasses}>
@@ -124,7 +104,7 @@ export function CommentActions({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>No</AlertDialogCancel>
-              <AlertDialogAction onClick={onDelete}>Yes</AlertDialogAction>
+              <AlertDialogAction onClick={deleteComment}>Yes</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

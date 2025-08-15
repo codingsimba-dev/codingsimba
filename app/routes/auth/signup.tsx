@@ -188,7 +188,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
                 <p className="text-muted-foreground text-sm">
                   Already have an account?{" "}
                   <Link
-                    to="/signin"
+                    to={`/signin${redirectTo ? `?redirectTo=${redirectTo}` : ""}`}
                     className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                   >
                     Signin

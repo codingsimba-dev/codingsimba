@@ -258,18 +258,22 @@ function ResolvedMetrics({ metrics, className }: ResolvedMetricsProps) {
           contentType="article"
           userId={userId!}
         />
-        <Bookmark
-          contentType="article"
-          isBookmarked={isBookmarked}
-          itemId={isBookmarked ? metrics?.id : metrics?.sanityId}
-          existingBookmark={bookmark}
-        />
-        <Report
-          size="sm"
-          contentType="article"
-          isReported={isReported}
-          itemId={isReported ? metrics?.id : metrics?.sanityId}
-        />
+        {user ? (
+          <>
+            <Bookmark
+              contentType="article"
+              isBookmarked={isBookmarked}
+              itemId={isBookmarked ? metrics?.id : metrics?.sanityId}
+              existingBookmark={bookmark}
+            />
+            <Report
+              size="sm"
+              contentType="article"
+              isReported={isReported}
+              itemId={isReported ? metrics?.id : metrics?.sanityId}
+            />
+          </>
+        ) : null}
         <Views views={metrics?.views ?? LEAST_COUNT} />
       </div>
     </div>
