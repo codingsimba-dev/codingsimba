@@ -3,6 +3,7 @@ import { getErrorMessage } from "../misc";
 import {
   ALGORITHM_KEYWORDS,
   ANALYSIS_KEYWORDS,
+  BASE_SYSTEM_PROMPT,
   CAREER_KEYWORDS,
   COMPLEXITY_INDICATORS,
   DEBUG_KEYWORDS,
@@ -12,7 +13,7 @@ import {
   SIMPLICITY_INDICATORS,
   SOFTWARE_INDICATORS,
   SYSTEM_DESIGN_KEYWORDS,
-  SYSTEM_PROMPTS,
+  CACHED_SYSTEM_PROMPTS,
   TUTORIAL_KEYWORDS,
 } from "./constants";
 
@@ -22,16 +23,9 @@ const anthropicClient = new Anthropic({
 
 export const MODELS = {
   HAIKU: "claude-3-5-haiku-latest",
-  SONNET: "claude-3-7-sonnet-latest",
+  SONNET: "claude-sonnet-4-20250514",
 } as const;
 
-export const CONFIG = {
-  maxTokens: 4096,
-  temperature: 0.7,
-  defaultModel: MODELS.HAIKU,
-};
-
-// Type definitions
 export type LearningMode = keyof typeof LEARNING_MODE_PROMPTS;
 export type ModelType = keyof typeof MODELS;
 
@@ -40,15 +34,21 @@ export interface BaseMessage {
   content: string;
 }
 
-type Metadata = Record<string, unknown>;
-
 export interface ConversationContext {
   messages: BaseMessage[];
+  systemPrompt: string;
+  thinking?: boolean;
+  learningMode?: string;
   model?: keyof typeof MODELS;
   temperature?: number;
-  maxTokens?: number;
-  systemPrompt: keyof typeof SYSTEM_PROMPTS | string;
-  metadata?: Metadata;
+  userLevel?: "beginner" | "intermediate" | "advanced";
+  contextCount?: number;
+  queryType?: string;
+  urgency?: "low" | "medium" | "high";
+  complexity?: "simple" | "complex";
+  searchPerformed?: boolean;
+  searchType?: string;
+  searchResultCount?: number;
 }
 
 export interface RAGContext {
@@ -62,24 +62,46 @@ export interface RAGContext {
   userLevel?: "beginner" | "intermediate" | "advanced";
 }
 
-export interface AIResponse {
-  content: string;
-  messageId: string;
-  usage: {
-    inputTokens: number;
-    outputTokens: number;
-    totalTokens: number;
-  };
-  model: string;
-  processingTime: number;
-  metadata?: Metadata;
-}
-
 export interface StreamingAIResponse {
   stream: ReadableStream<string>;
   messageId: string;
   model: string;
-  metadata?: Metadata;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Determines if "thinking" should be enabled for a request.
+ */
+export function shouldEnableThinking({
+  learningMode,
+  complexity,
+  userQuery,
+}: {
+  learningMode?: string;
+  complexity?: "simple" | "complex";
+  userQuery?: string;
+}): boolean {
+  const thinkingModes: string[] = [
+    "system-design",
+    "explain-or-design-algorithm",
+    "analyze-algorithm",
+    "code-review",
+  ];
+
+  if (learningMode && thinkingModes.includes(learningMode)) return true;
+  if (complexity === "complex") return true;
+
+  const reasoningTriggers = [
+    "show your reasoning",
+    "think step by step",
+    "explain your steps",
+    "explain why",
+    "how did you get this",
+  ];
+  const queryLower = (userQuery || "").toLowerCase();
+  if (reasoningTriggers.some((t) => queryLower.includes(t))) return true;
+
+  return false;
 }
 
 /**
@@ -87,123 +109,56 @@ export interface StreamingAIResponse {
  */
 export async function callClaudeAPI(
   context: ConversationContext,
-  streaming: boolean = false,
-): Promise<AIResponse | StreamingAIResponse> {
-  const startTime = Date.now();
+  enableThinking?: boolean,
+): Promise<StreamingAIResponse> {
+  const config = {
+    haikuMaxTokens: 4_096,
+    sonnetMaxTokens: 16_000,
+    temperature: 0.7,
+    defaultModel: MODELS.HAIKU,
+  };
 
   try {
-    const model = MODELS[context.model ?? "HAIKU"];
-    // Handle both system prompt keys and direct strings
-    const systemPrompt = determineSystemPrompt(context);
+    const thinkingEnabled =
+      enableThinking ??
+      shouldEnableThinking({
+        learningMode: context.learningMode,
+        complexity: context.complexity,
+        userQuery: context.messages[0]?.content,
+      });
+
+    const model =
+      thinkingEnabled || context.model === "SONNET"
+        ? MODELS["SONNET"]
+        : MODELS[context.model ?? "HAIKU"];
+
+    const systemPrompt =
+      typeof context.systemPrompt === "string" &&
+      context.systemPrompt in CACHED_SYSTEM_PROMPTS
+        ? CACHED_SYSTEM_PROMPTS[
+            context.systemPrompt as keyof typeof CACHED_SYSTEM_PROMPTS
+          ]
+        : (context.systemPrompt as string);
+
+    const maxTokens =
+      thinkingEnabled && model === MODELS["SONNET"]
+        ? config.sonnetMaxTokens
+        : config.haikuMaxTokens;
+
     const messages = [...context.messages];
 
-    if (streaming) {
-      return handleStreamingResponse(systemPrompt, model, context, messages);
-    } else {
-      return handleNonStreamingResponse(
-        startTime,
-        systemPrompt,
-        model,
-        context,
-        messages,
-      );
-    }
-  } catch (error: unknown) {
-    console.error("Claude API error:", error);
-    throw new Error(`Failed to call Claude API: ${getErrorMessage(error)}`);
-  }
-}
-/**
- * Determines the system prompt to use for the API call.
- * @param context The conversation context containing user messages and metadata.
- * @returns The resolved system prompt string.
- */
-function determineSystemPrompt(context: ConversationContext): string {
-  return typeof context.systemPrompt === "string" &&
-    context.systemPrompt in SYSTEM_PROMPTS
-    ? SYSTEM_PROMPTS[context.systemPrompt as keyof typeof SYSTEM_PROMPTS]
-    : (context.systemPrompt as string);
-}
-
-/**
- * Prepares the API call parameters.
- * @param systemPrompt The system prompt to use for the API call.
- * @param model The model to use for the API call.
- * @param context The conversation context containing user messages and metadata.
- * @param messages The list of messages to include in the API call.
- * @returns The prepared API call parameters.
- */
-async function handleStreamingResponse(
-  systemPrompt: string,
-  model: string,
-  context: ConversationContext,
-  messages: BaseMessage[],
-): Promise<StreamingAIResponse> {
-  // Return streaming response
-  const stream = anthropicClient.messages.stream({
-    model,
-    max_tokens: context.maxTokens || CONFIG.maxTokens,
-    temperature: context.temperature || CONFIG.temperature,
-    system: [
-      {
-        type: "text",
-        text: systemPrompt,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages: messages.map((msg) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    })),
-  });
-
-  // Create a ReadableStream for the response
-  const readableStream = new ReadableStream<string>({
-    start(controller) {
-      stream.on("text", (text) => {
-        controller.enqueue(text);
-      });
-
-      stream.on("end", () => {
-        controller.close();
-      });
-
-      stream.on("error", (error) => {
-        controller.error(error);
-      });
-    },
-  });
-
-  return {
-    stream: readableStream,
-    messageId: `streaming-${Date.now()}`,
-    model,
-  };
-}
-
-/**
- * Prepares the API call parameters.
- * @param startTime The time when the API call started.
- * @param systemPrompt The system prompt to use for the API call.
- * @param model The model to use for the API call.
- * @param context The conversation context containing user messages and metadata.
- * @param messages The list of messages to include in the API call.
- * @returns The prepared API call parameters.
- */
-async function handleNonStreamingResponse(
-  startTime: number,
-  systemPrompt: string,
-  model: string,
-  context: ConversationContext,
-  messages: BaseMessage[],
-): Promise<AIResponse> {
-  let content = "";
-  const stream = anthropicClient.messages
-    .stream({
+    const stream = anthropicClient.messages.stream({
       model,
-      max_tokens: context.maxTokens || CONFIG.maxTokens,
-      temperature: context.temperature || CONFIG.temperature,
+      max_tokens: maxTokens,
+      temperature: context.temperature ?? config.temperature,
+      ...(thinkingEnabled && {
+        thinking: {
+          type: "enabled",
+          budget_tokens: 10_000,
+        },
+      }),
       system: [
+        { type: "text", text: BASE_SYSTEM_PROMPT },
         {
           type: "text",
           text: systemPrompt,
@@ -214,24 +169,50 @@ async function handleNonStreamingResponse(
         role: msg.role as "user" | "assistant",
         content: msg.content,
       })),
-    })
-    .on("text", (text) => {
-      content += text;
     });
 
-  const message = await stream.finalMessage();
+    const readableStream = new ReadableStream<string>({
+      async start(controller) {
+        for await (const event of stream) {
+          if (event.type === "content_block_delta") {
+            if (event.delta.type === "thinking_delta") {
+              controller.enqueue(
+                JSON.stringify({
+                  type: "thinking",
+                  data: event.delta.thinking,
+                }),
+              );
+            } else if (event.delta.type === "text_delta") {
+              controller.enqueue(
+                JSON.stringify({ type: "response", data: event.delta.text }),
+              );
+            }
+          }
+        }
+        controller.close();
+      },
+    });
 
-  return {
-    model,
-    messageId: message.id,
-    content: content.trim(),
-    usage: {
-      inputTokens: message.usage.input_tokens,
-      outputTokens: message.usage.output_tokens,
-      totalTokens: message.usage.input_tokens + message.usage.output_tokens,
-    },
-    processingTime: Date.now() - startTime,
-  };
+    return {
+      stream: readableStream,
+      messageId: `streaming-${Date.now()}`,
+      model,
+      metadata: {
+        learningMode: context.learningMode,
+        userLevel: context.userLevel,
+        contextCount: context.contextCount,
+        queryType: context.queryType,
+        urgency: context.urgency,
+        complexity: context.complexity,
+        searchPerformed: context.searchPerformed,
+        searchType: context.searchType,
+        searchResultCount: context.searchResultCount,
+      },
+    };
+  } catch (error: unknown) {
+    console.error("Claude API error:", error);
+    throw new Error(`Failed to call Claude API: ${getErrorMessage(error)}`);
+  }
 }
 
 /**
@@ -270,22 +251,22 @@ export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
  * @returns The prompt for the specified learning mode.
  */
 export function getPromptForLearningMode(mode: LearningMode): string {
-  return `${SYSTEM_PROMPTS.SUPERCHARGED_ASSISTANT}
+  return `${CACHED_SYSTEM_PROMPTS.SUPERCHARGED_ASSISTANT}
 
 **CURRENT LEARNING MODE: ${mode.toUpperCase().replace("-", " ")}**
 
 ${LEARNING_MODE_PROMPTS[mode]}
-
 **RESPONSE REQUIREMENTS FOR THIS MODE:**
 - Provide exhaustive detail with microscopic precision
 - Include multiple examples and edge cases
 - Use visual aids (mermaid diagrams) where helpful
 - Use mathematical notation for complex concepts where applicable
 - Explain underlying principles and theory
-- Offer practical implementation guidance
+- Offer practical implementation guidance where necessary
 - Address common pitfalls and advanced considerations
 - Suggest related topics and next learning steps
-- Maintain focus on the specific learning mode context`;
+- Maintain focus on the specific learning mode context
+- Make sure you handle accurately non-coding queries and requests`;
 }
 
 /**
@@ -507,10 +488,10 @@ export function getModelRecommendation(
   temperature: number;
   reasoning: string;
 } {
-  const learningMode = options.learningMode || detectLearningMode(query);
-  const complexity = options.complexity || detectComplexity(query);
+  const learningMode = options.learningMode ?? detectLearningMode(query);
+  const complexity = options.complexity ?? detectComplexity(query);
   const model = selectOptimalModel(learningMode, query, complexity);
-  const temperature = LEARNING_MODE_TEMPERATURE_MAP[learningMode] || 0.3;
+  const temperature = LEARNING_MODE_TEMPERATURE_MAP[learningMode] ?? 0.3;
 
   let reasoning = `Detected mode: ${learningMode}, recommended model: ${model}`;
 

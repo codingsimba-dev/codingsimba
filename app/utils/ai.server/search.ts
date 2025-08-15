@@ -9,7 +9,6 @@ import {
 const BRAVE_BASE_URL =
   "https://api.search.brave.com/res/v1/web/search" as const;
 
-// Enhanced schemas with more detailed response structure
 const BraveSearchResultSchema = z.object({
   title: z.string(),
   url: z.string(),

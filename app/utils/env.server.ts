@@ -21,6 +21,7 @@ export const schema = z.object({
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
   RESEND_API_KEY: z.string(),
+  RESEND_AUDIENCE_ID: z.string(),
   SANITY_STUDIO_PROJECT_ID: z.string(),
   SANITY_STUDIO_DATASET: z.string(),
   ALLOW_INDEXING: z.enum(["true", "false"]).optional(),

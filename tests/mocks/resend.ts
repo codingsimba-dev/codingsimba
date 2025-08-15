@@ -12,7 +12,7 @@ const EmailSchema = z.object({
 });
 
 export const handlers: HttpHandler[] = [
-  http.post(RESEND_URL, async ({ request }) => {
+  http.post(`${RESEND_URL}/emails`, async ({ request }) => {
     const body = EmailSchema.parse(await request.json());
     console.info("Mocked email:", body);
     return HttpResponse.json({
