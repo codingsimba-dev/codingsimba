@@ -9,8 +9,7 @@ import { renderToPipeableStream } from "react-dom/server";
 import { getEnv, init } from "./utils/env.server";
 
 export const streamTimeout = 5_000;
-const { NODE_ENV, MOCKS } = process.env;
-const isProduction = NODE_ENV === "production";
+const { MOCKS } = process.env;
 const isMocks = MOCKS === "true";
 
 init();
@@ -19,16 +18,6 @@ global.env = getEnv();
 (async () => {
   if (isMocks) {
     await import("../tests/mocks/index");
-  }
-
-  if (isProduction && !isMocks) {
-    import("./utils/scheduler.server")
-      .then(({ initializeScheduler }) => {
-        initializeScheduler();
-      })
-      .catch((error) => {
-        console.error("Failed to initialize scheduler:", error);
-      });
   }
 })();
 

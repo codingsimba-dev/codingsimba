@@ -58,9 +58,13 @@ export async function handleVerification({
 
   void sendEmail({
     to: preUpdateUser.email,
-    subject: "Coding Simba Email changed",
+    subject: "TekBreed Email changed",
     react: <EmailChangeNotification {...emailProps} />,
   });
+
+  /**
+   * TODO: update newsletter user with new email
+   */
 
   return redirectWithToast(
     "/profile",

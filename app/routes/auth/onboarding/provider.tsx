@@ -40,9 +40,9 @@ import { generateMetadata } from "~/utils/meta";
 import { GradientContainer } from "~/components/gradient-container";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "~/utils/honeypot.server";
-import { nameInputPlaceholder } from "~/utils/constants";
 import { redirectWithToast } from "~/utils/toast.server";
 import { prisma } from "~/utils/db.server";
+import { subscribeUser } from "~/utils/email.server";
 
 export const providerIdKey = "providerId";
 export const prefilledProfileKey = "prefilledProfile";
@@ -133,6 +133,8 @@ export async function action({ request, params }: Route.ActionArgs) {
         providerId: String(providerId),
         providerName,
       });
+      //Add user to newsletter
+      void subscribeUser({ name: data.name, email });
       return { ...data, session };
     }),
     async: true,
@@ -228,7 +230,7 @@ export default function OnboardingProvider({
                   <Label htmlFor={fields.name.id}>Name</Label>
                   <Input
                     {...getInputProps(fields.name, { type: "text" })}
-                    placeholder={nameInputPlaceholder}
+                    placeholder="Tony Max"
                   />
                   <FormError errors={fields.name.errors} />
                 </div>

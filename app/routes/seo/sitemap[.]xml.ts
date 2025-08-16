@@ -1,18 +1,23 @@
+import { generateRemixSitemap } from "@forge42/seo-tools/remix/sitemap";
+import type { Route } from "./+types/sitemap[.]xml";
+import { href } from "react-router";
 import { getDomainUrl } from "~/utils/misc";
 
-export async function loader({ request }: { request: Request }) {
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      <url>
-        <loc>${getDomainUrl(request)}</loc>
-        <lastmod>${new Date().toISOString()}</lastmod>
-      </url>
-    </urlset>`;
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const { routes } = await import("virtual:react-router/server-build");
+  const sitemap = await generateRemixSitemap({
+    domain: getDomainUrl(request),
+    ignore: [
+      href("/profile"),
+      href("/profile/change-email"),
+      href("/profile/password"),
+    ],
+    routes,
+  });
 
   return new Response(sitemap, {
     headers: {
       "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=3600",
     },
   });
-}
+};

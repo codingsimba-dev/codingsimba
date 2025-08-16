@@ -104,16 +104,22 @@ export function Navbar() {
 
 export function AuthButtons() {
   const user = useOptionalUser();
+  const location = useLocation();
   const { openMobileNav } = useMobileNav();
 
   const image = user?.image;
   const userIsAdmin = userHasRole(user, "ADMIN");
+  const redirectTo = `${location.pathname}${location.search}${location.hash}`;
+  const params = new URLSearchParams({ redirectTo });
+
   return (
     <div className="flex items-center gap-4">
       <ThemeToggle />
       {!user ? (
         <Button className="hidden lg:flex" asChild>
-          <Link to={"/signin"}>Sign In</Link>
+          <Link to={{ pathname: "/signin", search: params.toString() }}>
+            Sign In
+          </Link>
         </Button>
       ) : null}
       {userIsAdmin ? (

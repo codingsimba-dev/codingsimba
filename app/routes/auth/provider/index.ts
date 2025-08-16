@@ -12,7 +12,6 @@ export async function loader() {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const providerName = ProviderNameSchema.parse(params.provider);
-
   try {
     await handleMockAction(providerName, request);
     return await authenticator.authenticate(providerName, request);

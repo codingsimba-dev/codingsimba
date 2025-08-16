@@ -10,7 +10,7 @@ import { useMobileNav } from "~/utils/mobile-nav-provider";
 import { navLinks, learning, slogan, learningIcons } from "~/utils/constants";
 import { NavLink } from "./nav-link";
 import { Separator } from "./ui/separator";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -22,7 +22,9 @@ import { SignoutButton } from "./signout-button";
 export function MobileNav() {
   const { open, closeMobileNav } = useMobileNav();
   const user = useOptionalUser();
-
+  const location = useLocation();
+  const redirectTo = `${location.pathname}${location.search}${location.hash}`;
+  const params = new URLSearchParams({ redirectTo });
   return (
     <aside>
       <Sheet open={open} onOpenChange={closeMobileNav}>
@@ -79,7 +81,7 @@ export function MobileNav() {
           <div className="flex justify-center gap-4 px-4 pb-4">
             <ThemeToggle />
             {!user ? (
-              <Link to={"/signin"}>
+              <Link to={{ pathname: "/signin", search: params.toString() }}>
                 <Button
                   onClick={closeMobileNav}
                   className="flex"

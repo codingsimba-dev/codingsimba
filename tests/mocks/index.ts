@@ -5,8 +5,9 @@ import { handlers as sanityHandlers } from "./sanity";
 import { handlers as resendHandlers } from "./resend";
 import { handlers as bunnyHandlers } from "./bunny";
 import { handlers as githubHandlers } from "./github";
-import { handlers as openaiHandlers } from "./openai";
 import { handlers as polarHandlers } from "./polar";
+import { handlers as voyageHandlers } from "./vogage";
+import { handlers as vectorHandlers } from "./vector";
 import { handlers as chatbotHandlers } from "./chat";
 
 // React Router Dev Tools
@@ -21,8 +22,9 @@ export const server = setupServer(
   ...bunnyHandlers,
   ...sanityHandlers,
   ...githubHandlers,
-  ...openaiHandlers,
   ...polarHandlers,
+  ...voyageHandlers,
+  ...vectorHandlers,
   ...chatbotHandlers,
 );
 server.listen({ onUnhandledRequest: "warn" });

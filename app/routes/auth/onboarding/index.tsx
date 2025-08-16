@@ -33,6 +33,7 @@ import { GradientContainer } from "~/components/gradient-container";
 import { generateMetadata } from "~/utils/meta";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "~/utils/honeypot.server";
+import { subscribeUser } from "~/utils/email.server";
 
 export const onboardingSessionKey = "onboardingEmail";
 
@@ -120,12 +121,12 @@ export async function action({ request }: Route.ActionArgs) {
     });
   }
 
-  const { rememberMe, session, redirectTo } = submission.value;
-
+  const { rememberMe, session, redirectTo, name, email } = submission.value;
+  //Add user to newsletter
+  void subscribeUser({ name, email });
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie"),
   );
-
   authSession.set(sessionKey, session.id);
 
   const verifySession = await verifySessionStorage.getSession(
@@ -199,7 +200,7 @@ export default function Onboarding({
                   <Label htmlFor={fields.name.id}>Name</Label>
                   <Input
                     {...getInputProps(fields.name, { type: "text" })}
-                    placeholder="Kent C. Dodds"
+                    placeholder="Tony Max"
                   />
                   <FormError errors={fields.name.errors} />
                 </div>

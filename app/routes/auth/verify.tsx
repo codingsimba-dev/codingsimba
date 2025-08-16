@@ -106,7 +106,7 @@ export default function VerifyPage({
 
   React.useEffect(() => {
     const code = fields[codeQueryParam].value;
-    if (code && code.length === OTP_LENGTH && !isVerifying) {
+    if (code?.length === OTP_LENGTH && !isVerifying) {
       if (formRef.current) {
         formRef.current.requestSubmit();
       }

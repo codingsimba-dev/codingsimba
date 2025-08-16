@@ -104,6 +104,22 @@ export async function queryVector(
   }
 }
 
+export async function deleteVectorsByIds(ids: string[]): Promise<void> {
+  invariant(ids.length, "At least one ID is required");
+  try {
+    const response = await withRetry(
+      () => vectorIndex.delete(ids),
+      "deleteVectorsByIds",
+    );
+    console.log(
+      `Successfully deleted ${response.deleted} vectors for document`,
+    );
+  } catch (error) {
+    console.error("Upstash delete error:", error);
+    throw new Error(`Failed to delete vectors: ${getErrorMessage(error)}`);
+  }
+}
+
 export async function deleteVectorsByDocumentId(
   documentId: string,
 ): Promise<void> {

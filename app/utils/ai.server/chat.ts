@@ -116,12 +116,6 @@ export async function askAIAssistant(
     searchType?: "general" | "software" | "recent";
     urgency?: "low" | "medium" | "high";
     thinking?: boolean;
-    webSearchResults?: Array<{
-      title: string;
-      url: string;
-      description: string;
-      content?: string;
-    }>;
   } = {},
 ): Promise<
   StreamingAIResponse & {
@@ -141,7 +135,6 @@ export async function askAIAssistant(
       learningMode,
     });
 
-    // Add web search context from search results or provided results
     const webResults = webSearch?.searchResults?.length
       ? webSearch.searchResults.map((result) => ({
           title: result.title,
@@ -149,7 +142,7 @@ export async function askAIAssistant(
           description: result.description,
           content: result.snippet,
         }))
-      : options.webSearchResults;
+      : undefined;
 
     const webContext = fineTuneWebResults(
       userQuery,
@@ -232,7 +225,7 @@ async function performWebSearch(
   if (!enableSearch) return undefined;
   try {
     const searchType =
-      options.searchType ||
+      options.searchType ??
       getSearchType(options.userQuery, options.learningMode);
     const searchCount = 8;
 
@@ -267,7 +260,6 @@ async function performWebSearch(
       searchError,
     );
   }
-  return undefined;
 }
 
 function fineTuneWebResults(
@@ -301,13 +293,11 @@ Recent web sources:
 ${webContext}
 Please incorporate relevant information from these sources in your response while providing your expert analysis and recommendations.`;
 
-  // Add learning mode context
   if (learningMode !== "default") {
     enhancedQuery += `\n\nLEARNING MODE: ${learningMode.toUpperCase().replace("-", " ")}`;
     enhancedQuery += `\nPlease respond according to the ${learningMode} learning mode guidelines and provide the level of detail and specialization expected for this mode.`;
   }
 
-  // Add urgency context with mode-specific adjustments
   if (urgency === "high") {
     if (learningMode === "debug-code") {
       enhancedQuery +=
@@ -321,7 +311,6 @@ Please incorporate relevant information from these sources in your response whil
     }
   }
 
-  // Add complexity hints for better model selection
   if (complexity) {
     enhancedQuery += `\n\nComplexity Level: ${complexity.toUpperCase()} - Adjust explanation depth accordingly.`;
   }

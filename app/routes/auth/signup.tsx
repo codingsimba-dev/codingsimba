@@ -90,7 +90,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const response = await sendEmail({
     to: email,
-    subject: `Welcome to Coding Simba!`,
+    subject: `Welcome to TekBreed!`,
     react: <Verification code={otp} verificationUrl={verifyUrl.toString()} />,
   });
 
@@ -105,12 +105,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Signup({ actionData }: Route.ComponentProps) {
-  const metadata = generateMetadata({ title: "Signup | Coding Simba" });
+  const metadata = generateMetadata({ title: "Signup" });
   const isSubmitting = useIsPending();
   const [searchParams] = useSearchParams();
 
-  const redirectTo = searchParams.get("redirectTo");
-
+  const redirectTo = searchParams.get("redirectTo") ?? "";
+  const params = new URLSearchParams({ redirectTo });
   const [form, fields] = useForm({
     id: "signup",
     lastResult: actionData,
@@ -118,7 +118,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: SignupSchema });
     },
-    shouldValidate: "onBlur",
+    shouldValidate: "onSubmit",
   });
 
   return (
@@ -148,7 +148,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
                   <Label htmlFor={fields.email.id}>Email</Label>
                   <Input
                     {...getInputProps(fields.email, { type: "email" })}
-                    placeholder="hello@example.com"
+                    placeholder="tonymax@tekbreed.com"
                   />
                   <FormError errors={fields.email.errors} />
                 </div>
@@ -188,7 +188,7 @@ export default function Signup({ actionData }: Route.ComponentProps) {
                 <p className="text-muted-foreground text-sm">
                   Already have an account?{" "}
                   <Link
-                    to={`/signin${redirectTo ? `?redirectTo=${redirectTo}` : ""}`}
+                    to={{ pathname: "/signin", search: params.toString() }}
                     className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                   >
                     Signin

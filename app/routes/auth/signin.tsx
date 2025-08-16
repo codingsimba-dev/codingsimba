@@ -81,7 +81,6 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const { rememberMe, redirectTo, session } = submission.value;
-  console.log(redirectTo);
 
   return await handleNewSession({
     request,
@@ -92,12 +91,11 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Signin({ actionData }: Route.ComponentProps) {
-  const metadata = generateMetadata({ title: "Signin | Coding Simba" });
+  const metadata = generateMetadata({ title: "Signin" });
   const isSubmitting = useIsPending();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo");
-  console.log(redirectTo);
-
+  const redirectTo = searchParams.get("redirectTo") ?? "";
+  const params = new URLSearchParams({ redirectTo });
   const [form, fields] = useForm({
     id: "signin",
     lastResult: actionData,
@@ -105,7 +103,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: SigninSchema });
     },
-    shouldValidate: "onBlur",
+    shouldValidate: "onSubmit",
   });
 
   return (
@@ -135,7 +133,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
                   <Label htmlFor={fields.email.id}>Email</Label>
                   <Input
                     {...getInputProps(fields.email, { type: "email" })}
-                    placeholder="hello@tonymax.com"
+                    placeholder="tonymax@tekbreed.com"
                   />
                   <FormError errors={fields.email.errors} />
                 </div>
@@ -205,7 +203,7 @@ export default function Signin({ actionData }: Route.ComponentProps) {
                 <p className="text-muted-foreground text-sm">
                   Don&apos;t have an account?{" "}
                   <Link
-                    to={`/signup${redirectTo ? `?redirectTo=${redirectTo}` : ""}`}
+                    to={{ pathname: "/signup", search: params.toString() }}
                     className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                   >
                     Signup

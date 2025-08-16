@@ -163,16 +163,10 @@ export async function validateRequest(
       return handleResetPasswordVerification({ request, body, submission });
     }
     case "onboarding": {
-      /**
-       * TODO: Subscribe user to newsletter
-       */
       await deleteVerification();
       return handleOnboardingVerification({ request, body, submission });
     }
     case "change_email": {
-      /**
-       * TODO: Subscribe user to newsletter with the new email address
-       */
       await deleteVerification();
       return handleChangeEmailVerification({ request, body, submission });
     }

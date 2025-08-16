@@ -32,7 +32,8 @@ export const platform = [
   { name: "about", path: "about" },
   { name: "contact", path: "contact" },
   { name: "FAQs", path: "support#faqs" },
-  { name: "color scheme", path: "color-scheme" },
+  { name: "sitemap", path: "sitemap.xml" },
+  // { name: "color scheme", path: "color-scheme" },
 ];
 
 export const legal = [

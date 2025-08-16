@@ -1,16 +1,16 @@
 [
   {
-    "code": "MOCK_GITHUB_CODE_KODY",
-    "accessToken": "MOCK_GITHUB_CODE_KODY_mock_access_token",
+    "code": "MOCK_GITHUB_CODE_CODINGSIMBA",
+    "accessToken": "MOCK_GITHUB_CODE_CODINGSIMBA_mock_access_token",
     "profile": {
       "login": "Al_Larson11",
-      "id": "MOCK_GITHUB_CODE_KODY_profile_id",
+      "id": "MOCK_GITHUB_CODE_CODINGSIMBA_profile_id",
       "name": "Pam Oberbrunner",
       "avatar_url": "https://github.com/ghost.png",
       "emails": [
         "Preston14@yahoo.com",
         "Eleanora.Beier62@gmail.com",
-        "kody@kcd.dev"
+        "CODINGSIMBA@tekbreed.com"
       ]
     },
     "emails": [
@@ -27,21 +27,21 @@
         "visibility": null
       },
       {
-        "email": "kody@kcd.dev",
+        "email": "CODINGSIMBA@tekbreed.com",
         "verified": true,
         "primary": true,
         "visibility": "public"
       }
     ],
-    "primaryEmail": "kody@kcd.dev"
+    "primaryEmail": "CODINGSIMBA@tekbreed.com"
   },
   {
-    "code": "MOCK_GITHUB_CODE_HANNAH",
-    "accessToken": "MOCK_GITHUB_CODE_HANNAH_mock_access_token",
+    "code": "MOCK_GITHUB_CODE_TONY",
+    "accessToken": "MOCK_GITHUB_CODE_TONY_mock_access_token",
     "profile": {
       "login": "Adelia.Bednar82",
-      "id": "MOCK_GITHUB_CODE_HANNAH_profile_id",
-      "name": "Mr. Orlando O'Reilly",
+      "id": "MOCK_GITHUB_CODE_TONY_profile_id",
+      "name": "Mr. Tony Maxy",
       "avatar_url": "https://github.com/ghost.png",
       "emails": [
         "Elnora_Cartwright89@gmail.com",

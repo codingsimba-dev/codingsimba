@@ -555,7 +555,7 @@ function BookmarkTags({ tags }: { tags: Bookmark["bookmarkTags"] }) {
           variant="secondary"
           className="text-xs"
           style={{
-            backgroundColor: bt.tag.color || undefined,
+            backgroundColor: bt.tag.color ?? undefined,
             color: bt.tag.color ? "white" : undefined,
           }}
         >

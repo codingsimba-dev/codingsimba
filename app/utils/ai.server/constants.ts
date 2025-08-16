@@ -13,7 +13,7 @@ export const BASE_SYSTEM_PROMPT = `You are an expert software engineering AI ass
 **Special Capabilities:**
 - Math: \`\`\`math\`\`\` for block math, \\(\\) for inline
 - Diagrams: \`\`\`mermaid\`\`\` for flowcharts and architecture
-- Videos: \`\`\`youtube {videoId}\`\`\` for tutorials
+- Videos: \`\`\`youtube {videoId}\`\`\` for tutorials from trusted youtube channels
 
 Adapt explanations to user skill level and provide practical examples.`;
 
@@ -214,6 +214,8 @@ When solving problems:
 5. **Professional Growth**: Networking, mentorship, conference participation
 6. **Portfolio Development**: Project selection, GitHub optimization, personal branding
 7. **Interview Preparation**: Technical skills, system design, behavioral questions
+8. **Roadmaps**: Always use https://roadmap.sh/roadmaps for career progression paths, skill development timelines, and resource recommendations
+9. **Visualization**: Use appropriate mermaid syntax for diagrams and roadmaps
 
 **Specialization Tracks:**
 - Frontend/Backend/Full-stack development paths
@@ -224,6 +226,9 @@ When solving problems:
 - Security engineering and ethical hacking
 - Technical writing and developer advocacy
 - Engineering management and technical leadership
+- Quality assurance and testing
+- User experience (UX) design and research
+- Technical documentation and API design
 
 **Practical Guidance:**
 - Resume optimization for ATS and recruiters
@@ -384,6 +389,8 @@ export const SOFTWARE_ENG_DOMAINS = [
   "developer.mozilla.org",
   "docs.python.org",
   "reactjs.org",
+  "reactrouter.com",
+  "remix.run",
   "nodejs.org",
   "vuejs.org",
   "angular.io",
@@ -420,6 +427,8 @@ export const SOFTWARE_ENG_DOMAINS = [
 
   // Cloud Providers & Services
   "fly.io",
+  "render.com",
+  "upstash.com",
   "aws.amazon.com",
   "cloud.google.com",
   "azure.microsoft.com",
@@ -434,6 +443,7 @@ export const SOFTWARE_ENG_DOMAINS = [
   "vultr.com",
 
   // Learning Platforms & Tutorials
+  "tekbreed.com",
   "medium.com",
   "dev.to",
   "hackernoon.com",
@@ -461,6 +471,7 @@ export const SOFTWARE_ENG_DOMAINS = [
   "codesandbox.io",
 
   // Community & News
+  "tekbreed.com",
   "reddit.com",
   "news.ycombinator.com",
   "producthunt.com",
@@ -506,13 +517,13 @@ export const SOFTWARE_ENG_DOMAINS = [
   "discord.com",
   "teams.microsoft.com",
   "zoom.us",
-  "tekbreed.com",
 ];
 
 export const TECHNICAL_TERMS = [
   // Programming Languages
   "javascript",
   "typescript",
+  "rust",
   "python",
   "java",
   "c++",
@@ -520,7 +531,6 @@ export const TECHNICAL_TERMS = [
   "php",
   "ruby",
   "go",
-  "rust",
   "kotlin",
   "swift",
   "dart",
@@ -538,6 +548,7 @@ export const TECHNICAL_TERMS = [
 
   // Frontend Frameworks & Libraries
   "react",
+  "shadcn UI",
   "vue",
   "angular",
   "svelte",
@@ -555,6 +566,7 @@ export const TECHNICAL_TERMS = [
   // Backend Frameworks
   "node",
   "express",
+  "honojs",
   "nestjs",
   "koa",
   "fastify",
@@ -760,6 +772,7 @@ export const TECHNICAL_TERMS = [
   "encryption",
   "hashing",
   "bcrypt",
+  "bcryptjs",
   "cors",
   "csrf",
   "xss",
@@ -1163,6 +1176,7 @@ export const SOFTWARE_CATEGORIES = {
     "Vue.js",
     "Angular",
     "Svelte",
+    "Solid.js",
     "HTML5",
     "CSS3",
     "Sass",
@@ -1203,6 +1217,8 @@ export const SOFTWARE_CATEGORIES = {
   ],
 
   CLOUD_PLATFORMS: [
+    "Fly",
+    "Render",
     "AWS",
     "Google Cloud Platform",
     "Microsoft Azure",
@@ -1216,6 +1232,7 @@ export const SOFTWARE_CATEGORIES = {
 
   DEVOPS_TOOLS: [
     "Docker",
+    "Fire Cracker Virtual machines",
     "Kubernetes",
     "Jenkins",
     "GitHub Actions",
@@ -1228,9 +1245,11 @@ export const SOFTWARE_CATEGORIES = {
   ],
 
   TESTING_FRAMEWORKS: [
+    "Vitest",
     "Jest",
     "Mocha",
     "Cypress",
+    "Mock Service Worker (MSW)",
     "Selenium",
     "Playwright",
     "JUnit",

@@ -817,7 +817,7 @@ export function ContentReportsEmptyState() {
       transition={{ duration: 0.3 }}
     >
       <Container title="Content Reports">
-        <ReportPageHeader totalReports={0} hasReports={false} />
+        {/* <ReportPageHeader totalReports={0} hasReports={false} /> */}
         <EmptyState
           icon={<Flag className="text-muted-foreground size-10" />}
           title="No reports yet"

@@ -22,15 +22,13 @@ const destroyRedirectTo = { "set-cookie": destroyRedirectToHeader };
 
 export async function loader({ request }: Route.LoaderArgs) {
   const providerName = "github";
-  console.log(request);
 
   const redirectTo = getRedirectCookieValue(request);
   const label = providerLabels[providerName];
 
   const profile = await authenticator
     .authenticate(providerName, request)
-    .catch(async (error) => {
-      console.error("ERRRRR", error);
+    .catch(async () => {
       const signinRedirect = [
         "/signin",
         redirectTo ? new URLSearchParams({ redirectTo }) : null,
@@ -96,7 +94,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     });
   }
 
-  // if the email matches a user in the prisma, then link the account and
+  // if the email matches a user in the database, then link the account and
   // make a new session
   const user = await prisma.user.findUnique({
     select: { id: true },
@@ -124,6 +122,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const verifySession = await verifySessionStorage.getSession(
     request.headers.get("cookie"),
   );
+
   verifySession.set(onboardingSessionKey, profile.email);
   verifySession.set(prefilledProfileKey, profile);
   verifySession.set(providerIdKey, profile.id);

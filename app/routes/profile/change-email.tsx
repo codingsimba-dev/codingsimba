@@ -129,7 +129,7 @@ export default function ChangeEmail({
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: ChangeEmailSchema });
     },
-    shouldValidate: "onBlur",
+    shouldValidate: "onSubmit",
   });
 
   return (
@@ -164,7 +164,7 @@ export default function ChangeEmail({
                   <Label htmlFor={fields.email.id}>New Email</Label>
                   <Input
                     {...getInputProps(fields.email, { type: "email" })}
-                    placeholder="johndoe@example.com"
+                    placeholder="tonymax@tekbreed.com"
                     className="border-border bg-background h-12 !text-lg"
                   />
                   <FormError errors={fields.email.errors} />

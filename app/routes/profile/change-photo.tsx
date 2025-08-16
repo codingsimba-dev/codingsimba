@@ -75,7 +75,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const userId = await requireUserId(request);
-
   const formData = await parseFormData(request, { maxFileSize: MAX_SIZE });
   await checkHoneypot(formData);
   const submission = await parseWithZod(formData, {
@@ -143,7 +142,7 @@ export async function action({ request }: Route.ActionArgs) {
     if (!MOCKS) {
       await prisma.image.deleteMany({ where: { userId } });
     }
-    return redirectWithToast("/profile", {
+    return await redirectWithToast("/profile", {
       title: `Profile picture removed`,
       description: "You have successfully deleted your profile picture",
       type: "success",
@@ -159,7 +158,7 @@ export async function action({ request }: Route.ActionArgs) {
       });
     });
   }
-  return redirectWithToast("/profile", {
+  return await redirectWithToast("/profile", {
     title: `Profile picture update`,
     description: "You have successfully updated your profile picture",
     type: "success",
@@ -211,7 +210,7 @@ export default function ChangePhoto({
                 </CardDescription>
               </CardHeader>
               <CardContent className="my-8">
-                <Avatar className="border-border mx-auto mt-4 size-48 border">
+                <Avatar className="border-border mx-auto my-4 size-48 border">
                   <AvatarImage
                     src={
                       newImageSrc ??

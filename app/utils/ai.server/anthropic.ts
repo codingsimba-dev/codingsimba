@@ -170,23 +170,115 @@ export async function callClaudeAPI(
         content: msg.content,
       })),
     });
-
+    let inputTokens: number;
+    let outputTokens: number;
+    let totalTokens: number;
+    let cacheCreationInputTokens: number | null = null;
+    let cacheReadInputTokens: number | null = null;
     const readableStream = new ReadableStream<string>({
       async start(controller) {
         for await (const event of stream) {
-          if (event.type === "content_block_delta") {
-            if (event.delta.type === "thinking_delta") {
-              controller.enqueue(
-                JSON.stringify({
-                  type: "thinking",
-                  data: event.delta.thinking,
-                }),
-              );
-            } else if (event.delta.type === "text_delta") {
-              controller.enqueue(
-                JSON.stringify({ type: "response", data: event.delta.text }),
-              );
-            }
+          switch (event.type) {
+            case "message_start":
+              {
+                inputTokens = event.message.usage.input_tokens;
+                outputTokens = event.message.usage.output_tokens;
+                cacheCreationInputTokens =
+                  event.message.usage.cache_creation_input_tokens ?? 0;
+                cacheReadInputTokens =
+                  event.message.usage.cache_read_input_tokens ?? 0;
+                totalTokens =
+                  inputTokens +
+                  outputTokens +
+                  cacheCreationInputTokens +
+                  cacheReadInputTokens;
+                controller.enqueue(
+                  JSON.stringify({
+                    type: "message_start",
+                    data: {
+                      messageId: event.message.id,
+                      model: event.message.model,
+                      metadata: {
+                        inputTokens,
+                        outputTokens,
+                        cacheCreationInputTokens,
+                        cacheReadInputTokens,
+                        totalTokens,
+                        learningMode: context.learningMode,
+                        userLevel: context.userLevel,
+                        contextCount: context.contextCount,
+                        queryType: context.queryType,
+                        urgency: context.urgency,
+                        complexity: context.complexity,
+                        searchPerformed: context.searchPerformed,
+                        searchType: context.searchType,
+                        searchResultCount: context.searchResultCount,
+                      },
+                    },
+                  }),
+                );
+              }
+              break;
+
+            case "content_block_start":
+              if (event.content_block.type === "thinking") {
+                controller.enqueue(
+                  JSON.stringify({
+                    type: "thinking",
+                    data: "",
+                  }),
+                );
+              }
+              break;
+
+            case "content_block_delta":
+              if (event.delta.type === "thinking_delta") {
+                controller.enqueue(
+                  JSON.stringify({
+                    type: event.delta.type,
+                    data: event.delta.thinking,
+                  }),
+                );
+              }
+              if (event.delta.type === "signature_delta") {
+                controller.enqueue(
+                  JSON.stringify({
+                    type: event.delta.type,
+                    data: event.delta.signature,
+                  }),
+                );
+              }
+
+              if (event.delta.type === "text_delta") {
+                controller.enqueue(
+                  JSON.stringify({
+                    type: event.delta.type,
+                    data: event.delta.text,
+                  }),
+                );
+              }
+              break;
+
+            case "message_delta":
+              {
+                inputTokens += event.usage.input_tokens ?? 0;
+                outputTokens += event.usage.output_tokens;
+                controller.enqueue(
+                  JSON.stringify({
+                    type: event.type,
+                    data: event.delta, // {stop_reason, stop_sequence}
+                    metadata: {},
+                  }),
+                );
+              }
+              break;
+
+            case "message_stop":
+              controller.close();
+              break;
+
+            default:
+              break;
           }
         }
         controller.close();
