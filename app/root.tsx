@@ -17,6 +17,7 @@ import {
   useTheme,
 } from "remix-themes";
 
+import { createDefaultDevCallback } from "./utils/profiler";
 import type { Route } from "./+types/root";
 import appStyles from "~/styles/app.css?url";
 import fontStyles from "~/styles/fonts.css?url";
@@ -165,8 +166,8 @@ function App() {
 function BottomContainer() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-      <LiveChat />
       <DiscordBadge />
+      <LiveChat />
     </div>
   );
 }
@@ -179,14 +180,18 @@ function OptionalNavbar() {
 
 export default function AppWithProviders({ loaderData }: Route.ComponentProps) {
   const { theme, honeyProps } = loaderData;
+  const onRenderCallback = createDefaultDevCallback();
+
   return (
-    <HoneypotProvider {...honeyProps}>
-      <MobileNavProvider>
-        <ThemedApp theme={theme}>
-          <App />
-        </ThemedApp>
-      </MobileNavProvider>
-    </HoneypotProvider>
+    <React.Profiler id="App" onRender={onRenderCallback}>
+      <HoneypotProvider {...honeyProps}>
+        <MobileNavProvider>
+          <ThemedApp theme={theme}>
+            <App />
+          </ThemedApp>
+        </MobileNavProvider>
+      </HoneypotProvider>
+    </React.Profiler>
   );
 }
 

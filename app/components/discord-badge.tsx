@@ -5,10 +5,10 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Link } from "react-router";
-import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface DiscordStats {
   memberCount?: number;
@@ -27,8 +27,6 @@ export function DiscordBadge({
   showStats = false,
   variant = "simple",
 }: DiscordBadgeProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   if (variant === "detailed" && showStats) {
     return (
       <div>
@@ -94,22 +92,20 @@ export function DiscordBadge({
   }
 
   return (
-    <div>
-      <Link
-        to="https://discord.gg/7uZ6PWf4Xv"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 rounded-full bg-[#5865F2] px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:scale-105 hover:bg-[#4752C4]"
-        aria-label="Join the Discord community"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <Discord className="size-5" />
-        <span>Join Discord</span>
-        {isHovered && (
-          <div className="absolute -right-2 -top-2 h-3 w-3 animate-pulse rounded-full bg-green-500" />
-        )}
-      </Link>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to="https://discord.gg/7uZ6PWf4Xv"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Join our Discord community"
+        >
+          <Discord className="size-10" />
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Join our Discord community</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

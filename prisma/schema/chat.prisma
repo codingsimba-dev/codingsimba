@@ -1,37 +1,100 @@
 model Conversation {
-  id         String    @id @default(cuid())
-  title      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  messages   Message[]
-  documentId String?
+  id        String   @id @default(cuid())
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  // User relationship
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  totalInputTokens  Int   @default(0)
-  totalOutputTokens Int   @default(0)
-  totalTokens       Int   @default(0)
-  metadata          Json?
+  // Enhanced AI system tracking
+  learningMode       String? // debug-code, system-design, etc.
+  userLevel          String? // beginner, intermediate, advanced
+  detectedComplexity String? // simple, complex
+  confidence         Float? // Analysis confidence score
+
+  // Document/RAG context
+  documentId    String?
+  hasWebContext Boolean @default(false)
+
+  // Relationships
+  messages Message[]
+  contexts ConversationContext[]
+
+  // Enhanced metadata for analysis results
+  analysisMetadata Json? // Store full query analysis results
+  preferences      Json? // User preferences for this conversation
+
+  @@index([userId, createdAt])
+  @@index([userId, learningMode])
+  @@index([learningMode, userLevel])
+  @@index([hasWebContext])
 }
 
 model Message {
   id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  role           MessageRole  @default(user)
-  content        String
-  timestamp      DateTime     @default(now())
 
-  inputTokens  Int?
-  outputTokens Int?
-  totalTokens  Int?
+  role      MessageRole @default(user)
+  content   String // Primary content
+  createdAt DateTime    @default(now())
 
-  metadata Json?
+  // Enhanced content handling
+  contentBlocks   Json? // Complex content structure (images, etc.)
+  hasThinking     Boolean @default(false)
+  thinkingContent String? // Separate thinking content
+
+  // AI model and configuration tracking
+  modelUsed   String? // claude-3-5-haiku-latest, claude-sonnet-4-20250514
+  temperature Float?
+  maxTokens   Int?
+
+  // Enhanced token tracking (matches your API response)
+  inputTokens              Int?
+  outputTokens             Int?
+  cacheCreationInputTokens Int? @default(0)
+  cacheReadInputTokens     Int? @default(0)
+
+  // Request characteristics
+  complexity String? // simple, complex
+  urgency    String? // low, medium, high
+
+  // Tool usage tracking
+  usedWebSearch Boolean @default(false)
+  toolCalls     Json? // Store tool usage details
+
+  // Processing metadata
+  processingTime Int? // Response time in milliseconds
+  streamingId    String? // For tracking streaming responses
+
+  metadata Json? // Additional flexible metadata
+
+  @@index([conversationId, createdAt])
+  @@index([role])
+  @@index([modelUsed])
+  @@index([streamingId])
+}
+
+// Store RAG context sources
+model ConversationContext {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  sourceUrl      String
+  contextData    String // The actual context content
+  relevanceScore Float? // How relevant this context was
+  usedInMessage  String? // Which message used this context
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([sourceUrl])
 }
 
 enum MessageRole {
   user
   assistant
-  system
 }

@@ -15,6 +15,11 @@ import {
   Briefcase,
   FileText,
   Layers,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCcw,
+  Copy,
+  Send,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ChatSidebar } from "./components/sidebar";
@@ -28,6 +33,11 @@ import {
 import { Badge } from "~/components/ui/badge";
 
 import { AuthButtons } from "~/components/navbar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 export interface Message {
   id: string;
@@ -334,16 +344,9 @@ export default function ChatbotPage() {
           />
 
           {/* Main Chat Area */}
-          <div className="mb-32 mt-14 flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-1 flex-col">
             {/* Chat Header */}
-            <div
-              style={{
-                left: "calc(var(--sidebar-width))",
-                width: "calc(100% - var(--sidebar-width))",
-                right: "0",
-              }}
-              className="bg-card/50 fixed top-0 z-30 flex items-center justify-between gap-6 border-b px-6 py-2"
-            >
+            <div className="bg-card/50 sticky top-0 z-30 flex items-center justify-between gap-6 border-b px-6 py-1">
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="h-8 w-8" />
                 <Avatar className="h-8 w-8">
@@ -357,7 +360,7 @@ export default function ChatbotPage() {
                     {activeConversation?.title || "AI Assistant"}
                   </h1>
                   <p className="text-muted-foreground text-sm">
-                    {format(new Date(), "HH:mm")}
+                    {format(new Date(), "h:mm a")}
                   </p>
                 </div>
               </div>
@@ -467,7 +470,7 @@ export default function ChatbotPage() {
                       messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                          className={`flex w-full ${message.role === "user" ? "flex-col-reverse" : "flex-col"} gap-3 md:flex-row ${message.role === "user" ? "justify-end" : "justify-start"}`}
                         >
                           {message.role === "assistant" && (
                             <Avatar className="mt-1 h-8 w-8">
@@ -478,10 +481,11 @@ export default function ChatbotPage() {
                           )}
 
                           <div
-                            className={`max-w-[85%] rounded-2xl px-3 py-2 sm:max-w-[80%] sm:px-4 sm:py-3 ${
+                            className={`rounded-2xl px-3 py-2 sm:px-4 sm:py-3 md:max-w-[85%] ${
                               message.role === "user"
                                 ? "bg-muted text-foreground shadow-md" // User: Uses your theme primary
-                                : "bg-card border-border text-card-foreground border shadow-sm" // Assistant: Theme-aware
+                                : "" // Assistant: Theme-aware
+                              // bg-card border-border text-card-foreground border shadow-sm
                             }`}
                           >
                             <div className="whitespace-pre-wrap leading-relaxed">
@@ -494,7 +498,7 @@ export default function ChatbotPage() {
                                   : "text-muted-foreground"
                               }`}
                             >
-                              {format(message.timestamp, "HH:mm")}
+                              {format(message.timestamp, "h:mm a")}
                             </div>
                           </div>
 
@@ -527,6 +531,45 @@ export default function ChatbotPage() {
                         </div>
                       </div>
                     ) : null}
+                    <div className="flex w-full max-w-3xl justify-between">
+                      <p className="text-muted-foreground w-full text-center text-xs">
+                        AI generated. Please double-check responses.
+                      </p>
+                      <div className="flex gap-4">
+                        <Tooltip>
+                          <TooltipTrigger className="text-muted-foreground">
+                            <Copy className="size-5" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Copy</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger className="text-muted-foreground">
+                            <ThumbsUp className="size-5" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Give positive feedback</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger className="text-muted-foreground">
+                            <ThumbsDown className="size-5" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Give negative feedback</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger className="text-muted-foreground">
+                            <RefreshCcw className="size-5" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Retry</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
 
                     {/* Scroll anchor */}
                     <div ref={messagesEndRef} />
@@ -536,14 +579,8 @@ export default function ChatbotPage() {
             </div>
 
             {/* Input Area */}
-            <div
-              style={{
-                left: "var(--sidebar-width)",
-                right: "0",
-              }}
-              className="bg-card fixed bottom-2 left-0 right-0 mx-auto w-full max-w-3xl rounded-2xl border border-t p-2 shadow-lg"
-            >
-              <div className="mx-auto max-w-3xl">
+            <div className="mx-auto flex w-full max-w-3xl flex-col p-2 shadow-lg">
+              <div className="mx-auto w-full max-w-3xl">
                 {learningMode && (
                   <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm">
                     {(() => {
@@ -560,7 +597,7 @@ export default function ChatbotPage() {
                     </span>
                   </div>
                 )}
-                <div className="flex items-end gap-2 px-4 pb-2">
+                <div className="flex w-full items-end gap-2 px-4 pb-2">
                   <div
                     className="relative flex-1 rounded-2xl bg-white shadow-sm transition-all duration-200 dark:bg-gray-800"
                     style={{
@@ -595,37 +632,10 @@ export default function ChatbotPage() {
                       disabled={isLoading}
                       rows={1}
                     />
-                    <div className="absolute bottom-2 right-2 flex gap-1">
+                    <div className="absolute bottom-2 right-2 flex gap-3">
                       {/* File Upload Button */}
-                      <button
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        // onClick={handleFileUpload}
-                        disabled={isLoading}
-                      >
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                          />
-                        </svg>
-                      </button>
-
-                      {/* Search Button (appears when search terms detected) */}
-                      {/* shouldShowSearchButton(input) */}
-                      {/* eslint-disable-next-line no-constant-binary-expression */}
-                      {true && (
-                        <button
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900"
-                          // onClick={handleWebSearch}
-                          disabled={isLoading}
-                        >
+                      <Tooltip>
+                        <TooltipTrigger>
                           <svg
                             className="h-5 w-5"
                             fill="none"
@@ -636,38 +646,31 @@ export default function ChatbotPage() {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
                             />
                           </svg>
-                        </button>
-                      )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Upload file</p>
+                        </TooltipContent>
+                      </Tooltip>
 
                       {/* Send Button */}
-                      <button
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${input.trim() ? "text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900" : "text-gray-400"}`}
-                        onClick={handleSend}
-                        disabled={!input.trim() || isLoading}
-                      >
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                      <Tooltip>
+                        <TooltipTrigger
+                          onClick={handleSend}
+                          disabled={!input.trim() || isLoading}
+                          className="mr-2"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                          />
-                        </svg>
-                      </button>
+                          <Send className="size-5" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Send</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
-                <p className="text-muted-foreground text-center text-xs">
-                  AI can make mistakes. Consider checking important information.
-                </p>
               </div>
             </div>
           </div>

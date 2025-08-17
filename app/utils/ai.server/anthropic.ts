@@ -8,13 +8,12 @@ import {
   COMPLEXITY_INDICATORS,
   DEBUG_KEYWORDS,
   LEARNING_MODE_PROMPTS,
-  QUESTION_INDICATORS,
   REVIEW_KEYWORDS,
   SIMPLICITY_INDICATORS,
-  SOFTWARE_INDICATORS,
   SYSTEM_DESIGN_KEYWORDS,
   CACHED_SYSTEM_PROMPTS,
   TUTORIAL_KEYWORDS,
+  GENERAL_CHAT_KEYWORDS,
 } from "./constants";
 
 const anthropicClient = new Anthropic({
@@ -29,10 +28,35 @@ export const MODELS = {
 export type LearningMode = keyof typeof LEARNING_MODE_PROMPTS;
 export type ModelType = keyof typeof MODELS;
 
-export interface BaseMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
+interface TextContentBlock {
+  type: "text";
+  text: string;
+  cache_control?: { type: "ephemeral" };
 }
+
+interface ImageContentBlock {
+  type: "image";
+  source: {
+    type: "base64";
+    media_type: "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+    data: string;
+  };
+  cache_control?: { type: "ephemeral" };
+}
+
+type ContentBlock = TextContentBlock | ImageContentBlock;
+
+export interface UserMessage {
+  role: "user";
+  content: string | ContentBlock[];
+}
+
+export interface AssistantMessage {
+  role: "assistant";
+  content: string | ContentBlock[];
+}
+
+export type BaseMessage = UserMessage | AssistantMessage;
 
 export interface ConversationContext {
   messages: BaseMessage[];
@@ -46,19 +70,12 @@ export interface ConversationContext {
   queryType?: string;
   urgency?: "low" | "medium" | "high";
   complexity?: "simple" | "complex";
-  searchPerformed?: boolean;
-  searchType?: string;
-  searchResultCount?: number;
 }
 
 export interface RAGContext {
   query: string;
-  contexts: Array<{
-    text: string;
-    source: string;
-    score: number;
-    metadata?: Record<string, unknown>;
-  }>;
+  messages: BaseMessage[];
+  contexts: string[];
   userLevel?: "beginner" | "intermediate" | "advanced";
 }
 
@@ -81,6 +98,9 @@ export function shouldEnableThinking({
   complexity?: "simple" | "complex";
   userQuery?: string;
 }): boolean {
+  // Never enable thinking for general chat
+  if (learningMode === "general-chat") return false;
+
   const thinkingModes: string[] = [
     "system-design",
     "explain-or-design-algorithm",
@@ -124,7 +144,7 @@ export async function callClaudeAPI(
       shouldEnableThinking({
         learningMode: context.learningMode,
         complexity: context.complexity,
-        userQuery: context.messages[0]?.content,
+        userQuery: context.messages[0]?.content as string,
       });
 
     const model =
@@ -153,67 +173,69 @@ export async function callClaudeAPI(
       temperature: context.temperature ?? config.temperature,
       ...(thinkingEnabled && {
         thinking: {
-          type: "enabled",
+          type: "enabled" as const,
           budget_tokens: 10_000,
         },
       }),
       system: [
-        { type: "text", text: BASE_SYSTEM_PROMPT },
+        { type: "text" as const, text: BASE_SYSTEM_PROMPT },
         {
-          type: "text",
+          type: "text" as const,
           text: systemPrompt,
-          cache_control: { type: "ephemeral" },
+          cache_control: { type: "ephemeral" as const },
         },
       ],
-      messages: messages.map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      })),
+      messages: messages.map((msg): Anthropic.Messages.MessageParam => {
+        if (msg.role === "user") {
+          if (typeof msg.content === "string") {
+            return {
+              role: "user",
+              content: msg.content,
+            };
+          } else {
+            return {
+              role: "user",
+              content: msg.content,
+            };
+          }
+        } else {
+          if (typeof msg.content === "string") {
+            return {
+              role: "assistant",
+              content: [
+                {
+                  type: "text" as const,
+                  text: msg.content,
+                  cache_control: { type: "ephemeral" as const },
+                },
+              ],
+            };
+          } else {
+            return {
+              role: "assistant",
+              content: msg.content.map((block) => ({
+                ...block,
+                cache_control: { type: "ephemeral" as const },
+              })),
+            };
+          }
+        }
+      }),
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
     });
-    let inputTokens: number;
-    let outputTokens: number;
-    let totalTokens: number;
-    let cacheCreationInputTokens: number | null = null;
-    let cacheReadInputTokens: number | null = null;
+
     const readableStream = new ReadableStream<string>({
       async start(controller) {
         for await (const event of stream) {
           switch (event.type) {
             case "message_start":
               {
-                inputTokens = event.message.usage.input_tokens;
-                outputTokens = event.message.usage.output_tokens;
-                cacheCreationInputTokens =
-                  event.message.usage.cache_creation_input_tokens ?? 0;
-                cacheReadInputTokens =
-                  event.message.usage.cache_read_input_tokens ?? 0;
-                totalTokens =
-                  inputTokens +
-                  outputTokens +
-                  cacheCreationInputTokens +
-                  cacheReadInputTokens;
                 controller.enqueue(
                   JSON.stringify({
                     type: "message_start",
                     data: {
                       messageId: event.message.id,
                       model: event.message.model,
-                      metadata: {
-                        inputTokens,
-                        outputTokens,
-                        cacheCreationInputTokens,
-                        cacheReadInputTokens,
-                        totalTokens,
-                        learningMode: context.learningMode,
-                        userLevel: context.userLevel,
-                        contextCount: context.contextCount,
-                        queryType: context.queryType,
-                        urgency: context.urgency,
-                        complexity: context.complexity,
-                        searchPerformed: context.searchPerformed,
-                        searchType: context.searchType,
-                        searchResultCount: context.searchResultCount,
-                      },
                     },
                   }),
                 );
@@ -224,7 +246,7 @@ export async function callClaudeAPI(
               if (event.content_block.type === "thinking") {
                 controller.enqueue(
                   JSON.stringify({
-                    type: "thinking",
+                    type: event.content_block.type,
                     data: "",
                   }),
                 );
@@ -261,20 +283,39 @@ export async function callClaudeAPI(
 
             case "message_delta":
               {
-                inputTokens += event.usage.input_tokens ?? 0;
-                outputTokens += event.usage.output_tokens;
+                const inputTokens = event.usage.input_tokens ?? 0;
+                const outputTokens = event.usage.output_tokens;
+                const cacheCreationInputTokens =
+                  event.usage.cache_creation_input_tokens ?? 0;
+                const cacheReadInputTokens =
+                  event.usage.cache_read_input_tokens ?? 0;
+                const totalTokens =
+                  inputTokens +
+                  outputTokens +
+                  cacheCreationInputTokens +
+                  cacheReadInputTokens;
                 controller.enqueue(
                   JSON.stringify({
                     type: event.type,
                     data: event.delta, // {stop_reason, stop_sequence}
-                    metadata: {},
+                    metadata: {
+                      inputTokens,
+                      outputTokens,
+                      cacheCreationInputTokens,
+                      cacheReadInputTokens,
+                      totalTokens,
+                      learningMode: context.learningMode,
+                      userLevel: context.userLevel,
+                      urgency: context.urgency,
+                      complexity: context.complexity,
+                    },
                   }),
                 );
               }
               break;
 
             case "message_stop":
-              controller.close();
+              // maybe something
               break;
 
             default:
@@ -296,9 +337,6 @@ export async function callClaudeAPI(
         queryType: context.queryType,
         urgency: context.urgency,
         complexity: context.complexity,
-        searchPerformed: context.searchPerformed,
-        searchType: context.searchType,
-        searchResultCount: context.searchResultCount,
       },
     };
   } catch (error: unknown) {
@@ -309,6 +347,7 @@ export async function callClaudeAPI(
 
 /**
  * Model selection mapping based on learning mode recommendations
+ * Updated to include general-chat
  */
 const LEARNING_MODE_MODEL_MAP: Record<LearningMode, ModelType> = {
   "system-design": "SONNET",
@@ -319,11 +358,13 @@ const LEARNING_MODE_MODEL_MAP: Record<LearningMode, ModelType> = {
   "code-review": "HAIKU",
   "analyse-code": "HAIKU",
   "career-advice": "HAIKU",
+  "general-chat": "HAIKU", // Always use HAIKU for general conversation
   default: "HAIKU",
 };
 
 /**
  * Temperature settings optimized for each learning mode
+ * Updated to include general-chat
  */
 export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
   "system-design": 0.4,
@@ -334,6 +375,7 @@ export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
   "code-review": 0.2,
   "analyse-code": 0.2,
   "career-advice": 0.4,
+  "general-chat": 0.7, // Higher temperature for more natural conversation
   default: 0.2,
 };
 
@@ -343,6 +385,11 @@ export const LEARNING_MODE_TEMPERATURE_MAP: Record<LearningMode, number> = {
  * @returns The prompt for the specified learning mode.
  */
 export function getPromptForLearningMode(mode: LearningMode): string {
+  // For general chat, return the prompt directly
+  if (mode === "general-chat") {
+    return CACHED_SYSTEM_PROMPTS.GENERAL_CHAT;
+  }
+
   return `${CACHED_SYSTEM_PROMPTS.SUPERCHARGED_ASSISTANT}
 
 **CURRENT LEARNING MODE: ${mode.toUpperCase().replace("-", " ")}**
@@ -363,11 +410,43 @@ ${LEARNING_MODE_PROMPTS[mode]}
 
 /**
  * Smart learning mode detection based on user query
+ * Updated to include general-chat detection
  * @param query The user query to analyze.
  * @returns The detected learning mode.
  */
 export function detectLearningMode(query: string): LearningMode {
   const queryLower = query.toLowerCase();
+
+  // Check for general conversation indicators first
+  const generalChatMatches = GENERAL_CHAT_KEYWORDS.filter((keyword) =>
+    queryLower.includes(keyword),
+  );
+
+  // Check for technical indicators
+  const techIndicators = [
+    "code",
+    "programming",
+    "function",
+    "variable",
+    "class",
+    "method",
+    "algorithm",
+    "database",
+    "server",
+    "api",
+    "framework",
+    "library",
+  ];
+  const techMatches = techIndicators.filter((indicator) =>
+    queryLower.includes(indicator),
+  );
+
+  // If there are general chat indicators and no tech indicators, it's general chat
+  if (generalChatMatches.length > 0 && techMatches.length === 0) {
+    return "general-chat";
+  }
+
+  // Otherwise, check for specific technical modes
   if (DEBUG_KEYWORDS.some((keyword) => queryLower.includes(keyword))) {
     return "debug-code";
   }
@@ -395,98 +474,9 @@ export function detectLearningMode(query: string): LearningMode {
   if (ANALYSIS_KEYWORDS.some((keyword) => queryLower.includes(keyword))) {
     return "analyse-code";
   }
+
   // Default fallback
   return "default";
-}
-
-/**
- * Detects the complexity of a user query.
- * @param query The user query to analyze.
- * @returns The detected complexity level.
- */
-export function detectComplexity(query: string): "simple" | "complex" {
-  const queryLower = query.toLowerCase();
-  if (
-    COMPLEXITY_INDICATORS.some((indicator) => queryLower.includes(indicator))
-  ) {
-    return "complex";
-  }
-
-  if (
-    SIMPLICITY_INDICATORS.some((indicator) => queryLower.includes(indicator))
-  ) {
-    return "simple";
-  }
-
-  return query.length > 100 ? "complex" : "simple";
-}
-
-/**
- * Determines if a query should trigger a web search.
- * @param query The user query to analyze.
- * @param learningMode The current learning mode.
- * @returns True if a search should be performed, false otherwise.
- */
-export function shouldPerformSearch(
-  query: string,
-  learningMode: LearningMode,
-): boolean {
-  const queryLower = query.toLowerCase();
-
-  // Learning modes that often benefit from search
-  const searchBeneficialModes: LearningMode[] = [
-    "career-advice", // Job market, salary info, industry trends
-    "create-tutorial", // Latest examples and best practices
-    "system-design", // Current architectural patterns and tools
-  ];
-
-  // Don't search for basic algorithmic or debugging questions
-  const noSearchModes: LearningMode[] = [
-    "debug-code", // Usually about specific code issues
-    "analyze-algorithm", // Mathematical analysis doesn't need current info
-  ];
-
-  // Skip search for these modes unless explicitly indicated
-  if (noSearchModes.includes(learningMode)) {
-    return CAREER_KEYWORDS.some((indicator) => queryLower.includes(indicator));
-  }
-
-  if (searchBeneficialModes.includes(learningMode)) {
-    return true;
-  }
-
-  return (
-    CAREER_KEYWORDS.some((indicator) => queryLower.includes(indicator)) ||
-    QUESTION_INDICATORS.some((indicator) => queryLower.includes(indicator))
-  );
-}
-
-/**
- * Determines the best search type based on query and learning mode.
- * @param query The user query to analyze.
- * @param learningMode The current learning mode.
- * @returns The recommended search type.
- */
-export function getSearchType(
-  query: string,
-  learningMode: LearningMode,
-): "general" | "software" | "recent" {
-  const queryLower = query.toLowerCase();
-
-  if (CAREER_KEYWORDS.some((indicator) => queryLower.includes(indicator))) {
-    return "recent";
-  }
-
-  const isSoftwareQuery =
-    SOFTWARE_INDICATORS.some((indicator) => queryLower.includes(indicator)) ||
-    [
-      "system-design",
-      "analyse-code",
-      "create-tutorial",
-      "explain-or-design-algorithm",
-    ].includes(learningMode);
-
-  return isSoftwareQuery ? "software" : "general";
 }
 
 /**
@@ -532,6 +522,11 @@ export function selectOptimalModel(
   query: string,
   complexity?: "simple" | "complex",
 ): ModelType {
+  // General chat always uses HAIKU
+  if (learningMode === "general-chat") {
+    return "HAIKU";
+  }
+
   if (learningMode === "career-advice") {
     return getCareerAdviceModel(query);
   }
@@ -560,43 +555,4 @@ export function selectOptimalModel(
   }
 
   return recommendedModel;
-}
-
-/**
- * Gets a model recommendation based on the query and options.
- * @param query The user query to analyze.
- * @param options The options for model selection.
- * @returns The recommended model and its parameters.
- */
-export function getModelRecommendation(
-  query: string,
-  options: {
-    learningMode?: LearningMode;
-    complexity?: "simple" | "complex";
-  } = {},
-): {
-  learningMode: LearningMode;
-  model: ModelType;
-  temperature: number;
-  reasoning: string;
-} {
-  const learningMode = options.learningMode ?? detectLearningMode(query);
-  const complexity = options.complexity ?? detectComplexity(query);
-  const model = selectOptimalModel(learningMode, query, complexity);
-  const temperature = LEARNING_MODE_TEMPERATURE_MAP[learningMode] ?? 0.3;
-
-  let reasoning = `Detected mode: ${learningMode}, recommended model: ${model}`;
-
-  if (learningMode === "career-advice") {
-    reasoning =
-      model === "SONNET"
-        ? "Complex career planning detected - using SONNET for comprehensive analysis"
-        : "Tactical career question detected - using HAIKU for quick, focused advice";
-  } else if (complexity === "complex" && model === "SONNET") {
-    reasoning = "Complex query detected - using SONNET for deeper analysis";
-  } else if (complexity === "simple" && model === "HAIKU") {
-    reasoning = "Simple query detected - using HAIKU for efficient response";
-  }
-
-  return { learningMode, model, temperature, reasoning };
 }

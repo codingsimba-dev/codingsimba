@@ -12,7 +12,6 @@ export const schema = z.object({
   DATABASE_URL: z.string().default("file:./dev.db"),
   ANTHROPIC_API_KEY: z.string(),
   VOYAGE_API_KEY: z.string(),
-  BRAVE_SEARCH_API_KEY: z.string(),
   UPSTASH_VECTOR_REST_URL: z.string(),
   UPSTASH_VECTOR_REST_TOKEN: z.string(),
   BUNNY_STORAGE_ZONE: z.string(),

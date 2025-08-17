@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -95,19 +97,36 @@ const mockPlans = {
   ],
 };
 
-// AI-only plan
-const aiOnlyPlan = {
-  name: "ai-assistant",
-  description: "Standalone AI assistant for coding and learning",
-  metadata: {
-    group: "ai",
-    icon: "Bot",
-    buttonText: "Get AI Assistant",
-    buttonVariant: "default",
+// AI-only plans
+const aiOnlyPlans = {
+  basic: {
+    name: "ai-assistant-basic",
+    description: "Essential AI coding assistant with core features",
+    metadata: {
+      group: "ai",
+      icon: "Bot",
+      buttonText: "Get Basic AI",
+      buttonVariant: "outline",
+    },
+    prices: [
+      { amountType: "fixed", priceAmount: 1900, recurringInterval: "month" },
+    ],
   },
-  prices: [
-    { amountType: "fixed", priceAmount: 1900, recurringInterval: "month" },
-  ],
+  pro: {
+    name: "ai-assistant-pro",
+    description:
+      "Advanced AI assistant with unlimited features and priority support",
+    metadata: {
+      group: "ai",
+      icon: "Bot",
+      buttonText: "Get Pro AI",
+      buttonVariant: "default",
+      popular: true,
+    },
+    prices: [
+      { amountType: "fixed", priceAmount: 3900, recurringInterval: "month" },
+    ],
+  },
 };
 
 export function SubscriptionSection() {
@@ -217,15 +236,19 @@ export function SubscriptionSection() {
                 </p>
               </div>
 
-              <div className="flex justify-center">
-                <div className="w-full max-w-sm">
-                  <PricingCard
-                    plan={aiOnlyPlan}
-                    index={0}
-                    basePrice={getPriceAmount(aiOnlyPlan.prices[0])}
-                    isAIOnly={true}
-                  />
-                </div>
+              <div className="mx-auto grid max-w-4xl gap-8 lg:grid-cols-2">
+                <PricingCard
+                  plan={aiOnlyPlans.basic}
+                  index={0}
+                  basePrice={getPriceAmount(aiOnlyPlans.basic.prices[0])}
+                  isAIOnly={true}
+                />
+                <PricingCard
+                  plan={aiOnlyPlans.pro}
+                  index={1}
+                  basePrice={getPriceAmount(aiOnlyPlans.pro.prices[0])}
+                  isAIOnly={true}
+                />
               </div>
             </div>
           </TabsContent>
@@ -238,9 +261,9 @@ export function SubscriptionSection() {
           viewport={{ once: true }}
           className="mt-16 text-center"
         >
-          {/* <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-4">
             All plans include a 14-day free trial
-          </p> */}
+          </p>
           <div className="text-muted-foreground/80 flex flex-wrap justify-center gap-8 text-sm">
             <span>✓ No setup fees</span>
             <span>✓ Cancel anytime</span>

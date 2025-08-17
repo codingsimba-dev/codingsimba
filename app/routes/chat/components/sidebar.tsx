@@ -66,7 +66,7 @@ export function ChatSidebar({
 
   return (
     <Sidebar className="border-r">
-      <Header title="Katak" className="[&>h1]:text-md mt-0 p-2 [&>p]:text-sm" />
+      <Header title="Katak" className="[&>h1]:text-md mt-0 p-1 [&>p]:text-sm" />
       <SidebarHeader className="border-b p-4">
         <Button
           onClick={onNewConversation}

@@ -116,6 +116,7 @@
     "openimg": "^1.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "react-router": "^7.7.0",
     "react-shiki": "^0.5.0",
     "reading-time-estimator": "^1.12.0",

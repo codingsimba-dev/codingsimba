@@ -83,7 +83,7 @@ export class DiscordService {
           timestamp: new Date().toISOString(),
         },
       ],
-      username: "CodingSimba Bot",
+      username: "TekBreed Bot",
     });
   }
 
@@ -116,7 +116,7 @@ export class DiscordService {
           timestamp: completionDate.toISOString(),
         },
       ],
-      username: "CodingSimba Bot",
+      username: "TekBreed Bot",
     });
   }
 
@@ -193,7 +193,7 @@ export class DiscordService {
           timestamp: new Date().toISOString(),
         },
       ],
-      username: "CodingSimba Bot",
+      username: "TekBreed Bot",
     });
   }
 }
